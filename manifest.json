@@ -1,0 +1,51 @@
+{
+  "short_name": "FileHub",
+  "name": "FILEHUB - Gestión Inteligente con IA",
+  "description": "Tu centro de control personal con IA. Funciona offline.",
+  "icons": [
+    {
+      "src": "https://img.icons8.com/ios-filled/192/4f46e5/lightning-bolt.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "https://img.icons8.com/ios-filled/512/4f46e5/lightning-bolt.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "theme_color": "#0f172a",
+  "background_color": "#0f172a",
+  "orientation": "any",
+  "categories": ["productivity", "finance", "utilities", "medical"],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  "shortcuts": [
+    {
+      "name": "Tareas VIP",
+      "short_name": "VIP",
+      "url": "/?view=vip-tasks",
+      "icons": [{ "src": "https://img.icons8.com/ios-filled/96/f59e0b/star.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Dashboard",
+      "short_name": "Dash",
+      "url": "/?view=dashboard",
+      "icons": [{ "src": "https://img.icons8.com/ios-filled/96/4f46e5/lightning-bolt.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Pisos",
+      "short_name": "Pisos",
+      "url": "/?view=pisos-buscador",
+      "icons": [{ "src": "https://img.icons8.com/ios-filled/96/10b981/home.png", "sizes": "96x96" }]
+    }
+  ]
+}
