@@ -4,11 +4,15 @@
  * Cache-first for hashed assets only
  */
 
-const CACHE_VERSION = 'filehub-v29';
+const CACHE_VERSION = 'filehub-v30';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
-const OFFLINE_PAGE = '/index.html';
 
-const PRECACHE_URLS = ['/', '/index.html', '/manifest.json'];
+// Base path derivado de la ubicación del propio SW (raíz '/' en arditifilehub.com,
+// '/filehub2026-pages/' o similar en GitHub Pages).
+const SW_BASE = self.location.pathname.replace(/sw\.js$/, '');
+const OFFLINE_PAGE = SW_BASE + 'index.html';
+
+const PRECACHE_URLS = [SW_BASE, SW_BASE + 'index.html', SW_BASE + 'manifest.json'];
 
 const NO_CACHE = [
   'supabase.co','api.anthropic.com','api.deepseek.com','api.groq.com',

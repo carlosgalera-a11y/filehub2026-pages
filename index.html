@@ -157,7 +157,7 @@
     updateOnlineStatus();
 
     // Service Worker — Force update for iOS PWA
-    const SW_EXPECTED_VERSION = 'filehub-v29';
+    const SW_EXPECTED_VERSION = 'filehub-v30';
     if ('serviceWorker' in navigator) {
       // Nuke old SWs on iOS standalone
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
@@ -177,8 +177,10 @@
       }
 
       window.addEventListener('load', async () => {
-        // En arditifilehub.com sirve desde raíz '/'; en *.github.io/filehub2026/ usa subpath
-        const swBase = location.pathname.startsWith('/filehub2026') ? '/filehub2026' : '';
+        // En arditifilehub.com sirve desde raíz '/'; en *.github.io/<repo>/ usa subpath
+        // Detecta el primer segmento de la ruta para soportar /filehub2026-pages/, /filehub2026/, etc.
+        const firstSegment = location.pathname.split('/')[1] || '';
+        const swBase = firstSegment.startsWith('filehub2026') ? '/' + firstSegment : '';
         try {
           const reg = await navigator.serviceWorker.register(swBase + '/sw.js', { scope: swBase + '/' });
           console.log('[SW] Registered:', reg.scope);
