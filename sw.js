@@ -101,7 +101,7 @@ self.addEventListener('notificationclick', event => {
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
       // Si ya hay una ventana abierta de la app, foco + navega
       for (const c of clients) {
-        if (c.url.includes('filehub2026') && 'focus' in c) {
+        if ((c.url.includes('filehub2026') || c.url.includes('arditifilehub')) && 'focus' in c) {
           c.focus();
           if ('navigate' in c) c.navigate(target);
           return;
