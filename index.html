@@ -239,12 +239,39 @@
     button, nav { user-select: none; }
     input, textarea, select { user-select: text; -webkit-user-select: text; }
 
+    /* ═══ MOBILE ACCESS v224 ═══ */
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+
+    /* Altura dinámica real en móvil: las barras del navegador que aparecen y
+       desaparecen rompen 100vh; dvh siempre mide el viewport visible. */
+    @supports (height: 100dvh) {
+      .h-screen { height: 100dvh !important; }
+      .min-h-screen { min-height: 100dvh !important; }
+      .max-h-screen { max-height: 100dvh !important; }
+    }
+
+    @media (max-width: 768px) {
+      /* 16px mínimo en campos de texto: evita el zoom automático de iOS
+         al enfocar TAMBIÉN en Safari normal (antes solo en standalone) */
+      input, textarea, select { font-size: 16px !important; }
+      /* Sin retardo táctil de 300ms en toda la UI */
+      button, a, [role="button"] { touch-action: manipulation; }
+      /* Scroll con inercia en paneles internos */
+      .custom-scrollbar, .overflow-y-auto, .overflow-auto { -webkit-overflow-scrolling: touch; }
+    }
+
+    /* Touch targets mínimos accesibles (44px) en navegación con dedo */
+    @media (pointer: coarse) {
+      nav button, .sidebar-container button { min-height: 44px; }
+    }
+
     /* Offline banner */
     #offline-banner {
       display: none;
       position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
       background: #f59e0b; color: #1c1917; text-align: center;
       padding: 8px 16px; font-size: 12px; font-weight: 700;
+      padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
       font-family: 'Inter', sans-serif;
     }
     #offline-banner.show { display: block; }
