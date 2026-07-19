@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>FILEHUB · Chollos</title>
+  <meta name="theme-color" content="#0b1326">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Hanken+Grotesk:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --surface: #0b1326;
+      --surface-low: #131b2e;
+      --surface-mid: #171f33;
+      --surface-high: #222a3d;
+      --border: #283449;
+      --text: #F8FAFC;
+      --text-dim: #94A3B8;
+      --orange: #f97316;
+      --orange-dark: #ea580c;
+      --green: #4ade80;
+      --blue: #60a5fa;
+      --red: #fb7185;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--surface);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+    h1, h2, h3 { font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; user-select: none; }
+    input { font-family: inherit; font-size: 16px; }
+    a { color: inherit; }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
+
+    /* ── Header ── */
+    .top {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 14px 16px; position: sticky; top: 0; z-index: 20;
+      background: rgba(11,19,38,.85); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .top .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 17px; }
+    .top .brand small { display: block; font-weight: 600; font-size: 11px; color: var(--text-dim); }
+    .btn-orange {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--orange); color: #fff; font-weight: 800; font-size: 13px;
+      padding: 10px 16px; border-radius: 999px; transition: background .15s;
+    }
+    .btn-orange:hover { background: var(--orange-dark); }
+
+    /* ── Chips filtro ── */
+    .chips { display: flex; gap: 8px; margin: 14px 0; }
+    .chip {
+      padding: 7px 16px; border-radius: 999px; font-size: 12px; font-weight: 800;
+      background: var(--surface-low); border: 1px solid var(--border); color: var(--text-dim);
+    }
+    .chip.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+    /* ── Formulario alta ── */
+    .form {
+      background: var(--surface-low); border: 1px solid var(--border);
+      border-radius: 18px; padding: 14px; display: none; flex-direction: column; gap: 8px; margin-bottom: 14px;
+    }
+    .form.open { display: flex; }
+    .form input {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 12px; color: var(--text); outline: none;
+    }
+    .form input:focus { border-color: var(--orange); }
+    .form .row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+
+    /* ── Tarjeta chollo ── */
+    .card {
+      background: var(--surface-low); border: 1px solid var(--border);
+      border-radius: 18px; padding: 14px; margin-bottom: 12px; cursor: pointer;
+      transition: border-color .15s, transform .15s;
+    }
+    .card:hover { border-color: rgba(249,115,22,.5); transform: translateY(-2px); }
+    .card .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .card .title { font-size: 14px; font-weight: 700; line-height: 1.35; }
+    .card .meta { display: flex; align-items: baseline; gap: 8px; margin-top: 7px; }
+    .card img.thumb, .card .thumb-ph {
+      width: 58px; height: 58px; border-radius: 12px; object-fit: cover; float: right; margin-left: 10px;
+      border: 1px solid var(--border);
+    }
+    .card .thumb-ph {
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
+      background: linear-gradient(135deg, rgba(249,115,22,.18), rgba(244,63,94,.1));
+    }
+
+    /* ── Píldora temperatura ── */
+    .temp {
+      display: inline-flex; align-items: center; gap: 2px;
+      background: var(--surface-high); border: 1px solid #3b4a63; border-radius: 999px; padding: 4px 6px;
+    }
+    .temp button { padding: 4px; border-radius: 999px; display: flex; line-height: 0; }
+    .temp button:active { transform: scale(1.15); }
+    .temp .v { font-weight: 900; font-size: 14px; padding: 0 4px; font-variant-numeric: tabular-nums; }
+    .temp.lg { padding: 6px 8px; }
+    .temp.lg .v { font-size: 20px; }
+    .temp button.on-down { background: rgba(96,165,250,.2); }
+    .temp button.on-up { background: rgba(251,113,133,.2); }
+    svg { display: block; }
+
+    .price-free { color: var(--green); font-weight: 900; }
+    .price-strike { color: var(--text-dim); text-decoration: line-through; font-weight: 700; }
+    .date { color: var(--text-dim); font-size: 11px; }
+    .store b { color: var(--text); }
+
+    /* ── Detalle ── */
+    .detail { display: none; }
+    body.mode-detail .detail { display: block; }
+    body.mode-detail .list-view { display: none; }
+    .back { display: inline-flex; align-items: center; gap: 8px; font-weight: 800; font-size: 14px; color: var(--text-dim); padding: 8px 0; }
+    .back:hover { color: var(--text); }
+    .hero { width: 100%; max-height: 300px; object-fit: cover; border-radius: 18px; border: 1px solid var(--border); margin-bottom: 16px; }
+    .hero-ph {
+      width: 100%; height: 150px; border-radius: 18px; border: 1px solid var(--border); margin-bottom: 16px;
+      display: flex; align-items: center; justify-content: center; font-size: 52px;
+      background: linear-gradient(135deg, rgba(249,115,22,.18), rgba(244,63,94,.08));
+    }
+    .d-title { font-size: 24px; font-weight: 900; line-height: 1.25; margin: 10px 0 14px; }
+    .d-price { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+    .d-price .main { font-size: 34px; font-weight: 900; }
+    .d-price .old { font-size: 22px; }
+    .d-store { color: var(--text-dim); font-size: 14px; margin-bottom: 20px; }
+    .go {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; padding: 16px; border-radius: 999px;
+      background: var(--orange); color: #fff; font-size: 17px; font-weight: 900;
+      text-decoration: none; box-shadow: 0 10px 30px -10px rgba(249,115,22,.5);
+      transition: background .15s; margin-bottom: 16px;
+    }
+    .go:hover { background: var(--orange-dark); }
+    .actions { display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center; margin-bottom: 24px; }
+    .actions button { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 0; color: var(--text-dim); font-size: 13px; font-weight: 700; border-radius: 14px; }
+    .actions button:hover { color: var(--text); }
+    .actions button.saved { color: var(--orange); }
+    .divider { border-top: 1px solid var(--border); margin: 4px 0 20px; }
+    .rate-q { font-size: 16px; font-weight: 800; line-height: 1.4; margin-bottom: 14px; }
+    .rate-btns { display: flex; gap: 10px; margin-bottom: 26px; }
+    .rate-btns button {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 22px; border-radius: 999px; font-weight: 800; font-size: 14px;
+      border: 1px solid #3b4a63; color: var(--text-dim); transition: all .15s;
+    }
+    .rate-btns button.on-mala { border-color: var(--blue); color: var(--blue); background: rgba(96,165,250,.12); }
+    .rate-btns button.on-buena { border-color: var(--red); color: var(--red); background: rgba(251,113,133,.12); }
+    .c-item { background: var(--surface-low); border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; font-size: 14px; }
+    .c-item .date { margin-top: 4px; }
+    .c-bar {
+      display: flex; gap: 8px; margin-top: 12px; position: sticky; bottom: 10px;
+      background: rgba(11,19,38,.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      padding: 8px; border-radius: 999px; border: 1px solid var(--border);
+    }
+    .c-bar input {
+      flex: 1; background: var(--surface-low); border: 1px solid var(--border);
+      border-radius: 999px; padding: 12px 18px; color: var(--text); outline: none;
+    }
+    .c-bar input:focus { border-color: var(--orange); }
+    .empty { text-align: center; padding: 46px 0; color: var(--text-dim); font-size: 14px; }
+    .empty span { font-size: 40px; display: block; margin-bottom: 8px; }
+    .del { float: right; color: #475569; padding: 4px; border-radius: 8px; }
+    .del:hover { color: var(--red); }
+    .save-flag { color: var(--orange); float: right; margin-left: 8px; }
+    @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .card, .detail { animation: rise .4s cubic-bezier(.22,1,.36,1) both; }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span style="font-size:24px">🔥</span>
+      <div>Chollos<small id="sub">FILEHUB · 0 ofertas</small></div>
+    </div>
+    <button class="btn-orange" id="toggleForm">+ Añadir</button>
+  </header>
+
+  <!-- ═══ LISTA ═══ -->
+  <div class="wrap list-view">
+    <div class="form" id="form">
+      <input id="f-title" placeholder="Título del chollo *">
+      <div class="row">
+        <input id="f-price" placeholder="€ Precio (0 = Gratis)" inputmode="decimal">
+        <input id="f-old" placeholder="€ Precio original" inputmode="decimal">
+        <input id="f-store" placeholder="Tienda">
+      </div>
+      <input id="f-url" placeholder="🔗 Enlace a la oferta">
+      <input id="f-img" placeholder="🖼️ URL de imagen (opcional)">
+      <button class="btn-orange" style="align-self:flex-start" id="publish">Publicar chollo 🔥</button>
+    </div>
+    <div class="chips">
+      <button class="chip active" data-f="todos">Todos</button>
+      <button class="chip" data-f="guardados">Guardados</button>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <!-- ═══ DETALLE ═══ -->
+  <div class="wrap detail" id="detail"></div>
+
+  <script>
+    'use strict';
+    const KEY = 'fh_chollos';
+    const SEED = [{
+      id: 1,
+      title: '1 mes GRATIS de Recepcionista IA de Arsys | Atiende llamadas 24/7, reservas, desvíos y resúmenes por email',
+      price: '0', originalPrice: '45', store: 'arsys',
+      url: 'https://www.arsys.es', image: '',
+      temp: 1836, myVote: 0, saved: true, rating: null, comments: [],
+      createdAt: '2026-07-06'
+    }];
+    let deals; try { deals = JSON.parse(localStorage.getItem(KEY)) || SEED; } catch { deals = SEED; }
+    let filter = 'todos';
+    let openId = null;
+
+    const $ = s => document.querySelector(s);
+    const persist = () => localStorage.setItem(KEY, JSON.stringify(deals));
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const isFree = d => !d.price || parseFloat(d.price) === 0;
+    const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'long' }); } catch { return iso; } };
+    const tempColor = t => t >= 500 ? '#f97316' : t >= 100 ? '#fb923c' : t < 0 ? '#60a5fa' : '#94a3b8';
+    const okUrl = u => /^https?:\/\//i.test(u) ? u : '';
+
+    const icoDown = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>`;
+    const icoUp = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+    const icoFlame = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="#fb7185" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3 1.072-2.143 2.5-3.736 4.5-5 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>`;
+    const icoBook = (s, fill) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>`;
+    const icoShare = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13"/></svg>`;
+    const icoEnd = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m7 6 5 5 5-5M7 13l5 5 5-5"/></svg>`;
+    const icoExt = s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>`;
+
+    function tempPill(d, lg) {
+      const s = lg ? 20 : 14;
+      return `<span class="temp ${lg ? 'lg' : ''}">
+        <button data-act="down" data-id="${d.id}" class="${d.myVote === -1 ? 'on-down' : ''}" title="Enfriar">${icoDown(s)}</button>
+        <span class="v" style="color:${tempColor(d.temp)}">${d.temp}°</span>
+        <button data-act="up" data-id="${d.id}" class="${d.myVote === 1 ? 'on-up' : ''}" title="Calentar">${icoUp(s)}</button>
+      </span>`;
+    }
+    const priceHtml = (d, main, old) => (isFree(d)
+      ? `<span class="price-free" style="font-size:${main}px">Gratis</span>`
+      : `<span style="font-size:${main}px;font-weight:900">€${esc(d.price)}</span>`)
+      + (d.originalPrice ? ` <span class="price-strike" style="font-size:${old}px">€${esc(d.originalPrice)}</span>` : '');
+
+    function renderList() {
+      const visible = deals.filter(d => filter === 'guardados' ? d.saved : true);
+      $('#sub').textContent = `FILEHUB · ${deals.length} ofertas · ${deals.filter(d => d.saved).length} guardadas`;
+      $('#list').innerHTML = visible.length ? visible.map(d => `
+        <div class="card" data-open="${d.id}">
+          ${d.image ? `<img class="thumb" src="${esc(okUrl(d.image))}" alt="">` : '<div class="thumb-ph">🏷️</div>'}
+          <button class="del" data-act="del" data-id="${d.id}" title="Eliminar">✕</button>
+          ${d.saved ? `<span class="save-flag">${icoBook(15, true)}</span>` : ''}
+          <div class="head">${tempPill(d)} ${d.temp >= 500 ? icoFlame(17) : ''} <span class="date">${fmtDate(d.createdAt)}</span></div>
+          <div class="title">${esc(d.title)}</div>
+          <div class="meta">${priceHtml(d, 18, 13)} <span class="date store" style="margin-left:auto">en <b>${esc(d.store)}</b></span></div>
+        </div>`).join('')
+        : `<div class="empty"><span>🔥</span>${filter === 'guardados' ? 'No tienes chollos guardados.' : 'Añade tu primer chollo con el botón + Añadir.'}</div>`;
+    }
+
+    function renderDetail() {
+      const d = deals.find(x => x.id === openId);
+      if (!d) { openId = null; document.body.classList.remove('mode-detail'); return; }
+      $('#detail').innerHTML = `
+        <button class="back" data-act="back">← Volver a chollos</button>
+        ${d.image ? `<img class="hero" src="${esc(okUrl(d.image))}" alt="">` : '<div class="hero-ph">🏷️</div>'}
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">${tempPill(d, true)} ${d.temp >= 500 ? icoFlame(26) : ''}</div>
+        <p class="date" style="font-size:13px">Publicado ${fmtDate(d.createdAt)}</p>
+        <h1 class="d-title">${esc(d.title)}</h1>
+        <div class="d-price"><span class="main ${isFree(d) ? 'price-free' : ''}">${isFree(d) ? 'Gratis' : '€' + esc(d.price)}</span>${d.originalPrice ? `<span class="old price-strike">€${esc(d.originalPrice)}</span>` : ''}</div>
+        <p class="d-store">Disponible en <b>${esc(d.store)}</b></p>
+        ${okUrl(d.url) ? `<a class="go" href="${esc(okUrl(d.url))}" target="_blank" rel="noopener noreferrer">Ir al chollo ${icoExt(19)}</a>` : ''}
+        <div class="actions">
+          <button data-act="save" data-id="${d.id}" class="${d.saved ? 'saved' : ''}">${icoBook(23, d.saved)}${d.saved ? 'Guardado' : 'Guardar'}</button>
+          <button data-act="share" data-id="${d.id}">${icoShare(23)}Compartir</button>
+          <button data-act="end">${icoEnd(23)}Ir al final</button>
+        </div>
+        <div class="divider"></div>
+        <p class="rate-q">Tus votos nos ayudan a mostrarte las mejores ofertas. ¿Qué te parece esta?</p>
+        <div class="rate-btns">
+          <button data-act="mala" data-id="${d.id}" class="${d.rating === 'mala' ? 'on-mala' : ''}">${icoDown(16)} Es mala</button>
+          <button data-act="buena" data-id="${d.id}" class="${d.rating === 'buena' ? 'on-buena' : ''}">${icoUp(16)} Es buena</button>
+        </div>
+        <div class="divider"></div>
+        <h3 style="font-size:16px;margin-bottom:12px" id="comments">Comentarios (${d.comments.length})</h3>
+        ${d.comments.map(c => `<div class="c-item">${esc(c.text)}<div class="date">${fmtDate(c.date)}</div></div>`).join('') || '<p class="date" style="font-size:13px">Sé el primero en comentar.</p>'}
+        <div class="c-bar">
+          <input id="c-input" placeholder="¿Qué opinas? ¡Añade un comentario!">
+          <button class="btn-orange" data-act="send" data-id="${d.id}">Enviar</button>
+        </div>`;
+    }
+
+    function render() { renderList(); if (openId) renderDetail(); }
+
+    function vote(id, dir) {
+      const d = deals.find(x => x.id === id); if (!d) return;
+      const next = d.myVote === dir ? 0 : dir;
+      d.temp = d.temp - d.myVote * 25 + next * 25;
+      d.myVote = next;
+      persist(); render();
+    }
+
+    async function share(d) {
+      const text = `🔥 ${d.title}${isFree(d) ? ' — GRATIS' : d.price ? ' — €' + d.price : ''}`;
+      try {
+        if (navigator.share) await navigator.share({ title: d.title, text, url: okUrl(d.url) || undefined });
+        else { await navigator.clipboard.writeText(`${text} ${d.url || ''}`.trim()); alert('📋 Copiado al portapapeles'); }
+      } catch {}
+    }
+
+    document.addEventListener('click', e => {
+      const actEl = e.target.closest('[data-act]');
+      if (actEl) {
+        const id = Number(actEl.dataset.id);
+        const d = deals.find(x => x.id === id);
+        switch (actEl.dataset.act) {
+          case 'down': return vote(id, -1);
+          case 'up': return vote(id, 1);
+          case 'del':
+            if (confirm('¿Eliminar este chollo?')) { deals = deals.filter(x => x.id !== id); persist(); render(); }
+            return;
+          case 'back': openId = null; document.body.classList.remove('mode-detail'); window.scrollTo(0, 0); return;
+          case 'save': if (d) { d.saved = !d.saved; persist(); render(); } return;
+          case 'share': if (d) share(d); return;
+          case 'end': document.getElementById('comments')?.scrollIntoView({ behavior: 'smooth' }); return;
+          case 'mala': if (d) { d.rating = d.rating === 'mala' ? null : 'mala'; persist(); render(); } return;
+          case 'buena': if (d) { d.rating = d.rating === 'buena' ? null : 'buena'; persist(); render(); } return;
+          case 'send': {
+            const inp = $('#c-input');
+            if (d && inp.value.trim()) {
+              d.comments.push({ id: Date.now(), text: inp.value.trim(), date: new Date().toISOString().slice(0, 10) });
+              persist(); render();
+            }
+            return;
+          }
+        }
+      }
+      const card = e.target.closest('[data-open]');
+      if (card) { openId = Number(card.dataset.open); document.body.classList.add('mode-detail'); renderDetail(); window.scrollTo(0, 0); }
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.id === 'c-input') $('[data-act="send"]')?.click();
+    });
+
+    $('#toggleForm').addEventListener('click', () => {
+      const f = $('#form'); f.classList.toggle('open');
+      $('#toggleForm').textContent = f.classList.contains('open') ? '✕ Cerrar' : '+ Añadir';
+      if (document.body.classList.contains('mode-detail')) { openId = null; document.body.classList.remove('mode-detail'); }
+    });
+
+    $('#publish').addEventListener('click', () => {
+      const title = $('#f-title').value.trim();
+      if (!title) { $('#f-title').focus(); return; }
+      deals.unshift({
+        id: Date.now(), title,
+        price: $('#f-price').value.trim(), originalPrice: $('#f-old').value.trim(),
+        store: $('#f-store').value.trim() || '—', url: $('#f-url').value.trim(), image: $('#f-img').value.trim(),
+        temp: 0, myVote: 0, saved: false, rating: null, comments: [],
+        createdAt: new Date().toISOString().slice(0, 10)
+      });
+      persist();
+      ['f-title', 'f-price', 'f-old', 'f-store', 'f-url', 'f-img'].forEach(i => $('#' + i).value = '');
+      $('#form').classList.remove('open'); $('#toggleForm').textContent = '+ Añadir';
+      render();
+    });
+
+    document.querySelectorAll('.chip').forEach(c => c.addEventListener('click', () => {
+      filter = c.dataset.f;
+      document.querySelectorAll('.chip').forEach(x => x.classList.toggle('active', x === c));
+      renderList();
+    }));
+
+    render();
+  </script>
+</body>
+</html>
