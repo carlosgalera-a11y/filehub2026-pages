@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Evolutivos · FileHub</title>
+<meta name="theme-color" content="#0b1326">
+<style>
+  :root {
+    --bg:#0b1326; --card:#131b2e; --card2:#171f33; --card3:#222a3d;
+    --line:#283449; --line2:#334155; --ink:#F8FAFC; --muted:#94A3B8; --soft:#64748b;
+    --peri:#8083ff; --mint:#4edea3; --mint2:#10b981; --peach:#ffb783; --rojo:#EF4444;
+    --input-bg:#0e1526; --radius:16px; --shadow:0 10px 26px rgba(0,0,0,.35);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; font-size:15px; line-height:1.5; padding-bottom:40px; }
+  .wrap { max-width:640px; margin:0 auto; padding:16px 14px calc(24px + env(safe-area-inset-bottom)); }
+  header.top { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .logo { width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,var(--mint),var(--mint2)); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:var(--shadow); flex:none; }
+  h1 { font-size:20px; font-weight:800; letter-spacing:-.01em; }
+  .sub { font-size:12px; color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:15px; margin-bottom:12px; box-shadow:var(--shadow); }
+  .sec-t { font-size:10.5px; font-weight:700; color:var(--soft); text-transform:uppercase; letter-spacing:.09em; margin-bottom:8px; }
+  textarea { width:100%; background:var(--input-bg); color:var(--ink); border:1px solid var(--line2); border-radius:12px; padding:11px 12px; font-size:15px; font-family:inherit; resize:vertical; }
+  textarea:focus { outline:none; border-color:var(--peri); }
+  .btn { border:1px solid var(--line2); background:var(--card2); color:var(--ink); border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .btn.mint { background:var(--mint2); border-color:var(--mint2); color:#fff; }
+  .btn.peri { background:var(--peri); border-color:var(--peri); color:#fff; }
+  .btn.ghost { background:transparent; }
+  .btn[disabled] { opacity:.5; cursor:default; }
+  .fila-btn { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  /* Botón grande de dictado */
+  #micBtn { width:100%; border:none; border-radius:18px; padding:18px; font-size:16px; font-weight:800; cursor:pointer; font-family:inherit; color:#fff;
+    background:linear-gradient(135deg,var(--mint),var(--mint2)); box-shadow:var(--shadow); display:flex; align-items:center; justify-content:center; gap:10px; }
+  #micBtn.grabando { background:linear-gradient(135deg,var(--rojo),#f87171); animation:pulso 1.4s ease-in-out infinite; }
+  @keyframes pulso { 0%,100%{transform:scale(1)} 50%{transform:scale(1.015)} }
+  @media (prefers-reduced-motion: reduce){ #micBtn.grabando{animation:none} }
+  #interim { min-height:20px; font-size:13.5px; color:var(--peach); font-style:italic; margin-top:8px; }
+  .aviso { font-size:12px; color:var(--muted); margin-top:8px; }
+  .out { background:var(--input-bg); border:1px solid var(--line2); border-radius:12px; padding:11px 12px; white-space:pre-wrap; font-size:14px; min-height:60px; }
+  .out.vacio { color:var(--soft); font-style:italic; }
+  details { margin-bottom:12px; }
+  summary { cursor:pointer; font-size:13px; font-weight:700; color:var(--muted); padding:6px 0; list-style:none; }
+  summary::before { content:'▸ '; }
+  details[open] summary::before { content:'▾ '; }
+  .fila-evo { border:1px solid var(--line); border-radius:12px; padding:11px 12px; margin-top:10px; }
+  .fila-evo .cab { display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--soft); margin-bottom:5px; }
+  .fila-evo .cab .fecha { flex:1; font-variant-numeric:tabular-nums; }
+  .fila-evo .cab button { border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:12.5px; font-weight:700; }
+  .fila-evo .cuerpo { white-space:pre-wrap; font-size:13.5px; max-height:150px; overflow:auto; }
+  .toggle { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-top:10px; cursor:pointer; }
+  #login { display:none; }
+  #login input { width:100%; background:var(--input-bg); color:var(--ink); border:1px solid var(--line2); border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:8px; font-family:inherit; }
+  .ok { color:var(--mint); } .err { color:var(--rojo); }
+  footer { text-align:center; font-size:11px; color:var(--soft); margin-top:16px; }
+  footer a { color:var(--peri); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">🩺</div>
+    <div>
+      <h1>Evolutivos</h1>
+      <div class="sub" id="quien">Dicta en voz alta y te lo transcribo</div>
+    </div>
+  </header>
+
+  <div id="login" class="card">
+    <div class="sec-t">Inicia sesión (la misma de FileHub)</div>
+    <input id="lemail" type="email" placeholder="Email" autocomplete="username">
+    <input id="lpass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button class="btn peri" id="lbtn">Entrar</button>
+    <div class="aviso" id="lerr"></div>
+  </div>
+
+  <div id="app" style="display:none">
+    <!-- Dictado -->
+    <div class="card">
+      <button id="micBtn">🎤 Empezar a dictar</button>
+      <div id="interim"></div>
+      <textarea id="raw" rows="7" placeholder="Aquí aparece lo que dictes (también puedes escribir o usar el micrófono del teclado del móvil)."></textarea>
+      <label class="toggle"><input type="checkbox" id="usarPlantilla" checked> Al terminar, dármelo también estructurado según mi plantilla</label>
+      <div class="fila-btn">
+        <button class="btn mint" id="procesarBtn">✅ Terminar y procesar</button>
+        <button class="btn ghost" id="limpiarBtn">Limpiar</button>
+      </div>
+      <div class="aviso" id="estado"></div>
+      <div class="aviso">🔒 Consejo: dicta sin nombre ni número de historia del paciente; añádelos luego en tu programa.</div>
+    </div>
+
+    <!-- Resultado -->
+    <div class="card" id="resCard" style="display:none">
+      <div class="sec-t">Evolutivo estructurado (editable)</div>
+      <textarea id="fmt" rows="12"></textarea>
+      <div class="fila-btn">
+        <button class="btn peri" id="guardarBtn">💾 Guardar</button>
+        <button class="btn" id="copiarBtn">📋 Copiar</button>
+      </div>
+      <div class="aviso" id="resEstado"></div>
+    </div>
+
+    <!-- Plantilla editable -->
+    <details>
+      <summary>📄 Mi plantilla (toca para ver o cambiarla)</summary>
+      <div class="card">
+        <textarea id="plantilla" rows="10"></textarea>
+        <div class="fila-btn">
+          <button class="btn" id="plGuardar">Guardar plantilla</button>
+          <button class="btn ghost" id="plReset">Volver a la de serie</button>
+        </div>
+        <div class="aviso">Se guarda en este teléfono. Pega aquí tu plantilla real si es distinta.</div>
+      </div>
+    </details>
+
+    <!-- Historial -->
+    <div class="card">
+      <div class="sec-t">Mis últimos evolutivos</div>
+      <div id="lista"><span class="aviso">Cargando…</span></div>
+    </div>
+  </div>
+
+  <footer>Misma cuenta que <a href="/">FileHub</a>. Los evolutivos guardados solo los ves tú.</footer>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const SUPABASE_URL = 'https://igvadjgjpyuvzailjqwg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndmFkamdqcHl1dnphaWxqcXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NDI3MTAsImV4cCI6MjA4ODAxODcxMH0.eAqKCHDzrkvMTseaBP0I_JICP1owX60-cp3agYqRz4Q';
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+let uid = null;
+
+// ── Plantilla (editable, guardada en este dispositivo) ─────────────────────
+const PLANTILLA_DEFECTO = `EVOLUTIVO
+Fecha y hora:
+Motivo / situación:
+Constantes (si se mencionan): TA · FC · FR · Tª · SatO2 · Glucemia
+Valoración (estado general, dolor, piel, conciencia, movilidad…):
+Intervenciones realizadas (curas, medicación, técnicas…):
+Respuesta / evolución:
+Plan y pendientes:`;
+const plantillaGuardada = () => { try { return localStorage.getItem('fh_evo_plantilla_v1') || PLANTILLA_DEFECTO; } catch { return PLANTILLA_DEFECTO; } };
+$('plantilla').value = plantillaGuardada();
+$('plGuardar').onclick = () => { try { localStorage.setItem('fh_evo_plantilla_v1', $('plantilla').value); } catch {} $('plGuardar').textContent = '✓ Guardada'; setTimeout(() => $('plGuardar').textContent = 'Guardar plantilla', 1500); };
+$('plReset').onclick = () => { $('plantilla').value = PLANTILLA_DEFECTO; try { localStorage.removeItem('fh_evo_plantilla_v1'); } catch {} };
+
+// ── Dictado por voz (Web Speech del navegador, es-ES) ──────────────────────
+// En iPhone también funciona el micrófono del teclado directamente sobre el
+// cuadro de texto; este botón usa el reconocimiento continuo del navegador.
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, grabando = false;
+function paraDictado() {
+  grabando = false;
+  $('micBtn').classList.remove('grabando');
+  $('micBtn').textContent = '🎤 Empezar a dictar';
+  $('interim').textContent = '';
+  try { rec && rec.stop(); } catch {}
+}
+$('micBtn').onclick = () => {
+  if (grabando) { paraDictado(); return; }
+  if (!SR) { $('estado').textContent = 'Este navegador no tiene dictado integrado: usa el micrófono 🎙️ del teclado del móvil escribiendo en el cuadro.'; $('raw').focus(); return; }
+  rec = new SR();
+  rec.lang = 'es-ES'; rec.continuous = true; rec.interimResults = true;
+  rec.onresult = ev => {
+    let interim = '';
+    for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      const r = ev.results[i];
+      if (r.isFinal) {
+        const t = r[0].transcript.trim();
+        if (t) $('raw').value = ($('raw').value ? $('raw').value.replace(/\s+$/, '') + ' ' : '') + t;
+      } else interim += r[0].transcript;
+    }
+    $('interim').textContent = interim;
+  };
+  rec.onerror = e => { $('estado').textContent = e.error === 'not-allowed' ? 'Permite el micrófono al navegador para dictar.' : ('Dictado: ' + e.error); paraDictado(); };
+  // Safari corta solo tras silencios: si seguimos «grabando», rearrancamos.
+  rec.onend = () => { if (grabando) { try { rec.start(); } catch { paraDictado(); } } };
+  try { rec.start(); } catch (e) { $('estado').textContent = 'No se pudo iniciar el dictado: ' + e.message; return; }
+  grabando = true;
+  $('micBtn').classList.add('grabando');
+  $('micBtn').textContent = '⏹ Parar el dictado';
+  $('estado').textContent = 'Escuchando… habla con normalidad.';
+};
+
+// ── Procesar: puntuación limpia y, si se elige, estructurar con la plantilla ─
+async function pideIA(system, texto, maxTokens = 900) {
+  const body = { messages: [{ role: 'user', content: texto }], system, maxTokens };
+  const pide = () => sb.functions.invoke('ai-proxy', { body });
+  let { data, error } = await pide();
+  const es401 = (e, d) => (!!e && /401|unauthorized|non-2xx/i.test(e.message || '')) || (d?.error && /unauthorized/i.test(d.error));
+  if (es401(error, data)) { try { await sb.auth.refreshSession(); } catch {} ({ data, error } = await pide()); }
+  if (!error && data?.content) return String(data.content).trim();
+  throw new Error(error?.message || data?.error || 'sin respuesta de la IA');
+}
+$('procesarBtn').onclick = async () => {
+  const raw = $('raw').value.trim();
+  if (!raw) { $('raw').focus(); return; }
+  paraDictado();
+  const conPlantilla = $('usarPlantilla').checked;
+  $('estado').textContent = '⏳ Procesando…';
+  $('procesarBtn').disabled = true;
+  try {
+    let resultado;
+    if (conPlantilla) {
+      resultado = await pideIA(
+        `Eres asistente de una enfermera. Recibes la TRANSCRIPCIÓN de un evolutivo dictado en voz alta y debes reescribirlo siguiendo EXACTAMENTE esta plantilla, línea a línea:\n\n${plantillaGuardada()}\n\nNormas: usa SOLO la información dictada, no inventes nada; si un apartado no se menciona, deja su línea con «—»; corrige muletillas y repeticiones propias del dictado; mantén los términos clínicos tal cual; responde SOLO con el evolutivo relleno, sin comentarios.`,
+        raw, 1000);
+    } else {
+      resultado = await pideIA(
+        'Recibes la transcripción de un dictado clínico. Devuélvela limpia: puntuación y mayúsculas correctas, sin muletillas ni repeticiones del habla, sin cambiar el contenido ni los términos clínicos. Responde SOLO con el texto limpio.',
+        raw, 900);
+    }
+    $('fmt').value = resultado;
+    $('resCard').style.display = '';
+    $('estado').textContent = '';
+    $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) {
+    // Sin IA disponible, el dictado en bruto sigue siendo utilizable y guardable.
+    $('fmt').value = raw;
+    $('resCard').style.display = '';
+    $('estado').textContent = '⚠️ IA no disponible (' + e.message + '): te dejo la transcripción tal cual para editar y guardar.';
+  }
+  $('procesarBtn').disabled = false;
+};
+$('limpiarBtn').onclick = () => { paraDictado(); $('raw').value = ''; $('fmt').value = ''; $('resCard').style.display = 'none'; $('estado').textContent = ''; };
+
+// ── Guardar / copiar / listar ──────────────────────────────────────────────
+async function cargaLista() {
+  const { data, error } = await sb.from('evolutivos').select('id,raw,formatted,created_at').order('created_at', { ascending: false }).limit(15);
+  if (error) { $('lista').innerHTML = `<span class="aviso err">Error: ${error.message}</span>`; return; }
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  $('lista').innerHTML = (data || []).length ? data.map(e => {
+    const f = new Date(e.created_at);
+    const fecha = f.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' }) + ' ' + f.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    return `<div class="fila-evo" data-id="${e.id}">
+      <div class="cab"><span class="fecha">${fecha}</span>
+        <button data-copia="${e.id}">📋 copiar</button>
+        <button data-borra="${e.id}">🗑</button></div>
+      <div class="cuerpo">${esc(e.formatted || e.raw)}</div>
+    </div>`;
+  }).join('') : '<span class="aviso">Aún no hay evolutivos. Dicta el primero arriba. 💚</span>';
+}
+let cacheLista = [];
+$('guardarBtn').onclick = async () => {
+  if (!uid) return;
+  const fila = { id: 'evo_' + Date.now(), user_id: uid, raw: $('raw').value.trim() || $('fmt').value.trim(), formatted: $('fmt').value.trim() || null };
+  const { error } = await sb.from('evolutivos').insert(fila);
+  $('resEstado').textContent = error ? ('⚠️ No se pudo guardar: ' + error.message) : '✅ Guardado.';
+  if (!error) cargaLista();
+};
+$('copiarBtn').onclick = async () => {
+  try { await navigator.clipboard.writeText($('fmt').value); $('resEstado').textContent = '📋 Copiado — pégalo en tu programa.'; }
+  catch { $('fmt').select(); document.execCommand('copy'); $('resEstado').textContent = '📋 Copiado.'; }
+};
+$('lista').addEventListener('click', async e => {
+  const c = e.target.closest('[data-copia]');
+  if (c) {
+    const cuerpo = c.closest('.fila-evo').querySelector('.cuerpo').innerText;
+    try { await navigator.clipboard.writeText(cuerpo); c.textContent = '✓ copiado'; setTimeout(() => c.textContent = '📋 copiar', 1500); } catch {}
+    return;
+  }
+  const b = e.target.closest('[data-borra]');
+  if (b && confirm('¿Borrar este evolutivo?')) {
+    const { error } = await sb.from('evolutivos').delete().eq('id', b.dataset.borra);
+    if (!error) cargaLista();
+  }
+});
+
+// ── Sesión (compartida con FileHub en este navegador) ──────────────────────
+function pinta(session) {
+  uid = session?.user?.id || null;
+  const email = (session?.user?.email || '').toLowerCase();
+  $('login').style.display = uid ? 'none' : 'block';
+  $('app').style.display = uid ? 'block' : 'none';
+  if (uid) {
+    $('quien').textContent = email.startsWith('montsemaymo') ? 'Hola Montse 💚 — dicta y yo lo dejo bonito' : 'Dicta en voz alta y te lo transcribo';
+    cargaLista();
+  }
+}
+$('lbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('lemail').value.trim(), password: $('lpass').value });
+  $('lerr').textContent = error ? ('⚠️ ' + error.message) : '';
+};
+sb.auth.onAuthStateChange((_ev, session) => pinta(session));
+const { data: { session } } = await sb.auth.getSession();
+pinta(session);
+</script>
+</body>
+</html>

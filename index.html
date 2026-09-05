@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html class="dark" lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <title>FILEHUB - Inteligencia de Gestión</title>
+
+  <!-- PWA -->
+  <!-- App privada: fuera de buscadores (Google, Bing, archive.org…) -->
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+  <meta name="theme-color" content="#0b1326">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FileHub">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="FileHub">
+  <link rel="manifest" href="/filehub2026-pages/manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="icon" type="image/svg+xml" sizes="any" href="icon.svg">
+  <link rel="mask-icon" href="icon.svg" color="#8083ff">
+  <meta name="msapplication-TileColor" content="#8083ff">
+  <meta name="msapplication-TileImage" content="icon-512.png">
+
+  <!-- Splash screens iOS · carátula al lanzar la PWA -->
+  <link rel="apple-touch-startup-image" href="splash-1290x2796.png"
+        media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="splash-1170x2532.png"
+        media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="splash-1125x2436.png"
+        media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="splash-828x1792.png"
+        media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+  <link rel="apple-touch-startup-image" href="splash-2048x2732.png"
+        media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+
+  <!-- Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Motion premium: GSAP + ScrollTrigger (parallax, reveal, expand-on-scroll). Carga async; el contenido es legible sin ellos. -->
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Hanken+Grotesk:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+  <!-- FILEHUB Design System tokens (sincronizado con mockups Hanken+Inter+Material Symbols) -->
+  <script>
+    if (window.tailwind) {
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'fh-primary': '#c0c1ff',
+              'fh-primary-container': '#8083ff',
+              'fh-secondary': '#4edea3',
+              'fh-tertiary': '#ffb783',
+              'fh-surface': '#0b1326',
+              'fh-surface-container-lowest': '#060e20',
+              'fh-surface-container-low': '#131b2e',
+              'fh-surface-container': '#171f33',
+              'fh-surface-container-high': '#222a3d',
+              'fh-surface-container-highest': '#2d3449',
+              'fh-text-primary': '#F8FAFC',
+              'fh-text-secondary': '#94A3B8',
+              'fh-border-subtle': '#334155',
+              'fh-status-urgent': '#EF4444',
+              'fh-status-pending': '#F59E0B',
+              'fh-status-complete': '#10B981',
+            },
+            fontFamily: {
+              'headline': ['Hanken Grotesk', 'system-ui', 'sans-serif'],
+              'body': ['Inter', 'system-ui', 'sans-serif'],
+            },
+          }
+        }
+      };
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #0b1326;
+      color: #F8FAFC;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+
+    /* FILEHUB Design System — utility classes globales */
+    .font-headline { font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+    .font-body { font-family: 'Inter', system-ui, sans-serif; }
+
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      line-height: 1;
+      text-transform: none;
+      letter-spacing: normal;
+      word-wrap: normal;
+      white-space: nowrap;
+      direction: ltr;
+      vertical-align: middle;
+      user-select: none;
+    }
+    .material-symbols-outlined.filled { font-variation-settings: 'FILL' 1, 'wght' 400; }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(51, 65, 85, 0.5);
+    }
+    .glass-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid #334155;
+    }
+    .sidebar-active-gradient {
+      background: linear-gradient(90deg, rgba(99, 102, 241, 0.15) 0%, transparent 100%);
+    }
+    /* Tipografía global del dashboard */
+    h1, h2, h3, h4 { font-family: 'Hanken Grotesk', system-ui, sans-serif; }
+
+    /* ═══ Sistema de tarjetas oscuro coherente (sustituye al bg-white genérico) ═══ */
+    .fh-card {
+      background: #131b2e;                /* fh-surface-container-low */
+      border: 1px solid #283449;
+      border-radius: 1rem;
+      transition: transform .22s cubic-bezier(.22,1,.36,1),
+                  border-color .22s ease, box-shadow .22s ease, background .22s ease;
+    }
+    .fh-card-interactive { cursor: pointer; }
+    .fh-card-interactive:hover {
+      transform: translateY(-3px);
+      border-color: rgba(128,131,255,.45);
+      box-shadow: 0 10px 30px -12px rgba(128,131,255,.35);
+      background: #171f33;
+    }
+    .fh-card-interactive:active { transform: translateY(-1px); }
+
+    /* Entrada en cascada: añade style="animation-delay:Nms" por item */
+    @keyframes fh-rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fh-rise { animation: fh-rise .5s cubic-bezier(.22,1,.36,1) both; }
+    .fh-accent-ring { box-shadow: 0 0 0 1px rgba(128,131,255,.25), 0 6px 20px -10px rgba(128,131,255,.5); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .fh-rise { animation: none; }
+      .fh-card, .fh-card-interactive { transition: none; }
+      .fh-card-interactive:hover { transform: none; }
+    }
+
+    /* ═══ MOBILE RESPONSIVE FIXES ═══ */
+    @media (max-width: 768px) {
+      /* Prevent horizontal overflow */
+      html, body { overflow-x: hidden; max-width: 100vw; }
+      
+      /* Fix sidebar width on mobile */
+      .sidebar-container { width: 280px !important; max-width: 85vw !important; }
+      
+      /* Smaller padding on mobile */
+      .p-6 { padding: 1rem !important; }
+      .p-8 { padding: 1.25rem !important; }
+      .rounded-\[2rem\] { border-radius: 1rem !important; }
+      .rounded-\[3rem\] { border-radius: 1.25rem !important; }
+      
+      /* Weekly agenda — 7 cols is tight, allow scroll */
+      .grid-cols-7 { gap: 0.25rem !important; }
+      .grid-cols-7 > * { min-width: 0; font-size: 0.6rem !important; }
+      
+      /* Stats cards — 2 cols on small screens */
+      .grid-cols-4 { grid-template-columns: repeat(2, 1fr) !important; }
+      
+      /* Fix charts overflowing */
+      .recharts-wrapper { max-width: 100% !important; }
+      
+      /* Fix modals */
+      .fixed.inset-0 .max-w-lg { max-width: 95vw !important; margin: 0.5rem !important; }
+      
+      /* Bottom safe area for iOS */
+      main { padding-bottom: env(safe-area-inset-bottom, 20px) !important; }
+    }
+
+    /* ═══ SMALL PHONES (iPhone SE, etc) ═══ */
+    @media (max-width: 375px) {
+      .text-3xl { font-size: 1.5rem !important; }
+      .text-2xl { font-size: 1.25rem !important; }
+      .text-xl { font-size: 1.1rem !important; }
+      .gap-6 { gap: 0.75rem !important; }
+    }
+
+    /* ═══ CARPLAY MODE ═══ */
+    @media (display-mode: standalone) and (max-height: 480px),
+           (max-height: 400px) {
+      /* CarPlay has landscape ~800x480 or smaller */
+      .sidebar-container { display: none !important; }
+      header { padding: 0.25rem 0.5rem !important; }
+      .text-3xl, .text-2xl { font-size: 1rem !important; }
+      .grid-cols-7 { display: none !important; }
+      .rounded-2xl { border-radius: 0.5rem !important; }
+      .p-5, .p-6, .p-8 { padding: 0.5rem !important; }
+      .gap-6, .gap-4 { gap: 0.25rem !important; }
+      .mb-8, .mb-12 { margin-bottom: 0.25rem !important; }
+      /* Show only essential info */
+      .recharts-wrapper { display: none !important; }
+    }
+
+    /* ═══ TABLET ═══ */
+    @media (min-width: 768px) and (max-width: 1024px) {
+      .lg\:col-span-8 { grid-column: span 12 !important; }
+      .lg\:col-span-4 { grid-column: span 12 !important; }
+    }
+
+    /* ═══ PWA Standalone — no browser UI ═══ */
+    @media (display-mode: standalone) {
+      body { padding-top: env(safe-area-inset-top, 0); }
+      /* iOS PWA: ensure inputs work properly */
+      input, textarea, select {
+        -webkit-appearance: none;
+        -webkit-user-select: text !important;
+        user-select: text !important;
+        touch-action: manipulation;
+        font-size: 16px !important;
+      }
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    button, nav { user-select: none; }
+    input, textarea, select { user-select: text; -webkit-user-select: text; }
+
+    /* Offline banner */
+    #offline-banner {
+      display: none;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: #f59e0b; color: #1c1917; text-align: center;
+      padding: 8px 16px; font-size: 12px; font-weight: 700;
+      font-family: 'Inter', sans-serif;
+    }
+    #offline-banner.show { display: block; }
+  </style>
+  <script type="module" crossorigin src="/filehub2026-pages/assets/index-Dc24g1Ky.js"></script>
+</head>
+<body class="bg-[#0b1326] text-[#F8FAFC] font-body selection:bg-indigo-500/30">
+  <!-- Offline indicator -->
+  <div id="offline-banner">⚡ Sin conexión — FileHub funciona offline con tus datos guardados</div>
+
+  <div id="root"></div>
+
+  <script>
+    // Catch Supabase auth errors globally to prevent white screen
+    window.addEventListener('error', function(e) {
+      if (e.message && (e.message.includes("reading 'user'") || e.message.includes("reading 'session'") || e.message.includes("reading 'email'") || e.message.includes("reading 'id'"))) {
+        e.preventDefault();
+        console.warn('⚠️ Auth session not ready yet — suppressed error');
+      }
+    });
+    window.addEventListener('unhandledrejection', function(e) {
+      if (e.reason?.message && (e.reason.message.includes('user') || e.reason.message.includes('session') || e.reason.message.includes('ENOTFOUND') || e.reason.message.includes('Failed to fetch'))) {
+        e.preventDefault();
+      }
+    });
+  </script>
+
+  <script>
+    // Offline detection
+    function updateOnlineStatus() {
+      const banner = document.getElementById('offline-banner');
+      if (!navigator.onLine) banner.classList.add('show');
+      else banner.classList.remove('show');
+    }
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+
+    // Service Worker — Force update for iOS PWA
+    const SW_EXPECTED_VERSION = 'filehub-v209';
+    if ('serviceWorker' in navigator) {
+      // Nuke old SWs on iOS standalone
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      const lastSWVersion = localStorage.getItem('filehub_sw_version');
+      
+      if (lastSWVersion && lastSWVersion !== SW_EXPECTED_VERSION) {
+        console.log('[SW] Old version detected, nuking caches...');
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            regs.forEach(r => r.unregister());
+            localStorage.setItem('filehub_sw_version', SW_EXPECTED_VERSION);
+            if (isStandalone) window.location.reload();
+          });
+        });
+      } else {
+        localStorage.setItem('filehub_sw_version', SW_EXPECTED_VERSION);
+      }
+
+      window.addEventListener('load', async () => {
+        // Detecta dinámicamente la base path del deploy. Funciona en:
+        //   /                  (arditifilehub.com)
+        //   /filehub2026/      (mirror)
+        //   /filehub2026-pages/ (mirror alternativo)
+        const path = location.pathname;
+        const swBase = path.endsWith('/') ? path : path.substring(0, path.lastIndexOf('/') + 1);
+        try {
+          const reg = await navigator.serviceWorker.register(swBase + 'sw.js', { scope: swBase });
+          console.log('[SW] Registered:', reg.scope);
+          // Force check for updates on every load in standalone mode
+          if (isStandalone) reg.update();
+
+          // Re-chequear updates aunque la pestaña lleve días abierta:
+          // cada 30 min y cada vez que la app vuelve a primer plano.
+          setInterval(() => reg.update().catch(() => {}), 30 * 60 * 1000);
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') reg.update().catch(() => {});
+          });
+
+          // Banner «versión nueva»: el usuario decide cuándo aplicar (nunca
+          // recargamos solos — podría estar grabando una transcripción).
+          const showUpdateBanner = (worker) => {
+            if (document.getElementById('fh-update-banner')) return;
+            const b = document.createElement('button');
+            b.id = 'fh-update-banner';
+            b.textContent = '⬆️ Versión nueva disponible — toca para actualizar';
+            b.setAttribute('aria-live', 'polite');
+            b.style.cssText = 'position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);left:50%;transform:translateX(-50%);z-index:10000;background:#8083ff;color:#fff;border:none;border-radius:999px;padding:10px 18px;font:700 13px Inter,sans-serif;box-shadow:0 8px 24px rgba(128,131,255,.45);cursor:pointer;max-width:92vw;';
+            b.onclick = () => { b.disabled = true; b.textContent = 'Actualizando…'; worker.postMessage({ type: 'SKIP_WAITING' }); };
+            document.body.appendChild(b);
+          };
+          if (reg.waiting && navigator.serviceWorker.controller) showUpdateBanner(reg.waiting);
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateBanner(newWorker);
+                }
+              });
+            }
+          });
+
+          // Listen for SW_UPDATED message → reload to get fresh content
+          navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data?.type === 'SW_UPDATED') {
+              console.log('[App] New SW active, reloading...');
+              window.location.reload();
+            }
+          });
+
+          // Also reload when controller changes (SW took over)
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
+          });
+
+        } catch (err) {
+          console.warn('[SW] Registration failed:', err);
+        }
+      });
+    }
+  </script>
+</body>
+</html>

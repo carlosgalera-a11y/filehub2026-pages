@@ -1,0 +1,1025 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Correos · FileHub</title>
+<meta name="theme-color" content="#0b1326">
+<style>
+  :root {
+    --bg:#0b1326; --card:#131b2e; --card2:#171f33; --card3:#222a3d;
+    --line:#283449; --line2:#334155; --ink:#F8FAFC; --muted:#94A3B8; --soft:#64748b;
+    --peri:#8083ff; --mint:#4edea3; --mint2:#10b981; --peach:#ffb783; --rojo:#EF4444;
+    --input-bg:#0e1526; --radius:16px; --shadow:0 10px 26px rgba(0,0,0,.35);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--ink); font-family:Inter,system-ui,-apple-system,sans-serif; font-size:15px; line-height:1.5; padding-bottom:40px; }
+  .wrap { max-width:700px; margin:0 auto; padding:16px 14px calc(24px + env(safe-area-inset-bottom)); }
+  header.top { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .logo { width:44px; height:44px; border-radius:14px; background:linear-gradient(135deg,var(--peri),#c0c1ff); display:flex; align-items:center; justify-content:center; font-size:22px; box-shadow:var(--shadow); flex:none; }
+  h1 { font-size:20px; font-weight:800; letter-spacing:-.01em; }
+  .sub { font-size:12px; color:var(--muted); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:15px; margin-bottom:12px; box-shadow:var(--shadow); }
+  .sec-t { font-size:10.5px; font-weight:700; color:var(--soft); text-transform:uppercase; letter-spacing:.09em; margin-bottom:8px; }
+  input[type=text],input[type=email],input[type=password] { width:100%; background:var(--input-bg); color:var(--ink); border:1px solid var(--line2); border-radius:10px; padding:10px 12px; font-size:14px; font-family:inherit; }
+  input:focus { outline:none; border-color:var(--peri); }
+  .btn { border:1px solid var(--line2); background:var(--card2); color:var(--ink); border-radius:12px; padding:10px 14px; font-size:13.5px; font-weight:700; cursor:pointer; font-family:inherit; display:inline-flex; align-items:center; gap:6px; }
+  .btn.peri { background:var(--peri); border-color:var(--peri); color:#fff; }
+  .btn.mint { background:var(--mint2); border-color:var(--mint2); color:#fff; }
+  .btn[disabled] { opacity:.5; cursor:default; }
+  .aviso { font-size:12px; color:var(--muted); margin-top:8px; }
+  .ok { color:var(--mint); } .err { color:var(--rojo); }
+  #login { display:none; }
+  #login input { margin-bottom:8px; }
+
+  /* Upload zone */
+  .drop-zone { border:2px dashed var(--line2); border-radius:var(--radius); padding:30px 20px; text-align:center; color:var(--muted); cursor:pointer; transition:border-color .2s,background .2s; }
+  .drop-zone:hover,.drop-zone.over { border-color:var(--peri); background:rgba(128,131,255,.06); }
+  .drop-zone input { display:none; }
+  .drop-zone .icono { font-size:32px; margin-bottom:6px; }
+  .drop-zone .hint { font-size:13px; }
+
+  /* Domain input */
+  .domain-row { display:flex; gap:8px; margin-top:10px; align-items:center; }
+  .domain-row input { flex:1; }
+
+  /* Results table */
+  .res-table { width:100%; border-collapse:collapse; margin-top:10px; font-size:13px; }
+  .res-table th { text-align:left; font-size:10.5px; font-weight:700; color:var(--soft); text-transform:uppercase; letter-spacing:.06em; padding:6px 8px; border-bottom:1px solid var(--line); }
+  .res-table td { padding:7px 8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .res-table tr:hover td { background:rgba(128,131,255,.04); }
+  .email-chip { display:inline-block; background:var(--card3); border:1px solid var(--line); border-radius:8px; padding:2px 8px; margin:2px 4px 2px 0; font-size:12px; font-family:'SF Mono',Menlo,monospace; cursor:pointer; transition:background .15s; }
+  .email-chip:hover { background:var(--peri); color:#fff; border-color:var(--peri); }
+  .tag-nombre { color:var(--peach); font-weight:600; }
+
+  /* Historial */
+  .fila-hist { border:1px solid var(--line); border-radius:12px; padding:11px 12px; margin-top:10px; }
+  .fila-hist .cab { display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--soft); margin-bottom:5px; }
+  .fila-hist .cab .fecha { flex:1; font-variant-numeric:tabular-nums; }
+  .fila-hist .cab button { border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:12.5px; font-weight:700; }
+  .spinner { display:inline-block; width:16px; height:16px; border:2px solid var(--line2); border-top-color:var(--peri); border-radius:50%; animation:spin .6s linear infinite; vertical-align:middle; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  footer { text-align:center; font-size:11px; color:var(--soft); margin-top:16px; }
+  footer a { color:var(--peri); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="logo">📧</div>
+    <div>
+      <h1>Correos</h1>
+      <div class="sub" id="quien">Sube un PDF o DOCX con nombres y te busco los emails</div>
+    </div>
+  </header>
+
+  <div id="login" class="card">
+    <div class="sec-t">Inicia sesión (la misma de FileHub)</div>
+    <input id="lemail" type="email" placeholder="Email" autocomplete="username">
+    <input id="lpass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button class="btn peri" id="lbtn">Entrar</button>
+    <div class="aviso" id="lerr"></div>
+  </div>
+
+  <div id="app" style="display:none">
+    <!-- Upload -->
+    <div class="card">
+      <div class="sec-t">1 · Sube tu documento</div>
+      <div class="drop-zone" id="dropZone">
+        <div class="icono">📄</div>
+        <div class="hint">Arrastra un PDF, DOCX, CSV o ZIP aquí, o haz clic para seleccionar</div>
+        <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt,.csv,.zip">
+      </div>
+      <div id="fileName" class="aviso" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Domain -->
+    <div class="card">
+      <div class="sec-t">2 · Dominio (opcional)</div>
+      <div class="domain-row">
+        <input type="text" id="dominio" placeholder="empresa.com (para generar patrones)">
+      </div>
+      <div class="aviso">Si pones un dominio, se generan emails como nombre.apellido@empresa.com</div>
+    </div>
+
+    <!-- Procesar -->
+    <div class="card">
+      <button class="btn peri" id="buscarBtn" disabled>📧 Extraer nombres y buscar correos</button>
+      <div id="estado" class="aviso" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="card" id="resCard" style="display:none">
+      <div class="sec-t">Resultados</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn" id="copiarTodo">📋 Copiar todos</button>
+        <button class="btn mint" id="guardarBtn">💾 Guardar búsqueda</button>
+        <button class="btn" id="exportCsv">📥 CSV</button>
+      </div>
+      <div id="resEstado" class="aviso"></div>
+      <table class="res-table">
+        <thead><tr><th>Nombre</th><th>Emails generados</th></tr></thead>
+        <tbody id="resBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Nombres manual -->
+    <div class="card">
+      <div class="sec-t">O escribe nombres directamente</div>
+      <textarea id="nombresManual" rows="3" placeholder="Un nombre por línea:&#10;Juan García López&#10;María Fernández" style="width:100%;background:var(--input-bg);color:var(--ink);border:1px solid var(--line2);border-radius:12px;padding:11px 12px;font-size:14px;font-family:inherit;resize:vertical"></textarea>
+      <button class="btn" id="manualBtn" style="margin-top:8px">Generar emails</button>
+    </div>
+
+    <!-- Historial -->
+    <details>
+      <summary>Búsquedas guardadas</summary>
+      <div id="historial"></div>
+    </details>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- OSINT TOOLS                                                        -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div style="margin-top:20px;border-top:1px solid var(--line);padding-top:16px">
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:12px">🔍 Herramientas OSINT</h2>
+    </div>
+
+    <!-- MailAccess: Investigate email -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">📧</span>
+        <div>
+          <div style="font-weight:800;font-size:14px">MailAccess</div>
+          <div style="font-size:11px;color:var(--muted)">Investigar un email: breaches, redes sociales, 2500+ plataformas</div>
+        </div>
+      </div>
+      <div class="domain-row">
+        <input type="email" id="maEmail" placeholder="email@ejemplo.com">
+        <button class="btn peri" id="maInvestigar">Investigar</button>
+      </div>
+      <div id="maEstado" class="aviso" style="margin-top:8px"></div>
+      <div id="maResultado" style="display:none;margin-top:10px;background:var(--input-bg);border:1px solid var(--line2);border-radius:12px;padding:12px;font-size:13px;white-space:pre-wrap;max-height:400px;overflow:auto"></div>
+      <details style="margin-top:8px">
+        <summary>Harvest emails de un dominio</summary>
+        <div class="domain-row" style="margin-top:8px">
+          <input type="text" id="maHarvest" placeholder="empresa.com">
+          <button class="btn" id="maHarvestBtn">Harvest</button>
+        </div>
+        <div id="maHarvestEstado" class="aviso" style="margin-top:6px"></div>
+        <div id="maHarvestRes" style="display:none;margin-top:8px;background:var(--input-bg);border:1px solid var(--line2);border-radius:12px;padding:12px;font-size:13px;white-space:pre-wrap;max-height:300px;overflow:auto"></div>
+      </details>
+    </div>
+
+    <!-- Horus: Multi-OSINT -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">👁️</span>
+        <div>
+          <div style="font-weight:800;font-size:14px">Horus</div>
+          <div style="font-size:11px;color:var(--muted)">OSINT multitool: Shodan, teléfonos, geo-IP, crypto, VirusTotal, WiFi, EXIF</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <select id="horusMod" style="flex:1;min-width:140px;background:var(--input-bg);color:var(--ink);border:1px solid var(--line2);border-radius:10px;padding:8px 10px;font-size:13px;font-family:inherit">
+          <option value="numlook">📱 Teléfono (numlook)</option>
+          <option value="geolock">🌍 Geo-IP (geolock)</option>
+          <option value="shodan">🔎 Shodan</option>
+          <option value="vt">🦠 VirusTotal</option>
+          <option value="mactrace">📡 MAC trace</option>
+          <option value="cryptotrace">₿ Crypto trace</option>
+          <option value="wigle">📶 WiFi (Wigle)</option>
+          <option value="exif">📸 EXIF</option>
+        </select>
+      </div>
+      <div class="domain-row">
+        <input type="text" id="horusInput" placeholder="IP, teléfono, hash, MAC…">
+        <button class="btn" id="horusBtn" style="background:var(--peach);border-color:var(--peach);color:#000">Buscar</button>
+      </div>
+      <div id="horusEstado" class="aviso" style="margin-top:8px"></div>
+      <div id="horusRes" style="display:none;margin-top:10px;background:var(--input-bg);border:1px solid var(--line2);border-radius:12px;padding:12px;font-size:13px;white-space:pre-wrap;max-height:400px;overflow:auto"></div>
+    </div>
+
+    <!-- TorBot: Dark web -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">🧅</span>
+        <div>
+          <div style="font-weight:800;font-size:14px">TorBot</div>
+          <div style="font-size:11px;color:var(--muted)">Crawler de dark web (.onion) — requiere Tor en el NucBox</div>
+        </div>
+      </div>
+      <div class="domain-row">
+        <input type="text" id="torUrl" placeholder="http://ejemplo.onion o dominio a crawlear">
+        <button class="btn" id="torBtn" style="background:#7c3aed;border-color:#7c3aed;color:#fff">Crawl</button>
+      </div>
+      <div id="torEstado" class="aviso" style="margin-top:8px"></div>
+      <div id="torRes" style="display:none;margin-top:10px;background:var(--input-bg);border:1px solid var(--line2);border-radius:12px;padding:12px;font-size:13px;white-space:pre-wrap;max-height:400px;overflow:auto"></div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <!-- ARGUS OSINT                                                        -->
+    <!-- ════════════════════════════════════════════════════════════════════ -->
+    <div style="margin-top:20px;border-top:1px solid var(--line);padding-top:16px">
+      <h2 style="font-size:18px;font-weight:800;margin-bottom:4px">🛡️ Argus OSINT</h2>
+      <div class="aviso" style="margin-bottom:12px">Módulos de reconocimiento basados en Argus — se ejecutan en el NucBox</div>
+    </div>
+
+    <!-- Argus: Email Harvester -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">🕸️</span>
+        <div>
+          <div style="font-weight:800;font-size:14px">Email Harvester</div>
+          <div style="font-size:11px;color:var(--muted)">Crawlea un sitio web y extrae todos los emails que encuentre en las páginas</div>
+        </div>
+      </div>
+      <div class="domain-row">
+        <input type="text" id="argHarvestUrl" placeholder="https://empresa.com o dominio">
+        <button class="btn peri" id="argHarvestBtn">Crawl</button>
+      </div>
+      <div class="domain-row" style="margin-top:6px">
+        <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px">
+          Máx. páginas: <input type="number" id="argHarvestMax" value="50" min="1" max="200" style="width:60px;background:var(--input-bg);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:5px 8px;font-size:13px">
+        </label>
+      </div>
+      <div id="argHarvestEstado" class="aviso" style="margin-top:8px"></div>
+      <div id="argHarvestRes" style="display:none;margin-top:10px">
+        <div id="argHarvestEmails" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        <div id="argHarvestInfo" class="aviso" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <!-- Argus: Email Config (SPF/DKIM/DMARC) -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">🔐</span>
+        <div>
+          <div style="font-weight:800;font-size:14px">Email Config</div>
+          <div style="font-size:11px;color:var(--muted)">Comprueba SPF, DKIM, DMARC y registros MX de un dominio</div>
+        </div>
+      </div>
+      <div class="domain-row">
+        <input type="text" id="argConfigDom" placeholder="empresa.com">
+        <button class="btn" id="argConfigBtn" style="background:#6366f1;border-color:#6366f1;color:#fff">Analizar</button>
+      </div>
+      <div id="argConfigEstado" class="aviso" style="margin-top:8px"></div>
+      <div id="argConfigRes" style="display:none;margin-top:10px"></div>
+    </div>
+
+    <!-- Argus: Breach Check (HIBP) -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">💀</span>
+        <div>
+          <div style="font-weight:800;font-size:14px">Breach Check</div>
+          <div style="font-size:11px;color:var(--muted)">Consulta HaveIBeenPwned para ver si un email aparece en filtraciones</div>
+        </div>
+      </div>
+      <div class="domain-row">
+        <input type="email" id="argBreachEmail" placeholder="email@ejemplo.com">
+        <button class="btn" id="argBreachBtn" style="background:var(--rojo);border-color:var(--rojo);color:#fff">Comprobar</button>
+      </div>
+      <div id="argBreachEstado" class="aviso" style="margin-top:8px"></div>
+      <div id="argBreachRes" style="display:none;margin-top:10px"></div>
+    </div>
+
+    <!-- Argus: Data Leak -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">🔓</span>
+        <div>
+          <div style="font-weight:800;font-size:14px">Data Leak</div>
+          <div style="font-size:11px;color:var(--muted)">Busca fugas de datos de un dominio o email en leak-lookup.com</div>
+        </div>
+      </div>
+      <div class="domain-row">
+        <input type="text" id="argLeakQuery" placeholder="empresa.com o email@ejemplo.com">
+        <button class="btn" id="argLeakBtn" style="background:#d97706;border-color:#d97706;color:#fff">Buscar fugas</button>
+      </div>
+      <div id="argLeakEstado" class="aviso" style="margin-top:8px"></div>
+      <div id="argLeakRes" style="display:none;margin-top:10px"></div>
+    </div>
+
+    <!-- Argus: Social Media -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:24px">📱</span>
+        <div>
+          <div style="font-weight:800;font-size:14px">Social Media</div>
+          <div style="font-size:11px;color:var(--muted)">Detecta perfiles en redes sociales enlazados desde un sitio web</div>
+        </div>
+      </div>
+      <div class="domain-row">
+        <input type="text" id="argSocialUrl" placeholder="https://empresa.com">
+        <button class="btn" id="argSocialBtn" style="background:var(--mint2);border-color:var(--mint2);color:#fff">Detectar</button>
+      </div>
+      <div id="argSocialEstado" class="aviso" style="margin-top:8px"></div>
+      <div id="argSocialRes" style="display:none;margin-top:10px"></div>
+    </div>
+
+    <!-- OSINT status -->
+    <div class="card" id="osintStatus">
+      <div class="sec-t">Estado de las herramientas</div>
+      <div id="osintCheck" style="font-size:13px;color:var(--muted)">Comprobando conexión con NucBox…</div>
+    </div>
+  </div>
+
+  <footer><a href="/">← FileHub</a></footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const SUPABASE_URL = 'https://igvadjgjpyuvzailjqwg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndmFkamdqcHl1dnphaWxqcXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NDI3MTAsImV4cCI6MjA4ODAxODcxMH0.eAqKCHDzrkvMTseaBP0I_JICP1owX60-cp3agYqRz4Q';
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+let uid = null;
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { uid = session.user.id; muestraApp(); }
+  else { $('login').style.display = 'block'; }
+}
+function muestraApp() {
+  $('login').style.display = 'none';
+  $('app').style.display = 'block';
+  $('quien').textContent = 'Sube un documento con nombres';
+  cargaHistorial();
+}
+$('lbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('lemail').value.trim(), password: $('lpass').value });
+  if (error) { $('lerr').textContent = '❌ ' + error.message; return; }
+  const { data: { session } } = await sb.auth.getSession();
+  uid = session?.user?.id; muestraApp();
+};
+init();
+
+// ── File upload ───────────────────────────────────────────────────────────────
+let archivoTexto = '';
+let archivoTipo = ''; // 'tabla' (csv/txt) | 'doc' (pdf/docx)
+const dropZone = $('dropZone');
+const fileInput = $('fileInput');
+
+dropZone.onclick = () => fileInput.click();
+dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('over'); };
+dropZone.ondragleave = () => dropZone.classList.remove('over');
+dropZone.ondrop = e => { e.preventDefault(); dropZone.classList.remove('over'); if (e.dataTransfer.files.length) procesaArchivo(e.dataTransfer.files[0]); };
+fileInput.onchange = () => { if (fileInput.files.length) procesaArchivo(fileInput.files[0]); };
+
+async function extraerZIP(file) {
+  const zip = await JSZip.loadAsync(file);
+  let texto = '';
+  const archivos = Object.values(zip.files).filter(f => !f.dir);
+  let procesados = 0;
+  for (const entry of archivos) {
+    const ext = entry.name.split('.').pop().toLowerCase();
+    if (ext === 'txt' || ext === 'csv') {
+      texto += (await entry.async('text')) + '\n';
+      procesados++;
+    } else if (ext === 'pdf') {
+      const buf = await entry.async('arraybuffer');
+      const blob = new Blob([buf], { type: 'application/pdf' });
+      texto += (await extraerPDF(blob)) + '\n';
+      procesados++;
+    } else if (ext === 'docx' || ext === 'doc') {
+      const buf = await entry.async('arraybuffer');
+      const result = await mammoth.extractRawText({ arrayBuffer: buf });
+      texto += result.value + '\n';
+      procesados++;
+    }
+  }
+  if (!procesados) throw new Error('El ZIP no contiene archivos soportados (PDF, DOCX, TXT, CSV)');
+  const soloTablas = archivos.every(e => /\.(txt|csv)$/i.test(e.name) || e.dir);
+  return { texto, procesados, total: archivos.length, tipo: soloTablas ? 'tabla' : 'doc' };
+}
+
+async function procesaArchivo(file) {
+  $('fileName').textContent = '⏳ Leyendo ' + file.name + '…';
+  $('buscarBtn').disabled = true;
+  archivoTexto = '';
+  try {
+    const ext = file.name.split('.').pop().toLowerCase();
+    if (ext === 'pdf') {
+      archivoTexto = await extraerPDF(file); archivoTipo = 'doc';
+    } else if (ext === 'docx' || ext === 'doc') {
+      archivoTexto = await extraerDOCX(file); archivoTipo = 'doc';
+    } else if (ext === 'txt' || ext === 'csv') {
+      archivoTexto = await file.text(); archivoTipo = 'tabla';
+    } else if (ext === 'zip') {
+      const r = await extraerZIP(file);
+      archivoTexto = r.texto; archivoTipo = r.tipo;
+      const lineas = archivoTexto.split('\n').filter(l => l.trim()).length;
+      $('fileName').textContent = '✅ ' + file.name + ' — ' + r.procesados + '/' + r.total + ' archivos extraídos, ' + lineas + ' líneas';
+      $('buscarBtn').disabled = false;
+      return;
+    } else {
+      $('fileName').innerHTML = '<span class="err">Formato no soportado. Usa PDF, DOCX, TXT, CSV o ZIP.</span>';
+      return;
+    }
+    const lineas = archivoTexto.split('\n').filter(l => l.trim()).length;
+    $('fileName').textContent = '✅ ' + file.name + ' — ' + lineas + ' líneas extraídas';
+    $('buscarBtn').disabled = false;
+  } catch (e) {
+    $('fileName').innerHTML = '<span class="err">Error leyendo archivo: ' + e.message + '</span>';
+  }
+}
+
+async function extraerPDF(file) {
+  const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs');
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+  let texto = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    texto += content.items.map(it => it.str).join(' ') + '\n';
+  }
+  return texto;
+}
+
+async function extraerDOCX(file) {
+  const buf = await file.arrayBuffer();
+  const result = await mammoth.extractRawText({ arrayBuffer: buf });
+  return result.value;
+}
+
+// ── AI-powered name extraction ────────────────────────────────────────────────
+async function pideIA(system, user, maxTokens = 800) {
+  const pide = () => sb.functions.invoke('ai-proxy', {
+    body: { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: maxTokens }
+  });
+  let { data, error } = await pide();
+  const es401 = (e, d) => (!!e && /401|unauthorized|non-2xx/i.test(e.message || '')) || (d?.error && /unauthorized/i.test(d.error));
+  if (es401(error, data)) { try { await sb.auth.refreshSession(); } catch {} ({ data, error } = await pide()); }
+  if (!error && data?.content) return String(data.content).trim();
+  throw new Error(error?.message || data?.error || 'sin respuesta de la IA');
+}
+
+async function extraerNombresConIA(texto) {
+  const fragmento = texto.slice(0, 6000);
+  const resp = await pideIA(
+    `Eres un extractor de nombres de personas. Del texto que recibas, extrae TODOS los nombres completos de personas (nombre y al menos un apellido). Devuelve SOLO un JSON array de strings, sin comentarios ni explicaciones. Ejemplo: ["Juan García López","María Fernández Ruiz"]. Si no encuentras nombres, devuelve [].`,
+    fragmento, 1500
+  );
+  const match = resp.match(/\[[\s\S]*?\]/);
+  if (!match) return [];
+  try { return JSON.parse(match[0]).filter(n => typeof n === 'string' && n.trim().length > 2); } catch { return []; }
+}
+
+// ── Email pattern generation ──────────────────────────────────────────────────
+function normalizaNombre(nombre) {
+  return nombre.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+function generaPatrones(nombre, dominio) {
+  const partes = normalizaNombre(nombre).split(/\s+/).filter(Boolean);
+  if (partes.length < 2) return [partes[0] + '@' + dominio];
+  const first = partes[0];
+  const last = partes[partes.length - 1];
+  const last1 = partes.length > 2 ? partes[1] : last;
+  return [
+    first + '.' + last + '@' + dominio,
+    first + last + '@' + dominio,
+    first[0] + last + '@' + dominio,
+    first + '.' + last1 + '@' + dominio,
+    first + '@' + dominio,
+    last + '.' + first + '@' + dominio,
+    first + '_' + last + '@' + dominio,
+    first[0] + '.' + last + '@' + dominio,
+  ].filter((v, i, a) => a.indexOf(v) === i);
+}
+
+// ── Search logic ──────────────────────────────────────────────────────────────
+let resultados = [];
+
+$('buscarBtn').onclick = async () => {
+  if (!archivoTexto.trim()) return;
+  await buscar(archivoTexto);
+};
+
+$('manualBtn').onclick = async () => {
+  const txt = $('nombresManual').value.trim();
+  if (!txt) { $('nombresManual').focus(); return; }
+  const nombres = txt.split('\n').map(l => l.trim()).filter(Boolean);
+  const dominio = $('dominio').value.trim();
+  resultados = nombres.map(n => ({
+    nombre: n,
+    emails: dominio ? generaPatrones(n, dominio) : []
+  }));
+  pintaResultados();
+};
+
+// ── Parser local para CSV/TXT (sin IA, sin límite de tamaño) ─────────────────
+function parseaFilas(texto) {
+  const lineas = texto.replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (!lineas.length) return { filas: [], sep: '' };
+  const muestra = lineas.slice(0, 20).join('\n');
+  const cuenta = s => (muestra.match(new RegExp('\\' + s, 'g')) || []).length;
+  const sep = [';', ',', '\t', '|'].map(s => [s, cuenta(s)]).sort((a, b) => b[1] - a[1])[0];
+  const separador = sep[1] >= lineas.slice(0, 20).length ? sep[0] : null;
+  const divide = l => {
+    if (!separador) return [l.trim()];
+    const out = []; let cur = ''; let q = false;
+    for (const c of l) {
+      if (c === '"') { q = !q; continue; }
+      if (c === separador && !q) { out.push(cur.trim()); cur = ''; } else cur += c;
+    }
+    out.push(cur.trim());
+    return out;
+  };
+  return { filas: lineas.map(divide), sep: separador };
+}
+
+const TITULOS = /^(dr|dra|d|dña|don|doña|sr|sra|prof|lic|ing)\.?\s+/i;
+function limpiaNombre(s, giraComa = true) {
+  let n = String(s || '').replace(/\s+/g, ' ').trim().replace(TITULOS, '');
+  if (giraComa && n.includes(',')) { const [ap, nom] = n.split(',').map(x => x.trim()); if (ap && nom) n = nom + ' ' + ap; }
+  if (n === n.toUpperCase()) n = n.toLowerCase().replace(/(^|[\s'-])(\p{L})/gu, (m, p, c) => p + c.toUpperCase());
+  return n;
+}
+const pareceNombre = s => { const n = limpiaNombre(s); return /^[\p{L}'´`.\- ]{4,60}$/u.test(n) && n.split(' ').length >= 2 && n.split(' ').length <= 6; };
+
+function extraerNombresTabla(texto) {
+  const { filas } = parseaFilas(texto);
+  if (!filas.length) return [];
+  const cab = filas[0].map(c => c.toLowerCase());
+  const idx = re => cab.findIndex(c => re.test(c));
+  const iNom = idx(/^(nombre|name|first ?name|nom)\b/), iAp = idx(/apellido|surname|last ?name|cognom/), iFull = idx(/nombre completo|full ?name|nombre y apellidos|profesional|facultativo|m[eé]dico/);
+  const iMail = idx(/e-?mail|correo/);
+  let cuerpo = filas, col = null, colAp = null;
+  if (iNom >= 0 && iAp >= 0 && iNom !== iAp) { col = iNom; colAp = iAp; cuerpo = filas.slice(1); }
+  else if (iFull >= 0) { col = iFull; cuerpo = filas.slice(1); }
+  else if (iNom >= 0) { col = iNom; cuerpo = filas.slice(1); }
+  else if (iAp >= 0) { col = iAp; cuerpo = filas.slice(1); }
+  else {
+    // Sin cabecera reconocible: elegimos la columna cuyas celdas más parecen nombres
+    const ncol = Math.max(...filas.map(f => f.length));
+    let mejor = -1, puntos = 0;
+    for (let c = 0; c < ncol; c++) {
+      const p = filas.slice(0, 200).filter(f => pareceNombre(f[c] || '')).length;
+      if (p > puntos) { puntos = p; mejor = c; }
+    }
+    if (mejor < 0 || puntos < 2) return [];
+    col = mejor;
+    if (!pareceNombre(filas[0][col] || '') || /nombre|name/i.test(filas[0][col])) cuerpo = filas.slice(1);
+  }
+  const vistos = new Set(); const out = [];
+  for (const f of cuerpo) {
+    const nombre = colAp !== null ? limpiaNombre(limpiaNombre(f[col] || '', false) + ' ' + limpiaNombre(f[colAp] || '', false), false).replace(/,/g, '') : limpiaNombre(f[col] || '');
+    if (!pareceNombre(nombre)) continue;
+    const k = normalizaNombre(nombre);
+    if (vistos.has(k)) continue;
+    vistos.add(k);
+    const email = iMail >= 0 && /@/.test(f[iMail] || '') ? f[iMail].trim().toLowerCase() : null;
+    out.push({ nombre, email });
+  }
+  return out;
+}
+
+async function buscar(texto) {
+  $('buscarBtn').disabled = true;
+  const dominio = $('dominio').value.trim();
+  try {
+    let nombres = [];
+    // 1) CSV/TXT: parseo local (rápido, sin límite y sin IA)
+    if (archivoTipo === 'tabla') {
+      $('estado').innerHTML = '<span class="spinner"></span> Leyendo tabla…';
+      const filas = extraerNombresTabla(texto);
+      if (filas.length) {
+        resultados = filas.map(r => ({
+          nombre: r.nombre,
+          emails: [...new Set([...(r.email ? [r.email] : []), ...(dominio ? generaPatrones(r.nombre, dominio) : [])])]
+        }));
+        pintaResultados();
+        const conMail = filas.filter(r => r.email).length;
+        $('estado').textContent = '✅ ' + filas.length + ' nombres' + (conMail ? ' · ' + conMail + ' con email en el archivo' : '') + (dominio ? ' · patrones generados para @' + dominio : ' · añade un dominio para generar patrones');
+        $('buscarBtn').disabled = false;
+        return;
+      }
+    }
+    // 2) Resto: IA, con extracción básica de respaldo
+    $('estado').innerHTML = '<span class="spinner"></span> Extrayendo nombres con IA…';
+    try {
+      nombres = await extraerNombresConIA(texto);
+    } catch (e) {
+      $('estado').textContent = '⚠️ IA no disponible, intentando extracción básica…';
+      nombres = extraerNombresBasico(texto);
+    }
+    if (!nombres.length) nombres = extraerNombresBasico(texto);
+    if (!nombres.length) {
+      $('estado').textContent = '⚠️ No se encontraron nombres en el documento.';
+      $('buscarBtn').disabled = false;
+      return;
+    }
+    $('estado').textContent = '✅ ' + nombres.length + ' nombres encontrados. Generando patrones…';
+    resultados = nombres.map(n => ({
+      nombre: n,
+      emails: dominio ? generaPatrones(n, dominio) : []
+    }));
+    pintaResultados();
+    $('estado').textContent = '✅ ' + nombres.length + ' nombres · ' + (dominio ? resultados.reduce((s, r) => s + r.emails.length, 0) + ' emails generados' : 'sin dominio — añade uno para generar patrones');
+  } catch (e) {
+    $('estado').innerHTML = '<span class="err">Error: ' + e.message + '</span>';
+  }
+  $('buscarBtn').disabled = false;
+}
+
+function extraerNombresBasico(texto) {
+  const lineas = texto.split('\n').map(l => l.trim()).filter(Boolean);
+  const nombres = [];
+  const reNombre = /^[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+(?:\s+[A-ZÁÉÍÓÚÑÜ][a-záéíóúñü]+){1,4}$/;
+  for (const l of lineas) {
+    if (reNombre.test(l) && l.split(/\s+/).length <= 5) nombres.push(l);
+  }
+  return [...new Set(nombres)];
+}
+
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function pintaResultados() {
+  $('resCard').style.display = '';
+  $('resBody').innerHTML = resultados.map(r =>
+    `<tr>
+      <td class="tag-nombre">${esc(r.nombre)}</td>
+      <td>${r.emails.length ? r.emails.map(e => `<span class="email-chip" title="Clic para copiar">${esc(e)}</span>`).join('') : '<span style="color:var(--soft)">Añade un dominio arriba</span>'}</td>
+    </tr>`
+  ).join('');
+  $('resCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// Copy individual email on click
+$('resBody').addEventListener('click', async e => {
+  const chip = e.target.closest('.email-chip');
+  if (!chip) return;
+  try { await navigator.clipboard.writeText(chip.textContent); chip.style.background = 'var(--mint2)'; chip.style.borderColor = 'var(--mint2)'; setTimeout(() => { chip.style.background = ''; chip.style.borderColor = ''; }, 800); } catch {}
+});
+
+// Copy all
+$('copiarTodo').onclick = async () => {
+  const all = resultados.flatMap(r => r.emails).join('\n');
+  if (!all) { $('resEstado').textContent = '⚠️ No hay emails para copiar'; return; }
+  try { await navigator.clipboard.writeText(all); $('resEstado').textContent = '📋 ' + resultados.flatMap(r => r.emails).length + ' emails copiados'; } catch { $('resEstado').textContent = '⚠️ Error al copiar'; }
+};
+
+// Export CSV
+$('exportCsv').onclick = () => {
+  let csv = 'Nombre,Email\n';
+  for (const r of resultados) {
+    if (r.emails.length) r.emails.forEach(e => csv += `"${r.nombre}","${e}"\n`);
+    else csv += `"${r.nombre}",""\n`;
+  }
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'correos_' + Date.now() + '.csv'; a.click();
+};
+
+// ── Save / Load history ───────────────────────────────────────────────────────
+$('guardarBtn').onclick = async () => {
+  if (!uid || !resultados.length) return;
+  const fila = {
+    id: 'corr_' + Date.now(), user_id: uid,
+    source_name: $('fileName').textContent || 'manual',
+    domain: $('dominio').value.trim() || null,
+    results: resultados
+  };
+  const { error } = await sb.from('correos_busquedas').insert(fila);
+  $('resEstado').textContent = error ? ('⚠️ ' + error.message) : '✅ Guardado.';
+  if (!error) cargaHistorial();
+};
+
+async function cargaHistorial() {
+  const { data, error } = await sb.from('correos_busquedas')
+    .select('id,source_name,domain,results,created_at')
+    .order('created_at', { ascending: false }).limit(10);
+  if (error || !data?.length) { $('historial').innerHTML = '<span class="aviso">Sin búsquedas guardadas aún.</span>'; return; }
+  $('historial').innerHTML = data.map(e => {
+    const f = new Date(e.created_at);
+    const fecha = f.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit' }) + ' ' + f.toLocaleTimeString('es-ES', { hour:'2-digit', minute:'2-digit' });
+    const n = (e.results || []).length;
+    return `<div class="fila-hist" data-id="${e.id}">
+      <div class="cab"><span class="fecha">${fecha} · ${n} nombres${e.domain ? ' · ' + esc(e.domain) : ''}</span>
+        <button data-cargar="${e.id}">🔄 cargar</button>
+        <button data-borrar="${e.id}">🗑</button></div>
+    </div>`;
+  }).join('');
+}
+let histData = [];
+$('historial').addEventListener('click', async e => {
+  const c = e.target.closest('[data-cargar]');
+  if (c) {
+    const { data } = await sb.from('correos_busquedas').select('results,domain').eq('id', c.dataset.cargar).single();
+    if (data) { resultados = data.results || []; if (data.domain) $('dominio').value = data.domain; pintaResultados(); }
+    return;
+  }
+  const b = e.target.closest('[data-borrar]');
+  if (b && confirm('¿Borrar esta búsqueda?')) {
+    await sb.from('correos_busquedas').delete().eq('id', b.dataset.borrar);
+    cargaHistorial();
+  }
+});
+
+// ── OSINT Tools (NucBox API) ──────────────────────────────────────────────────
+// Lee la MISMA config que la app FileHub (Settings → IA Local):
+// localStorage['filehub_minipc_config_v1'] = { tasksBaseUrl, cfAccessClientSecret, ... }
+// El NucBox valida el secret por el header CF-Access-Client-Secret (o x-filehub-key).
+function nucboxCfg() {
+  try {
+    const c = JSON.parse(localStorage.getItem('filehub_minipc_config_v1') || '{}');
+    return {
+      url: (c.tasksBaseUrl || 'https://nucboxg10.tail3a7cac.ts.net').replace(/\/$/, ''),
+      secret: c.cfAccessClientSecret || localStorage.getItem('fh_ia_local_secret') || '',
+      id: c.cfAccessClientId || '',
+    };
+  } catch {
+    return { url: 'https://nucboxg10.tail3a7cac.ts.net', secret: localStorage.getItem('fh_ia_local_secret') || '', id: '' };
+  }
+}
+function nucboxHeaders(extra) {
+  const { secret, id } = nucboxCfg();
+  const h = Object.assign({}, extra || {});
+  if (secret) { h['CF-Access-Client-Secret'] = secret; h['x-filehub-key'] = secret; }
+  if (id) h['CF-Access-Client-Id'] = id;
+  return h;
+}
+const NUCBOX = nucboxCfg().url;
+
+async function nucboxFetch(path, body) {
+  const res = await fetch(NUCBOX + path, { method: 'POST', headers: nucboxHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(body), signal: AbortSignal.timeout(120000) });
+  if (!res.ok) throw new Error('HTTP ' + res.status + ': ' + (await res.text()).slice(0, 200));
+  return res.json();
+}
+
+// Check OSINT status
+async function checkOsint() {
+  try {
+    const res = await fetch(NUCBOX + '/osint/status', { headers: nucboxHeaders(), signal: AbortSignal.timeout(8000) });
+    if (res.ok) {
+      const d = await res.json();
+      $('osintCheck').innerHTML = '<span class="ok">✅ NucBox conectado</span> — ' +
+        (d.mailaccess ? '📧 MailAccess' : '<span style="color:var(--soft)">⬜ MailAccess</span>') + ' · ' +
+        (d.horus ? '👁️ Horus' : '<span style="color:var(--soft)">⬜ Horus</span>') + ' · ' +
+        (d.torbot ? '🧅 TorBot' : '<span style="color:var(--soft)">⬜ TorBot</span>') + ' · ' +
+        (d.argus ? '🛡️ Argus' : '<span style="color:var(--soft)">⬜ Argus</span>');
+    } else throw new Error();
+  } catch {
+    $('osintCheck').innerHTML = '<span style="color:var(--peach)">⚠️ NucBox no accesible</span> — las herramientas OSINT necesitan el NucBox encendido y con los servicios instalados. <a href="/" style="color:var(--peri)">Configura la URL en Settings → IA Local</a>';
+  }
+}
+checkOsint();
+
+// MailAccess: Investigate
+$('maInvestigar').onclick = async () => {
+  const email = $('maEmail').value.trim();
+  if (!email) { $('maEmail').focus(); return; }
+  $('maEstado').innerHTML = '<span class="spinner"></span> Investigando ' + esc(email) + '…';
+  $('maInvestigar').disabled = true;
+  $('maResultado').style.display = 'none';
+  try {
+    const data = await nucboxFetch('/osint/mailaccess/investigate', { email });
+    $('maResultado').textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    $('maResultado').style.display = '';
+    $('maEstado').textContent = '✅ Investigación completada';
+  } catch (e) {
+    $('maEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('maInvestigar').disabled = false;
+};
+
+// MailAccess: Harvest
+$('maHarvestBtn').onclick = async () => {
+  const dom = $('maHarvest').value.trim();
+  if (!dom) { $('maHarvest').focus(); return; }
+  $('maHarvestEstado').innerHTML = '<span class="spinner"></span> Buscando emails en ' + esc(dom) + '…';
+  $('maHarvestBtn').disabled = true;
+  $('maHarvestRes').style.display = 'none';
+  try {
+    const data = await nucboxFetch('/osint/mailaccess/harvest', { domain: dom });
+    $('maHarvestRes').textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    $('maHarvestRes').style.display = '';
+    $('maHarvestEstado').textContent = '✅ Harvest completado';
+  } catch (e) {
+    $('maHarvestEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('maHarvestBtn').disabled = false;
+};
+
+// Horus
+$('horusBtn').onclick = async () => {
+  const input = $('horusInput').value.trim();
+  const mod = $('horusMod').value;
+  if (!input) { $('horusInput').focus(); return; }
+  $('horusEstado').innerHTML = '<span class="spinner"></span> Ejecutando ' + mod + '…';
+  $('horusBtn').disabled = true;
+  $('horusRes').style.display = 'none';
+  try {
+    const data = await nucboxFetch('/osint/horus', { module: mod, query: input });
+    $('horusRes').textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    $('horusRes').style.display = '';
+    $('horusEstado').textContent = '✅ ' + mod + ' completado';
+  } catch (e) {
+    $('horusEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('horusBtn').disabled = false;
+};
+
+// TorBot
+$('torBtn').onclick = async () => {
+  const url = $('torUrl').value.trim();
+  if (!url) { $('torUrl').focus(); return; }
+  $('torEstado').innerHTML = '<span class="spinner"></span> Crawling (puede tardar)…';
+  $('torBtn').disabled = true;
+  $('torRes').style.display = 'none';
+  try {
+    const data = await nucboxFetch('/osint/torbot', { url });
+    $('torRes').textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    $('torRes').style.display = '';
+    $('torEstado').textContent = '✅ Crawl completado';
+  } catch (e) {
+    $('torEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('torBtn').disabled = false;
+};
+
+// ── Argus OSINT ──────────────────────────────────────────────────────────────
+
+// Argus: Email Harvester
+$('argHarvestBtn').onclick = async () => {
+  const url = $('argHarvestUrl').value.trim();
+  if (!url) { $('argHarvestUrl').focus(); return; }
+  const max = parseInt($('argHarvestMax').value) || 50;
+  $('argHarvestEstado').innerHTML = '<span class="spinner"></span> Crawleando ' + esc(url) + ' (máx ' + max + ' páginas)…';
+  $('argHarvestBtn').disabled = true;
+  $('argHarvestRes').style.display = 'none';
+  try {
+    const data = await nucboxFetch('/osint/argus/harvest', { url, max_pages: max });
+    if (data.error) throw new Error(data.error);
+    const emails = data.emails || [];
+    $('argHarvestEmails').innerHTML = emails.length
+      ? emails.map(e => `<span class="email-chip" title="Clic para copiar">${esc(e)}</span>`).join('')
+      : '<span style="color:var(--soft)">No se encontraron emails</span>';
+    $('argHarvestInfo').textContent = emails.length + ' emails encontrados en ' + (data.pages_crawled || 0) + ' páginas';
+    $('argHarvestRes').style.display = '';
+    $('argHarvestEstado').textContent = '✅ Harvest completado';
+  } catch (e) {
+    $('argHarvestEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('argHarvestBtn').disabled = false;
+};
+
+// Argus: Email Config
+$('argConfigBtn').onclick = async () => {
+  const dom = $('argConfigDom').value.trim();
+  if (!dom) { $('argConfigDom').focus(); return; }
+  $('argConfigEstado').innerHTML = '<span class="spinner"></span> Analizando ' + esc(dom) + '…';
+  $('argConfigBtn').disabled = true;
+  $('argConfigRes').style.display = 'none';
+  try {
+    const d = await nucboxFetch('/osint/argus/email-config', { domain: dom });
+    if (d.error) throw new Error(d.error);
+    const spfOk = d.spf?.record && d.spf.record !== 'No SPF';
+    const dmarcOk = d.dmarc?.record && d.dmarc.record !== 'No DMARC';
+    const dkimOk = d.dkim?.length && d.dkim[0].selector !== '-';
+    let html = `<table class="res-table">
+      <tr><th colspan="2" style="color:var(--peri)">📋 Resumen de ${esc(dom)}</th></tr>
+      <tr><td style="width:90px;font-weight:700">SPF</td>
+          <td>${spfOk ? '<span class="ok">✅</span>' : '<span class="err">❌</span>'} <code style="font-size:12px;color:var(--muted);word-break:break-all">${esc(d.spf?.record || '-')}</code></td></tr>
+      <tr><td style="font-weight:700">DMARC</td>
+          <td>${dmarcOk ? '<span class="ok">✅</span>' : '<span class="err">❌</span>'} <code style="font-size:12px;color:var(--muted);word-break:break-all">${esc(d.dmarc?.record || '-')}</code></td></tr>`;
+    if (dmarcOk && d.dmarc.tags) {
+      const t = d.dmarc.tags;
+      if (t.p) html += `<tr><td></td><td style="font-size:12px">Política: <strong>${esc(t.p)}</strong>${t.rua ? ' · Reportes: ' + esc(t.rua) : ''}</td></tr>`;
+    }
+    html += `<tr><td style="font-weight:700">DKIM</td><td>`;
+    if (dkimOk) {
+      html += d.dkim.map(dk => `<span class="ok">✅</span> selector: <strong>${esc(dk.selector)}</strong>`).join('<br>');
+    } else {
+      html += '<span class="err">❌ No se encontraron selectores DKIM</span>';
+    }
+    html += `</td></tr>`;
+    if (d.mx?.length) {
+      html += `<tr><td style="font-weight:700">MX</td><td style="font-size:12px">${d.mx.map(m => esc(m)).join('<br>')}</td></tr>`;
+    }
+    html += `</table>`;
+    $('argConfigRes').innerHTML = html;
+    $('argConfigRes').style.display = '';
+    $('argConfigEstado').textContent = '✅ Análisis completado';
+  } catch (e) {
+    $('argConfigEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('argConfigBtn').disabled = false;
+};
+
+// Argus: Breach Check
+$('argBreachBtn').onclick = async () => {
+  const email = $('argBreachEmail').value.trim();
+  if (!email) { $('argBreachEmail').focus(); return; }
+  $('argBreachEstado').innerHTML = '<span class="spinner"></span> Consultando HIBP para ' + esc(email) + '…';
+  $('argBreachBtn').disabled = true;
+  $('argBreachRes').style.display = 'none';
+  try {
+    const d = await nucboxFetch('/osint/argus/breach', { email });
+    if (d.error) throw new Error(d.error);
+    let html = '';
+    if (d.breaches?.length) {
+      html = `<div style="color:var(--rojo);font-weight:700;margin-bottom:8px">⚠️ Encontrado en ${d.breaches.length} filtración(es)</div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:6px">` +
+        d.breaches.map(b => `<span style="background:rgba(239,68,68,.15);border:1px solid var(--rojo);border-radius:8px;padding:3px 10px;font-size:12px;color:var(--rojo)">${esc(b)}</span>`).join('') +
+        `</div>`;
+    } else {
+      html = `<div class="ok" style="font-weight:700">✅ No aparece en filtraciones conocidas</div>`;
+    }
+    if (d.note) html += `<div class="aviso" style="margin-top:6px">${esc(d.note)}</div>`;
+    $('argBreachRes').innerHTML = html;
+    $('argBreachRes').style.display = '';
+    $('argBreachEstado').textContent = '✅ Consulta completada';
+  } catch (e) {
+    $('argBreachEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('argBreachBtn').disabled = false;
+};
+
+// Argus: Data Leak
+$('argLeakBtn').onclick = async () => {
+  const q = $('argLeakQuery').value.trim();
+  if (!q) { $('argLeakQuery').focus(); return; }
+  $('argLeakEstado').innerHTML = '<span class="spinner"></span> Buscando fugas para ' + esc(q) + '…';
+  $('argLeakBtn').disabled = true;
+  $('argLeakRes').style.display = 'none';
+  try {
+    const d = await nucboxFetch('/osint/argus/leak', { query: q });
+    if (d.error) throw new Error(d.error);
+    let html = '';
+    const checked = d.checked_emails || [];
+    for (const ce of checked) {
+      const icon = ce.status === 'found' ? '🔓' : ce.status === 'clean' ? '✅' : '⚠️';
+      html += `<div style="margin-bottom:8px"><strong>${icon} ${esc(ce.email)}</strong>`;
+      if (ce.status === 'found' && ce.leaks?.length) {
+        html += `<div style="margin-left:16px;margin-top:4px">`;
+        for (const l of ce.leaks.slice(0, 20)) {
+          html += `<div style="font-size:12px;color:var(--peach)">• ${esc(l.source)}${l.data ? ': ' + esc(l.data) : ''}</div>`;
+        }
+        if (ce.leaks.length > 20) html += `<div class="aviso">+${ce.leaks.length - 20} más</div>`;
+        html += `</div>`;
+      } else if (ce.status === 'clean') {
+        html += ` <span style="font-size:12px;color:var(--mint)">sin fugas</span>`;
+      } else if (ce.status === 'error') {
+        html += ` <span style="font-size:12px;color:var(--soft)">error de conexión</span>`;
+      }
+      html += `</div>`;
+    }
+    if (!checked.length) html = '<span class="aviso">Sin resultados</span>';
+    $('argLeakRes').innerHTML = html;
+    $('argLeakRes').style.display = '';
+    $('argLeakEstado').textContent = '✅ Búsqueda completada — ' + (d.leaks?.length || 0) + ' fugas encontradas';
+  } catch (e) {
+    $('argLeakEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('argLeakBtn').disabled = false;
+};
+
+// Argus: Social Media
+$('argSocialBtn').onclick = async () => {
+  const url = $('argSocialUrl').value.trim();
+  if (!url) { $('argSocialUrl').focus(); return; }
+  $('argSocialEstado').innerHTML = '<span class="spinner"></span> Escaneando ' + esc(url) + '…';
+  $('argSocialBtn').disabled = true;
+  $('argSocialRes').style.display = 'none';
+  try {
+    const d = await nucboxFetch('/osint/argus/social', { url });
+    if (d.error) throw new Error(d.error);
+    const profiles = d.profiles || [];
+    let html = '';
+    if (profiles.length) {
+      const icons = { 'Facebook': '📘', 'Twitter/X': '🐦', 'Instagram': '📸', 'LinkedIn': '💼', 'YouTube': '▶️', 'TikTok': '🎵', 'GitHub': '🐙', 'Pinterest': '📌', 'Reddit': '🟠', 'Threads': '🧵', 'Mastodon': '🐘' };
+      html = `<table class="res-table"><thead><tr><th>Red</th><th>URL</th></tr></thead><tbody>`;
+      for (const p of profiles) {
+        html += `<tr><td>${icons[p.platform] || '🌐'} ${esc(p.platform)}</td><td style="word-break:break-all"><a href="${esc(p.url)}" target="_blank" rel="noopener" style="color:var(--peri);font-size:12px">${esc(p.url)}</a></td></tr>`;
+      }
+      html += `</tbody></table>`;
+    } else {
+      html = '<span class="aviso">No se encontraron perfiles de redes sociales</span>';
+    }
+    $('argSocialRes').innerHTML = html;
+    $('argSocialRes').style.display = '';
+    $('argSocialEstado').textContent = '✅ ' + profiles.length + ' perfiles encontrados';
+  } catch (e) {
+    $('argSocialEstado').innerHTML = '<span class="err">❌ ' + esc(e.message) + '</span>';
+  }
+  $('argSocialBtn').disabled = false;
+};
+
+// Click-to-copy for Argus harvest emails too
+$('argHarvestRes')?.addEventListener('click', async e => {
+  const chip = e.target.closest('.email-chip');
+  if (!chip) return;
+  try { await navigator.clipboard.writeText(chip.textContent); chip.style.background = 'var(--mint2)'; chip.style.borderColor = 'var(--mint2)'; setTimeout(() => { chip.style.background = ''; chip.style.borderColor = ''; }, 800); } catch {}
+});
+
+</script>
+</body>
+</html>
