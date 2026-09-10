@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f4f6fa">
+<title>Calendario · FileHub</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-calendario-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/icon-calendario.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-calendario-180.png">
+<meta name="apple-mobile-web-app-title" content="Calendario">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Tema: 'auto' (sistema) | 'light' | 'dark'. Se aplica antes de pintar para no
+  // ver un fogonazo blanco al abrir en oscuro.
+  (function () {
+    var pref = localStorage.getItem('fh_cal_tema') || 'auto';
+    var oscuro = pref === 'dark' || (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.tema = oscuro ? 'dark' : 'light';
+    document.documentElement.dataset.temaPref = pref;
+  })();
+</script>
+<style>
+  /* Tema claro fijo (house style de Carlos) — formal, sereno y legible */
+  :root {
+    --ink: #0f172a; --muted: #64748b; --soft: #94a3b8;
+    --line: #e5e9f2; --bg: #f4f6fa; --card: #ffffff;
+    --indigo: #4f46e5; --indigo-hover: #4338ca; --indigo-soft: #eef2ff; --indigo-ring: #4f46e51a;
+    --red: #ef4444; --green: #22c55e; --blue: #3b82f6; --amber: #f59e0b; --emerald: #10b981;
+    --shadow: 0 1px 2px rgba(15,23,42,.05), 0 4px 14px rgba(15,23,42,.05);
+    --radius: 14px;
+    /* Superficies y detalles que cambian con el tema */
+    --seg-bg: #e9edf5; --seg-on: #ffffff; --line-hover: #c7d0e0;
+    --input-bg: var(--bg); --input-focus-bg: #ffffff;
+    --on-accent: #ffffff;
+    --overlay: #0f172a59; --sheet-shadow: 0 -8px 30px #00000033;
+    --aviso-bg: #fffbeb; --aviso-line: #fde68a; --aviso-fg: #92400e;
+    --atr-fg: #b91c1c; --atr-fecha: #dc2626; --atr-line: #fecaca;
+    --tarea: #0ea5e9; --montse: #db2777;
+    /* Turnos */
+    /* Turnos en sólido (v330): se ven de un vistazo; el verde, bien fuerte. */
+    --t-urg-bg: #dc2626; --t-urg-fg: #ffffff;
+    --t-agm-bg: #16a34a; --t-agm-fg: #ffffff;
+    --t-agt-bg: #2563eb; --t-agt-fg: #ffffff;
+    --t-egs-bg: #facc15; --t-egs-fg: #4a3403;
+    /* Tipos de evento */
+    --ev-personal-bg: #e0e7ff; --ev-personal-fg: #4338ca; --ev-personal-dot: #6366f1;
+    --ev-work-bg: #fef3c7;     --ev-work-fg: #b45309;     --ev-work-dot: #f59e0b;
+    --ev-fitness-bg: #d1fae5;  --ev-fitness-fg: #047857;  --ev-fitness-dot: #10b981;
+    --ev-trip-bg: #cffafe;     --ev-trip-fg: #0e7490;     --ev-trip-dot: #06b6d4;
+    --ev-guardia-bg: #fee2e2;  --ev-guardia-fg: #b91c1c;  --ev-guardia-dot: #ef4444;
+    /* Prioridades */
+    --prio-high: #ef4444; --prio-medium: #f59e0b; --prio-low: #94a3b8;
+    color-scheme: light;
+  }
+
+  /* ── Modo oscuro (tokens fh-* de FileHub) ── */
+  html[data-tema="dark"] {
+    --ink: #f8fafc; --muted: #94a3b8; --soft: #64748b;
+    --line: #283449; --bg: #0b1326; --card: #131b2e;
+    --indigo: #8083ff; --indigo-hover: #9a9dff; --indigo-soft: #8083ff26; --indigo-ring: #8083ff2e;
+    --red: #f87171; --green: #4ade80; --blue: #60a5fa; --amber: #fbbf24; --emerald: #4edea3;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.30);
+    --seg-bg: #1b2438; --seg-on: #222a3d; --line-hover: #3b4761;
+    --input-bg: #0f1729; --input-focus-bg: #131b2e;
+    --on-accent: #0b1326;
+    --overlay: #020617b3; --sheet-shadow: 0 -8px 30px #00000066;
+    --aviso-bg: #3a2c0c; --aviso-line: #6b5312; --aviso-fg: #fcd34d;
+    --atr-fg: #fca5a5; --atr-fecha: #f87171; --atr-line: #7f1d1d;
+    --tarea: #38bdf8; --montse: #f472b6;
+    --t-urg-bg: #dc2626; --t-urg-fg: #ffffff;
+    --t-agm-bg: #16a34a; --t-agm-fg: #ffffff;
+    --t-agt-bg: #2563eb; --t-agt-fg: #ffffff;
+    --t-egs-bg: #facc15; --t-egs-fg: #4a3403;
+    --ev-personal-bg: #232a4d; --ev-personal-fg: #c0c1ff; --ev-personal-dot: #8083ff;
+    --ev-work-bg: #3a2c12;     --ev-work-fg: #fcd34d;     --ev-work-dot: #f59e0b;
+    --ev-fitness-bg: #10322a;  --ev-fitness-fg: #6ee7b7;  --ev-fitness-dot: #4edea3;
+    --ev-trip-bg: #113240;     --ev-trip-fg: #67e8f9;     --ev-trip-dot: #22d3ee;
+    --ev-guardia-bg: #3a1c1f;  --ev-guardia-fg: #fca5a5;  --ev-guardia-dot: #f87171;
+    --prio-high: #f87171; --prio-medium: #fbbf24; --prio-low: #64748b;
+    color-scheme: dark;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); padding: 18px 16px 28px;
+    font-size: 14px; line-height: 1.45;
+  }
+  h1, h2, h3, .col-num, #rangoTitulo { font-family: 'Hanken Grotesk', 'Inter', sans-serif; }
+  .wrap { max-width: 1140px; margin: 0 auto; }
+
+  /* ── Cabecera ── */
+  header { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .brand h1 { font-size: 21px; font-weight: 800; letter-spacing: -.01em; }
+  .brand p { font-size: 11.5px; color: var(--muted); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; }
+  .controls { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-wrap: wrap; }
+
+  /* Selector de vista (segmented control) */
+  .seg { display: inline-flex; background: var(--seg-bg); border-radius: 11px; padding: 3px; gap: 2px; }
+  .seg button {
+    border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px;
+    padding: 6px 13px; border-radius: 9px; cursor: pointer; transition: color .15s, background .15s;
+  }
+  .seg button.on { background: var(--seg-on); color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.12); }
+
+  .nav { display: flex; align-items: center; gap: 6px; }
+  button { font-family: inherit; }
+  .btn {
+    cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--ink);
+    border-radius: 10px; padding: 7px 13px; font-size: 13.5px; font-weight: 600;
+    box-shadow: 0 1px 2px rgba(15,23,42,.04); transition: border-color .15s, background .15s;
+  }
+  .btn:hover { border-color: var(--line-hover); }
+  .btn.primary { background: var(--indigo); border-color: var(--indigo); color: var(--on-accent); }
+  .btn.primary:hover { background: var(--indigo-hover); }
+  .btn.icono { padding: 7px 11px; font-size: 15px; line-height: 1; }
+  @keyframes fh-girar { to { transform: rotate(360deg); } }
+  .btn.girando { animation: fh-girar .7s linear infinite; opacity: .65; }
+  @media (prefers-reduced-motion: reduce) { .btn.girando { animation: none; } }
+  #rangoTitulo { font-weight: 700; font-size: 15.5px; min-width: 170px; text-align: center; }
+
+  /* ── Leyenda ── */
+  .leyenda { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; font-size: 12px; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px; color: var(--muted); font-weight: 500; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+  #viernesBtn { font-size: 12px; border-radius: 999px; padding: 4px 11px; }
+
+  #estado { font-size: 12.5px; color: var(--muted); margin: 10px 0; text-align: center; }
+
+  /* ── Vista MES ── */
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+  .dow { text-align: center; font-size: 10.5px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: .08em; padding: 5px 0; }
+  .dia {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; min-height: 104px;
+    padding: 6px; display: flex; flex-direction: column; gap: 3px; position: relative; cursor: pointer;
+    transition: border-color .15s, box-shadow .15s;
+    /* min-width 0: sin esto, un evento largo («Cita previa colegiación - Col·legi
+       Oficial de Metges…») fija el min-content de la celda, su columna del grid
+       se ensancha y la fila L–D deja de caer encima de los números (medido el
+       30-ago: columnas [100,504,100…] → con esto, 7 iguales y elipsis). */
+    min-width: 0;
+  }
+  .dia:hover { border-color: var(--line-hover); box-shadow: var(--shadow); }
+  .dia.fuera { opacity: .42; }
+  .dia.hoy { border: 1.5px solid var(--indigo); box-shadow: 0 0 0 3px var(--indigo-ring); }
+  .num { font-size: 12px; font-weight: 700; padding: 0 3px; color: var(--ink); }
+  .dia.hoy .num { color: var(--indigo); }
+  .turno { font-size: 10.5px; font-weight: 800; border-radius: 7px; padding: 5px 8px; line-height: 1.25; letter-spacing: .02em; }
+  .ev { font-size: 10.5px; font-weight: 500; border-radius: 6px; padding: 2px 6px; display: flex; align-items: center; gap: 5px; overflow: hidden; min-width: 0; }
+  .ev .dot { width: 6px; height: 6px; }
+  .ev span.t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .ev b.x { cursor: pointer; opacity: 0; font-weight: 700; padding: 0 1px; color: inherit; }
+  .ev:hover b.x { opacity: .7; }
+  .ev b.x:hover { opacity: 1; }
+  .masmini { font-size: 10px; color: var(--muted); padding-left: 3px; font-weight: 500; }
+  .tareasmini { font-size: 10px; font-weight: 600; color: var(--indigo); background: var(--indigo-soft); border-radius: 6px; padding: 2px 6px; margin-top: auto; align-self: flex-start; }
+  .addbtn {
+    position: absolute; right: 6px; bottom: 5px; width: 21px; height: 21px; border-radius: 7px; border: none;
+    background: var(--indigo-soft); color: var(--indigo); font-size: 14px; line-height: 1; padding: 0;
+    opacity: 0; transition: opacity .15s; cursor: pointer;
+  }
+  .dia:hover .addbtn { opacity: 1; }
+  @media (hover: none) { .addbtn { opacity: .65; } .ev b.x { opacity: .55; } }
+
+  /* ── Vista COLUMNAS (3 días / día) ── */
+  #cols { display: grid; gap: 12px; }
+  #cols.tres { grid-template-columns: repeat(3, 1fr); }
+  #cols.uno { grid-template-columns: 1fr; max-width: 620px; margin: 0 auto; }
+  #cols.siete { grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  #cols.siete .col { padding: 9px; min-height: 200px; gap: 7px; }
+  #cols.siete .col-num { font-size: 19px; }
+  #cols.siete .col-dow { font-size: 10.5px; }
+  #cols.siete .col-head { gap: 6px; padding-bottom: 6px; flex-wrap: wrap; }
+  @media (max-width: 1150px) { #cols.siete { grid-template-columns: repeat(2, 1fr); } }
+  .col {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 14px; box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 10px; min-height: 240px;
+    min-width: 0; /* mismo motivo que .dia: que un título largo no ensanche la columna */
+  }
+  .col.hoy { border-color: var(--indigo); box-shadow: 0 0 0 3px var(--indigo-ring), var(--shadow); }
+  .col-head { display: flex; align-items: baseline; gap: 9px; border-bottom: 1px solid var(--line); padding-bottom: 9px; }
+  .col-dow { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: capitalize; }
+  .col-num { font-size: 26px; font-weight: 800; letter-spacing: -.02em; }
+  .col.hoy .col-num { color: var(--indigo); }
+  .badge-hoy { font-size: 10px; font-weight: 700; color: var(--indigo); background: var(--indigo-soft); border-radius: 999px; padding: 2.5px 9px; margin-left: auto; letter-spacing: .05em; text-transform: uppercase; }
+  .col .turno { font-size: 11px; padding: 6px 10px; border-radius: 8px; align-self: flex-start; }
+  .sec-t { font-size: 10.5px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: .09em; margin-bottom: 2px; }
+  .vacio { font-size: 12px; color: var(--soft); font-style: italic; }
+  .fila-ev { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 9px; font-size: 13px; }
+  .fila-ev .hora { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12px; min-width: 40px; }
+  .fila-ev .t { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .fila-ev .x { cursor: pointer; border: none; background: none; color: inherit; opacity: .5; font-weight: 700; font-size: 14px; padding: 0 3px; }
+  .fila-ev .x:hover { opacity: 1; }
+  .fila-ta { display: flex; align-items: center; gap: 9px; padding: 5px 2px; font-size: 13px; }
+  .fila-ta input[type=checkbox] {
+    width: 17px; height: 17px; accent-color: var(--indigo); cursor: pointer; flex: none;
+  }
+  .fila-ta .t { flex: 1; font-weight: 500; }
+  .fila-ta.hecha .t { text-decoration: line-through; color: var(--soft); }
+  .prio { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .atrasada { color: var(--atr-fg); }
+  .atrasada .fecha-atr { font-size: 11px; color: var(--atr-fecha); font-weight: 600; }
+  .col-add { border: 1.5px dashed var(--line); background: transparent; color: var(--muted); border-radius: 10px; padding: 7px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: auto; }
+  .col-add:hover { border-color: var(--indigo); color: var(--indigo); }
+
+  /* ── Paneles (hoja inferior) ── */
+  .sheet { position: fixed; inset: 0; background: var(--overlay); display: none; align-items: flex-end; justify-content: center; z-index: 50; backdrop-filter: blur(2px); }
+  .sheet.open { display: flex; }
+  .sheet .caja {
+    background: var(--card); border-radius: 18px 18px 0 0; padding: 20px; width: 100%; max-width: 520px;
+    box-shadow: var(--sheet-shadow); max-height: 86vh; overflow-y: auto;
+  }
+  .sheet h3 { font-size: 16px; margin-bottom: 4px; text-transform: capitalize; }
+  .sheet .sub { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .sheet input, .sheet select {
+    width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px;
+    margin-bottom: 8px; background: var(--input-bg); color: var(--ink); outline: none; font-family: inherit;
+  }
+  .sheet input:focus, .sheet select:focus { border-color: var(--indigo); background: var(--input-focus-bg); }
+  .fila { display: flex; gap: 8px; }
+  .fila > * { flex: 1; }
+  .tabs { display: flex; background: var(--seg-bg); border-radius: 10px; padding: 3px; gap: 2px; margin-bottom: 10px; }
+  .tabs button { flex: 1; border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 13px; padding: 6px; border-radius: 8px; cursor: pointer; }
+  .tabs button.on { background: var(--seg-on); color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.12); }
+  .evlist { margin: 4px 0 12px; max-height: 200px; overflow-y: auto; }
+  .evlist .row { display: flex; align-items: center; gap: 9px; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .evlist .row .t { flex: 1; }
+  .evlist .row .del { color: var(--red); cursor: pointer; font-weight: 700; border: none; background: none; font-size: 15px; padding: 2px 6px; }
+
+  /* ── Asistente ── */
+  #agBrief { display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+  .ag-dia { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+  .ag-dia h4 { font-size: 13.5px; text-transform: capitalize; display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .ag-dia .turno { font-size: 10.5px; padding: 4px 8px; border-radius: 7px; display: inline-block; margin-bottom: 7px; }
+  .ag-dia ul { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+  .ag-dia li { font-size: 12.5px; display: flex; gap: 7px; align-items: baseline; }
+  .ag-dia li .hora { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 11.5px; color: var(--muted); min-width: 38px; }
+  .ag-dia .grupo { font-size: 10px; font-weight: 700; color: var(--soft); text-transform: uppercase; letter-spacing: .09em; margin: 7px 0 3px; }
+  #agIAWrap { border-top: 1px solid var(--line); padding-top: 12px; }
+  #agIAWrap .sec-t { margin-bottom: 6px; }
+  #agIA { font-size: 13px; white-space: pre-wrap; color: var(--ink); }
+  #agIA.pensando { color: var(--muted); font-style: italic; }
+
+  /* ── Últimas 10 tareas y revisión semanal ── */
+  .panelcard { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-top: 16px; }
+  .panelcard h2 { font-size: 14px; margin-bottom: 8px; }
+  .ult-fecha { font-size: 11px; color: var(--soft); font-variant-numeric: tabular-nums; flex: none; }
+  #avisoRevision { display: none; background: var(--aviso-bg); border: 1px solid var(--aviso-line); color: var(--aviso-fg); border-radius: 12px; padding: 10px 14px; margin: 0 0 12px; font-size: 13px; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #avisoRevision.on { display: flex; }
+  #avisoRevision .btn { padding: 5px 11px; font-size: 12.5px; }
+  .rev-row { display: flex; align-items: center; gap: 9px; padding: 8px 2px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .rev-row .t { flex: 1; }
+  .rev-row .btn { padding: 4px 9px; font-size: 12px; flex: none; }
+
+  /* ── Notas del calendario (anotaciones libres sobre eventos/tareas) ── */
+  #notaBody { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font-size: 13px; font-family: inherit; background: var(--input-bg); color: var(--ink); resize: vertical; }
+  .nota-ops { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .nota-ops input[type=date] { border: 1px solid var(--line); border-radius: 8px; padding: 5px 8px; font-size: 12.5px; background: var(--input-bg); color: var(--ink); font-family: inherit; }
+  .nota-comp { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  .fila-nota { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 10px; font-size: 13px; }
+  .fila-nota .cab { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .fila-nota .cuando { font-size: 11px; color: var(--soft); flex: 1; font-variant-numeric: tabular-nums; }
+  .fila-nota .dia-chip { font-size: 11px; font-weight: 700; color: var(--indigo); background: var(--ev-personal-bg); border-radius: 6px; padding: 1px 7px; flex: none; }
+  .fila-nota .x { border: none; background: transparent; color: var(--soft); cursor: pointer; font-size: 15px; line-height: 1; flex: none; }
+  .fila-nota .cuerpo { white-space: pre-wrap; color: var(--ink); }
+
+  #login { max-width: 380px; margin: 34px auto; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; display: none; box-shadow: var(--shadow); }
+  #login h3 { font-size: 15px; margin-bottom: 12px; }
+  #login input { background: var(--input-bg); color: var(--ink); }
+  #login input { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 8px; font-family: inherit; }
+
+  footer { margin-top: 18px; text-align: center; font-size: 11px; color: var(--soft); }
+  footer a { color: var(--indigo); }
+
+  /* ── Compartidas (círculo Carlos + Montse) ── */
+  .quien {
+    width: 15px; height: 15px; border-radius: 50%; flex: none; display: inline-flex;
+    align-items: center; justify-content: center; font-size: 9px; font-weight: 800;
+    background: var(--indigo); color: var(--on-accent); letter-spacing: 0;
+  }
+  .quien.m { background: var(--montse); }
+  .ev .quien { width: 12px; height: 12px; font-size: 8px; }
+  .seg.mini { padding: 2px; border-radius: 999px; }
+  .seg.mini button { padding: 4px 10px; font-size: 12px; border-radius: 999px; }
+  #filaShared { display: flex; align-items: center; gap: 8px; font-size: 13px; margin: 2px 0 10px; cursor: pointer; }
+  #filaShared input { width: 17px; height: 17px; accent-color: var(--indigo); margin: 0; flex: none; }
+
+  .ver-atr { font-size: 11.5px; padding: 4px 10px; margin-top: 4px; align-self: flex-start; color: var(--atr-fg); border-color: var(--atr-line); }
+
+  @media (max-width: 760px) {
+    body { padding: 12px 10px 22px; }
+    #cols.tres { grid-template-columns: 1fr; }
+    #cols.siete { grid-template-columns: 1fr; }
+    .controls { width: 100%; justify-content: space-between; }
+    #rangoTitulo { min-width: 0; flex: 1; }
+    .dia { min-height: 84px; }
+    /* Toque cómodo y sin zoom automático de iOS al enfocar campos */
+    .btn { padding: 9px 14px; }
+    .seg button { padding: 8px 13px; }
+    .sheet input, .sheet select, #login input { font-size: 16px; }
+    .sheet .caja { padding: 16px; max-height: 92vh; }
+    /* En móvil la leyenda informativa sobra: quedan el filtro y el botón del viernes */
+    .leyenda .chip { display: none; }
+    #avisoRevision { padding: 8px 12px; font-size: 12.5px; }
+  }
+  @media (max-width: 480px) {
+    .grid { gap: 3px; }
+    .dia { min-height: 68px; padding: 4px; border-radius: 9px; gap: 2px; }
+    .num { font-size: 11px; }
+    .turno { font-size: 8.5px; padding: 3.5px 5px; }
+    .ev { font-size: 9.5px; padding: 1.5px 4px; }
+    .tareasmini { font-size: 9px; padding: 1.5px 4px; }
+    .chip { padding: 3px 8px; font-size: 11px; }
+    .leyenda { gap: 5px; margin-bottom: 10px; }
+    .brand p { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* ── Botón flotante del asistente (v331) ── */
+  .fab {
+    position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom));
+    z-index: 45; display: inline-flex; align-items: center; gap: 8px;
+    background: var(--indigo); color: var(--on-accent); border: none;
+    border-radius: 999px; padding: 13px 18px; font-weight: 800; font-size: 14px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.38); cursor: pointer;
+    transition: transform .12s, box-shadow .12s;
+  }
+  .fab:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(0,0,0,.42); }
+  .fab .spark { font-size: 16px; line-height: 1; }
+  /* Caja de mando en lenguaje natural, arriba del todo del panel */
+  #agCmdWrap { background: var(--seg-bg); border-radius: 12px; padding: 12px; margin-bottom: 14px; }
+  #agCmd { margin: 0; }
+  .cmd-ej { font-size: 11.5px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  @media (max-width: 480px) {
+    .fab { padding: 14px; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom)); }
+    .fab .lbl { display: none; }   /* en móvil, icono solo: sencillo y sin estorbar */
+    .fab .spark { font-size: 20px; }
+  }
+  /* En ORDENADOR el panel se centra como tarjeta modal (no pegado abajo) */
+  @media (min-width: 761px) {
+    .sheet { align-items: center; }
+    .sheet .caja { max-width: 520px; border-radius: 18px; max-height: 88vh; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <h1>Calendario</h1>
+      <p>FileHub · Centro de salud</p>
+    </div>
+    <div class="controls">
+      <div class="seg" id="segVista">
+        <button data-v="mes">Mes</button>
+        <button data-v="semana">Semana</button>
+        <button data-v="tres">3 días</button>
+        <button data-v="dia">Día</button>
+      </div>
+      <div class="nav">
+        <button id="prev" class="btn icono" title="Anterior">‹</button>
+        <span id="rangoTitulo"></span>
+        <button id="next" class="btn icono" title="Siguiente">›</button>
+        <button id="hoyBtn" class="btn">Hoy</button>
+        <button id="recargarBtn" class="btn icono" title="Actualizar: vuelve a leer tus eventos y tareas (por ejemplo, los que acabas de apuntar por Telegram)" aria-label="Actualizar">⟳</button>
+      </div>
+      <button id="temaBtn" class="btn icono" title="Cambiar tema (auto / claro / oscuro)" aria-label="Cambiar tema">🌗</button>
+    </div>
+  </header>
+
+  <div class="leyenda">
+    <div class="seg mini" id="segFiltro" title="Filtra eventos y tareas: todas, solo tuyas o solo las compartidas">
+      <button data-f="todas">Todas</button>
+      <button data-f="mias">Mías</button>
+      <button data-f="comunes">👥 Comunes</button>
+    </div>
+    <span class="chip chip-turno"><span class="dot" style="background:var(--red)"></span> Urgencias tarde 13–20</span>
+    <span class="chip chip-turno"><span class="dot" style="background:var(--green)"></span> Agenda mañana 8–15</span>
+    <span class="chip chip-turno"><span class="dot" style="background:var(--blue)"></span> Agenda tarde 13–20</span>
+    <span class="chip"><span class="dot" style="background:var(--indigo)"></span> Eventos</span>
+    <span class="chip"><span class="dot" style="background:var(--tarea)"></span> Tareas</span>
+    <button id="viernesBtn" class="btn" title="Los viernes alternan mañana/tarde cada semana. Toca para corregir el turno de ESTA semana.">🔄 Viernes…</button>
+  </div>
+
+  <div id="estado">Cargando…</div>
+
+  <div id="avisoRevision">
+    <span id="avisoTxt"></span>
+    <button id="revAbrir" class="btn primary">Revisar</button>
+    <button id="revLuego" class="btn">Más tarde</button>
+  </div>
+
+  <div id="login">
+    <h3>Entra con tu cuenta de FileHub</h3>
+    <button id="gbtn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:11px;font-size:14.5px;font-weight:600;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);cursor:pointer">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.9 1.2 8 3l5.7-5.7C34.3 6.1 29.4 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.7l6.2 5.2C36.9 40.4 44 35 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+      Continuar con Google
+    </button>
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--muted);font-size:11px">
+      <span style="flex:1;height:1px;background:var(--line)"></span> o con tu email <span style="flex:1;height:1px;background:var(--line)"></span>
+    </div>
+    <input id="lemail" type="email" placeholder="Email" autocomplete="username">
+    <input id="lpass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button id="lbtn" class="btn primary" style="width:100%">Entrar</button>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px">Misma cuenta que la webapp FileHub. Si ya has entrado en FileHub en este navegador, la sesión se comparte sola.</p>
+  </div>
+
+  <div id="vistaMes">
+    <!-- Un ÚNICO grid: los días de la semana (L–D) son las 7 primeras celdas,
+         así la cabecera y los números comparten pistas y no pueden descuadrarse. -->
+    <div class="grid" id="cal"></div>
+  </div>
+  <div id="cols" style="display:none"></div>
+
+  <section class="panelcard" id="ultimasCard">
+    <h2>☑️ Últimas 10 tareas añadidas</h2>
+    <div id="ultimas"><div class="vacio">Inicia sesión para verlas.</div></div>
+  </section>
+
+  <section class="panelcard" id="notasCard">
+    <h2>📝 Notas</h2>
+    <textarea id="notaBody" rows="3" placeholder="Anotación libre sobre un evento o tarea: el guion de una reunión, qué llevar, qué contar al salir…"></textarea>
+    <div class="nota-ops">
+      <input type="date" id="notaFecha" title="Día al que se refiere (opcional)">
+      <label class="nota-comp"><input type="checkbox" id="notaShared"> compartida</label>
+      <button class="btn" id="notaAdd">Guardar nota</button>
+    </div>
+    <div id="notasLista"><div class="vacio">Inicia sesión para verlas.</div></div>
+  </section>
+
+  <footer>Turnos: L urgencias tarde · M agenda mañana · X agenda tarde · J agenda mañana · V alterno. Eventos y tareas sincronizados con <a href="/">FileHub</a> (misma cuenta).</footer>
+</div>
+
+<!-- Panel añadir/gestionar día -->
+<div id="panel" class="sheet">
+  <div class="caja">
+    <h3 id="panelTitulo">Añadir</h3>
+    <div class="sub" id="panelSub"></div>
+    <div class="evlist" id="evlist"></div>
+    <div class="tabs">
+      <button id="tabEv" class="on">Evento</button>
+      <button id="tabTa">Tarea</button>
+    </div>
+    <input id="fTitulo" placeholder="Título (ej: Guardia, Cena con Montse…)">
+    <div class="fila" id="filaEv">
+      <input id="fHora" type="time">
+      <select id="fTipo">
+        <option value="personal">Personal</option>
+        <option value="work">Trabajo</option>
+        <option value="fitness">Deporte</option>
+        <option value="trip">Viaje</option>
+      </select>
+    </div>
+    <div class="fila" id="filaTa" style="display:none">
+      <select id="fPrio">
+        <option value="medium">Prioridad media</option>
+        <option value="high">Prioridad alta</option>
+        <option value="low">Prioridad baja</option>
+      </select>
+      <select id="fCat">
+        <option value="personal">Personal</option>
+        <option value="work">Trabajo</option>
+        <option value="finance">Finanzas</option>
+        <option value="fitness">Deporte</option>
+        <option value="other">Otro</option>
+      </select>
+    </div>
+    <label id="filaShared"><input type="checkbox" id="fShared"> 👥 Compartida — la veis Carlos y Montse</label>
+    <div class="fila">
+      <button id="fVerDia" class="btn">Ver este día</button>
+      <button id="fGuardar" class="btn primary">Guardar</button>
+      <button id="fCerrar" class="btn">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Botón flotante del asistente (siempre visible, móvil y escritorio) -->
+<button id="agFab" class="fab" title="Asistente" aria-label="Abrir asistente">
+  <span class="spark">✦</span><span class="lbl">Asistente</span>
+</button>
+
+<!-- Panel asistente -->
+<div id="agPanel" class="sheet">
+  <div class="caja">
+    <h3 style="text-transform:none">✦ Asistente</h3>
+    <div class="sub" id="agSub"></div>
+
+    <!-- Mando en lenguaje natural: añadir, mover o quitar en una frase -->
+    <div id="agCmdWrap">
+      <div class="sec-t" style="margin:0 0 8px">💬 Dímelo en una frase</div>
+      <div class="fila">
+        <input id="agCmd" placeholder="«añade cena con Montse el viernes a las 21h»" style="flex:1">
+        <button id="agCmdBtn" class="btn primary">Enviar</button>
+      </div>
+      <div id="agCmdRes" class="sub" style="margin:8px 0 0"></div>
+      <div class="cmd-ej">Ejemplos: «apúntame llamar al banco mañana» · «qué tengo el jueves» · «mueve la reunión de medsys a las 11». Para <b>borrar</b> un evento concreto, tócalo en el calendario y pulsa la ×.</div>
+    </div>
+
+    <div id="agBrief"></div>
+    <div id="agIAWrap">
+      <div class="sec-t">Análisis del asistente</div>
+      <div id="agIA" class="pensando">Preparando resumen…</div>
+    </div>
+
+    <div class="sec-t" style="margin-top:16px">➕ Apuntar rápido</div>
+    <input id="qaTitulo" placeholder="Qué (ej: Cena juntos, Llamar al banco…)">
+    <div class="fila">
+      <input id="qaFecha" type="date">
+      <input id="qaHora" type="time">
+    </div>
+    <div class="fila" style="align-items:center">
+      <div class="tabs" style="flex:1;margin:0">
+        <button id="qaEv" class="on">Evento</button>
+        <button id="qaTa">Tarea</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer">
+        <input type="checkbox" id="qaShared" style="width:16px;height:16px;accent-color:var(--indigo);margin:0"> 👥 Común
+      </label>
+    </div>
+    <button id="qaGuardar" class="btn primary" style="width:100%">Guardar</button>
+    <div id="qaMsg" class="sub" style="margin:6px 0 0"></div>
+
+    <div class="sec-t" style="margin-top:18px">🔎 Posibles eventos</div>
+    <div class="sub">Pídeme que busque planes o cursos reales (busco en internet): «cursos de dolçaina en un centre cívic prop d'Horta», «centres cívics on facin català»…</div>
+    <div class="fila">
+      <input id="peQuery" placeholder="Qué busco…" style="flex:1">
+      <button id="peBuscar" class="btn">Buscar</button>
+    </div>
+    <div id="peRes"></div>
+
+    <div class="fila" style="margin-top:14px">
+      <button id="agRefrescar" class="btn">Actualizar</button>
+      <button id="agCerrar" class="btn primary">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Panel revisión semanal -->
+<div id="revision" class="sheet">
+  <div class="caja">
+    <h3 style="text-transform:none">🔔 Revisión semanal</h3>
+    <div class="sub">Tareas que llevan más de 7 días pendientes: márcalas hechas o déjalas pendientes hasta el próximo ciclo.</div>
+    <div id="revLista"></div>
+    <div class="fila" style="margin-top:14px">
+      <button id="revCerrar" class="btn primary">Hecho</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://igvadjgjpyuvzailjqwg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndmFkamdqcHl1dnphaWxqcXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NDI3MTAsImV4cCI6MjA4ODAxODcxMH0.eAqKCHDzrkvMTseaBP0I_JICP1owX60-cp3agYqRz4Q';
+// Mismo proyecto y storage por defecto que la webapp → en el MISMO dominio la sesión se comparte sola.
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Círculo compartido: eventos/tareas con shared=true los ven (y marcan) ambos.
+// Las RLS del proyecto (fh_circulo + fh_mismo_circulo) hacen cumplir esto en el servidor.
+const UID_CARLOS = '69428dff-f2b6-46ae-8120-0052e9bbed51';
+const UID_MONTSE = '94c1791d-3a28-4452-a166-233cb9783749';
+const NOMBRES = { [UID_CARLOS]: 'Carlos', [UID_MONTSE]: 'Montse' };
+const badgeQuien = x => x.shared
+  ? `<span class="quien${x.user_id === UID_MONTSE ? ' m' : ''}" title="Compartida · de ${NOMBRES[x.user_id] || '—'}">${(NOMBRES[x.user_id] || '?')[0]}</span>`
+  : '';
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const HOY = new Date(); HOY.setHours(0, 0, 0, 0);
+const HOY_S = ymd(HOY);
+// Ventana de «atrasadas»: solo las vencidas en los últimos 75 días. Las tareas
+// fósiles muy antiguas (que además se re-sincronizan solas desde la app) no
+// tapan lo realmente pendiente. Ajusta ATRAS_DIAS si quieres ver más atrás.
+const ATRAS_DIAS = 75;
+const ATRAS_DESDE = ymd(new Date(HOY.getTime() - ATRAS_DIAS * 86400000));
+
+// ── Turnos del centro de salud ─────────────────────────────────────────────
+// L: urgencias tarde 13-20 · M: agenda mañana 8-15 · X: agenda tarde 13-20 ·
+// J: agenda mañana 8-15 · V: ALTERNO mañana/tarde por semana (paridad ISO,
+// corregible con el botón «Viernes» — se guarda en este navegador).
+const T = {
+  URG_T: { label: 'URGENCIAS 13–20', bg: 'var(--t-urg-bg)', fg: 'var(--t-urg-fg)' },
+  AG_M:  { label: 'AGENDA 8–15',     bg: 'var(--t-agm-bg)', fg: 'var(--t-agm-fg)' },
+  AG_T:  { label: 'AGENDA 13–20',    bg: 'var(--t-agt-bg)', fg: 'var(--t-agt-fg)' },
+};
+function isoWeek(d) {
+  const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = x.getUTCDay() || 7;
+  x.setUTCDate(x.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1));
+  return Math.ceil(((x - y0) / 86400000 + 1) / 7);
+}
+// 'M' = en semanas ISO PARES el viernes es de mañana; 'T' = de tarde.
+let vierPar = localStorage.getItem('fh_cal_viernes_even') || 'M';
+// Los turnos del centro son de Carlos: con sesión de otra persona no se pintan.
+function turnoDe(d) { return (uid && uid !== UID_CARLOS) ? null : turnoDeCarlos(d); }
+function turnoDeCarlos(d) {
+  const dow = d.getDay(); // 0=D 1=L...
+  if (dow === 1) return T.URG_T;
+  if (dow === 2) return T.AG_M;
+  if (dow === 3) return T.AG_T;
+  if (dow === 4) return T.AG_M;
+  if (dow === 5) {
+    const even = isoWeek(d) % 2 === 0;
+    const man = (even && vierPar === 'M') || (!even && vierPar === 'T');
+    return man ? T.AG_M : T.AG_T;
+  }
+  return null;
+}
+const turnoChip = (t, extra = '') => t ? `<span class="turno ${extra}"${t.title ? ` title="${t.title}"` : ''} style="background:${t.bg};color:${t.fg}">${t.label}</span>` : '';
+
+// Las mañanas con turno de TARDE (empieza a las 13:00) son tiempo de
+// EGS TEK: desarrollo de webapps y proyectos, de 8:30 a 12:00, en amarillo.
+const EGSTEK = {
+  label: '💻 EGS TEK 8:30–12', bg: 'var(--t-egs-bg)', fg: 'var(--t-egs-fg)',
+  title: 'Mañana dedicada a EGS TEK: desarrollo de webapps y proyectos (8:30–12:00)',
+};
+const turnoEsTarde = t => t === T.URG_T || t === T.AG_T;
+function proximoViernes() {
+  const d = new Date(HOY);
+  while (d.getDay() !== 5) d.setDate(d.getDate() + 1);
+  return d;
+}
+function pintaViernesBtn() {
+  const conTurnos = !uid || uid === UID_CARLOS;
+  document.querySelectorAll('.chip-turno').forEach(c => c.style.display = conTurnos ? '' : 'none');
+  $('viernesBtn').style.display = conTurnos ? '' : 'none';
+  if (!conTurnos) return;
+  const t = turnoDe(proximoViernes());
+  $('viernesBtn').textContent = `🔄 Este viernes: ${t === T.AG_M ? 'mañana 8–15' : 'tarde 13–20'}`;
+}
+$('viernesBtn').onclick = () => {
+  vierPar = vierPar === 'M' ? 'T' : 'M';
+  localStorage.setItem('fh_cal_viernes_even', vierPar);
+  pintaViernesBtn(); render();
+};
+
+// ── Datos: eventos (calendar_events) y tareas (tasks) de FileHub ──────────
+// calendar_events: id(text), user_id, title, start_date(text), end_date, type.
+// tasks: id, user_id, title, completed, category, priority, due_date('YYYY-MM-DD').
+let uid = null, emailSesion = '', eventos = [], tareas = [], atrasadas = [], sinFecha = [], ultimas = [], notas = [];
+/** Nombre corto del perfil logueado, para que el asistente hable a quien toca. */
+function quienSoy() {
+  if (emailSesion.startsWith('montsemaymo')) return { nombre: 'Montse', desc: 'Montse' };
+  if (emailSesion.startsWith('carlosgalera2roman')) return { nombre: 'Carlos', desc: 'Carlos, médico de familia y urgencias en un centro de salud' };
+  return { nombre: emailSesion.split('@')[0] || 'quien usa la agenda', desc: emailSesion.split('@')[0] || 'la persona que usa la agenda' };
+}
+
+const TIPO_EV = {
+  personal: { bg: 'var(--ev-personal-bg)', fg: 'var(--ev-personal-fg)', dot: 'var(--ev-personal-dot)' },
+  work:     { bg: 'var(--ev-work-bg)',     fg: 'var(--ev-work-fg)',     dot: 'var(--ev-work-dot)' },
+  fitness:  { bg: 'var(--ev-fitness-bg)',  fg: 'var(--ev-fitness-fg)',  dot: 'var(--ev-fitness-dot)' },
+  trip:     { bg: 'var(--ev-trip-bg)',     fg: 'var(--ev-trip-fg)',     dot: 'var(--ev-trip-dot)' },
+  guardia:  { bg: 'var(--ev-guardia-bg)',  fg: 'var(--ev-guardia-fg)',  dot: 'var(--ev-guardia-dot)' },
+};
+const estiloEv = ev => /guardia/i.test(ev.title || '') ? TIPO_EV.guardia : (TIPO_EV[ev.type] || TIPO_EV.personal);
+const PRIO = { high: 'var(--prio-high)', medium: 'var(--prio-medium)', low: 'var(--prio-low)' };
+const prioTxt = { high: 'alta', medium: 'media', low: 'baja' };
+
+async function cargarDatos(desde, hasta) {
+  if (!uid) { eventos = []; tareas = []; atrasadas = []; sinFecha = []; ultimas = []; notas = []; return; }
+  const cols = 'id,title,completed,category,priority,due_date,user_id,shared';
+  const miasOComunes = `user_id.eq.${uid},shared.eq.true`;
+  const [ev, ta, atr, sf, ult, nts] = await Promise.all([
+    sb.from('calendar_events').select('id,title,start_date,end_date,type,user_id,shared')
+      .gte('start_date', desde).lt('start_date', hasta).order('start_date'),
+    sb.from('tasks').select(cols).or(miasOComunes)
+      .gte('due_date', desde).lt('due_date', hasta).order('due_date'),
+    sb.from('tasks').select(cols).eq('user_id', uid)
+      .eq('completed', false).gte('due_date', ATRAS_DESDE).lt('due_date', HOY_S)
+      .order('due_date', { ascending: false }).limit(20),
+    sb.from('tasks').select(cols).eq('user_id', uid)
+      .eq('completed', false).is('due_date', null).limit(8),
+    sb.from('tasks').select(cols + ',created_at').or(miasOComunes)
+      .order('created_at', { ascending: false }).limit(10),
+    sb.from('calendar_notas').select('id,body,fecha,user_id,shared,created_at').or(miasOComunes)
+      .order('created_at', { ascending: false }).limit(30),
+  ]);
+  const err = ev.error || ta.error || atr.error || sf.error || ult.error;
+  if (err) { $('estado').textContent = 'Error cargando datos: ' + err.message; }
+  eventos = ev.data || [];
+  tareas = ta.data || [];
+  atrasadas = atr.data || [];
+  sinFecha = sf.data || [];
+  ultimas = ult.data || [];
+  notas = nts.data || []; // si la tabla aún no existe en algún entorno, queda []
+}
+// Filtro Todas / Mías / Comunes (persistido en este navegador)
+let filtro = localStorage.getItem('fh_cal_filtro') || 'todas';
+const pasaFiltro = x => filtro === 'mias' ? x.user_id === uid : filtro === 'comunes' ? !!x.shared : true;
+function pintaFiltro() {
+  document.querySelectorAll('#segFiltro button').forEach(b => b.classList.toggle('on', b.dataset.f === filtro));
+}
+$('segFiltro').addEventListener('click', e => {
+  const b = e.target.closest('button[data-f]');
+  if (!b) return;
+  filtro = b.dataset.f;
+  localStorage.setItem('fh_cal_filtro', filtro);
+  pintaFiltro(); render();
+});
+pintaFiltro();
+
+const evDelDia = f => eventos.filter(e => (e.start_date || '').slice(0, 10) === f && pasaFiltro(e));
+const taDelDia = f => tareas.filter(t => (t.due_date || '').slice(0, 10) === f && pasaFiltro(t));
+const horaDe = e => (e.start_date || '').length > 10 ? (e.start_date || '').slice(11, 16) : '';
+
+// ── Estado de vista ────────────────────────────────────────────────────────
+// En móvil, la primera visita abre en «3 días» (la rejilla mensual es densa en pantalla pequeña).
+let modo = localStorage.getItem('fh_cal_modo') || (matchMedia('(max-width: 760px)').matches ? 'tres' : 'mes'); // mes | tres | dia
+let cursor = new Date(HOY);
+const DOWS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+const fmt = (d, o) => d.toLocaleDateString('es-ES', o);
+
+function rango() {
+  if (modo === 'mes') {
+    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const start = new Date(first); start.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+    const end = new Date(start); end.setDate(start.getDate() + 42);
+    return { start, end, dias: 42 };
+  }
+  if (modo === 'semana') {
+    const start = new Date(cursor); start.setDate(cursor.getDate() - ((cursor.getDay() + 6) % 7)); // lunes
+    const end = new Date(start); end.setDate(start.getDate() + 7);
+    return { start, end, dias: 7 };
+  }
+  const n = modo === 'tres' ? 3 : 1;
+  const start = new Date(cursor);
+  const end = new Date(start); end.setDate(start.getDate() + n);
+  return { start, end, dias: n };
+}
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+function tituloRango() {
+  if (modo === 'mes') return cap(fmt(cursor, { month: 'long', year: 'numeric' }));
+  if (modo === 'dia') return cap(fmt(cursor, { weekday: 'long', day: 'numeric', month: 'long' }));
+  if (modo === 'semana') {
+    const { start } = rango();
+    const fin = new Date(start); fin.setDate(start.getDate() + 6);
+    const m1 = fmt(start, { month: 'short' }), m2 = fmt(fin, { month: 'short' });
+    return start.getMonth() === fin.getMonth()
+      ? `Semana ${start.getDate()}–${fin.getDate()} ${m1} ${fin.getFullYear()}`
+      : `Semana ${start.getDate()} ${m1} – ${fin.getDate()} ${m2}`;
+  }
+  const fin = new Date(cursor); fin.setDate(fin.getDate() + 2);
+  const mismoMes = cursor.getMonth() === fin.getMonth();
+  const m1 = fmt(cursor, { month: 'short' }), m2 = fmt(fin, { month: 'short' });
+  return mismoMes
+    ? `${cursor.getDate()}–${fin.getDate()} ${m1} ${fin.getFullYear()}`
+    : `${cursor.getDate()} ${m1} – ${fin.getDate()} ${m2}`;
+}
+
+async function render() {
+  document.querySelectorAll('#segVista button').forEach(b => b.classList.toggle('on', b.dataset.v === modo));
+  $('rangoTitulo').textContent = tituloRango();
+  const { start, end } = rango();
+  await cargarDatos(ymd(start), ymd(end));
+  if (modo === 'mes') { $('vistaMes').style.display = ''; $('cols').style.display = 'none'; renderMes(start); }
+  else { $('vistaMes').style.display = 'none'; $('cols').style.display = 'grid'; renderCols(); }
+  pintaUltimas();
+  pintaNotas();
+  $('estado').textContent = uid ? '' : 'Sin sesión: se ven los turnos, pero no tus eventos ni tareas de FileHub.';
+  $('estado').style.display = $('estado').textContent ? 'block' : 'none';
+}
+
+// ── Vista MES ──────────────────────────────────────────────────────────────
+function renderMes(start) {
+  const m = cursor.getMonth();
+  // Cabecera L–D dentro del MISMO grid que las celdas: alineada por construcción.
+  let html = DOWS.map(x => `<div class="dow">${x}</div>`).join('');
+  const d = new Date(start);
+  for (let i = 0; i < 42; i++) {
+    const fecha = ymd(d);
+    const fuera = d.getMonth() !== m;
+    const esHoy = d.getTime() === HOY.getTime();
+    const t = turnoDe(d);
+    const evs = evDelDia(fecha);
+    const tas = taDelDia(fecha);
+    const pend = tas.filter(x => !x.completed).length;
+    html += `<div class="dia${fuera ? ' fuera' : ''}${esHoy ? ' hoy' : ''}" data-f="${fecha}">
+      <span class="num">${d.getDate()}</span>
+      ${turnoEsTarde(t) ? turnoChip(EGSTEK) : ''}
+      ${turnoChip(t)}
+      ${evs.slice(0, 3).map(e => {
+        const s = estiloEv(e), h = horaDe(e);
+        return `<span class="ev" style="background:${s.bg};color:${s.fg}"><span class="dot" style="background:${s.dot}"></span>${badgeQuien(e)}<span class="t">${h ? h + ' ' : ''}${esc(e.title)}</span>${e.user_id === uid ? `<b class="x" data-id="${e.id}" title="Eliminar">×</b>` : ''}</span>`;
+      }).join('')}
+      ${evs.length > 3 ? `<span class="masmini">+${evs.length - 3} más</span>` : ''}
+      ${pend ? `<span class="tareasmini">☑ ${pend} tarea${pend > 1 ? 's' : ''}</span>` : ''}
+      <button class="addbtn" title="Añadir">+</button>
+    </div>`;
+    d.setDate(d.getDate() + 1);
+  }
+  $('cal').innerHTML = html;
+}
+
+// ── Vista COLUMNAS (semana / 3 días / día) ────────────────────────────────
+function renderCols() {
+  const n = modo === 'semana' ? 7 : modo === 'tres' ? 3 : 1;
+  $('cols').className = n === 7 ? 'siete' : n === 3 ? 'tres' : 'uno';
+  const { start } = rango(); // en semana arranca en lunes; en el resto, en el cursor
+  let html = '';
+  const d = new Date(start);
+  for (let i = 0; i < n; i++) {
+    const fecha = ymd(d);
+    const esHoy = d.getTime() === HOY.getTime();
+    const t = turnoDe(d);
+    const evs = evDelDia(fecha);
+    const tas = taDelDia(fecha);
+    html += `<div class="col${esHoy ? ' hoy' : ''}" data-f="${fecha}">
+      <div class="col-head">
+        <span class="col-num">${d.getDate()}</span>
+        <span class="col-dow">${fmt(d, { weekday: 'long' })} · ${fmt(d, { month: 'long' })}</span>
+        ${esHoy ? '<span class="badge-hoy">Hoy</span>' : ''}
+      </div>
+      ${turnoEsTarde(t) ? turnoChip(EGSTEK) : ''}
+      ${t ? turnoChip(t) : '<span class="vacio">Sin turno en el centro</span>'}
+      <div>
+        <div class="sec-t">Agenda</div>
+        ${evs.length ? evs.map(e => {
+          const s = estiloEv(e), h = horaDe(e);
+          return `<div class="fila-ev" style="background:${s.bg};color:${s.fg}">
+            <span class="hora">${h || '—'}</span>${badgeQuien(e)}<span class="t">${esc(e.title)}</span>
+            ${e.user_id === uid ? `<button class="x" data-id="${e.id}" title="Eliminar">×</button>` : ''}</div>`;
+        }).join('') : '<div class="vacio">Sin eventos</div>'}
+      </div>
+      <div>
+        <div class="sec-t">Tareas</div>
+        ${tas.length ? tas.map(ta => filaTarea(ta)).join('') : '<div class="vacio">Sin tareas con fecha</div>'}
+      </div>
+      ${esHoy && atrasadas.length ? `<div>
+        <div class="sec-t atrasada">Atrasadas (${atrasadas.length})</div>
+        ${atrasadas.slice(0, verAtrasadas ? atrasadas.length : 4).map(ta => filaTarea(ta, true)).join('')}
+        ${atrasadas.length > 4 ? `<button class="btn ver-atr" id="verAtrBtn">${verAtrasadas ? 'Ver menos' : `Ver las ${atrasadas.length}`}</button>` : ''}
+      </div>` : ''}
+      <button class="col-add" data-f="${fecha}">+ Añadir a este día</button>
+    </div>`;
+    d.setDate(d.getDate() + 1);
+  }
+  $('cols').innerHTML = html;
+}
+function filaTarea(ta, conFecha = false) {
+  return `<div class="fila-ta${ta.completed ? ' hecha' : ''}${conFecha ? ' atrasada' : ''}">
+    <input type="checkbox" data-tid="${ta.id}" ${ta.completed ? 'checked' : ''}>
+    <span class="prio" style="background:${PRIO[ta.priority] || PRIO.low}" title="Prioridad ${prioTxt[ta.priority] || ''}"></span>
+    ${badgeQuien(ta)}<span class="t">${esc(ta.title)}</span>
+    ${conFecha && ta.due_date ? `<span class="fecha-atr">${ta.due_date.slice(8, 10)}/${ta.due_date.slice(5, 7)}</span>` : ''}
+  </div>`;
+}
+
+// ── Últimas 10 tareas añadidas (por created_at, marcables de un toque) ────
+const fechaCorta = iso => iso ? `${iso.slice(8, 10)}/${iso.slice(5, 7)}` : '';
+function pintaUltimas() {
+  const el = $('ultimas');
+  if (!uid) { el.innerHTML = '<div class="vacio">Inicia sesión para verlas.</div>'; return; }
+  const lista = ultimas.filter(pasaFiltro);
+  el.innerHTML = lista.length ? lista.map(ta => `<div class="fila-ta${ta.completed ? ' hecha' : ''}">
+      <input type="checkbox" data-tid="${ta.id}" ${ta.completed ? 'checked' : ''}>
+      <span class="prio" style="background:${PRIO[ta.priority] || PRIO.low}" title="Prioridad ${prioTxt[ta.priority] || ''}"></span>
+      ${badgeQuien(ta)}<span class="t">${esc(ta.title)}</span>
+      <span class="ult-fecha">añadida ${fechaCorta(ta.created_at)}${ta.due_date ? ' · para ' + fechaCorta(ta.due_date) : ''}</span>
+    </div>`).join('') : '<div class="vacio">Aún no hay tareas.</div>';
+}
+
+// ── Notas del calendario: anotaciones libres sobre eventos/tareas ─────────
+// (guion de una reunión, qué llevar, qué contar al salir…). Propias o del círculo.
+function pintaNotas() {
+  const el = $('notasLista');
+  if (!el) return;
+  if (!uid) { el.innerHTML = '<div class="vacio">Inicia sesión para verlas.</div>'; return; }
+  const lista = notas.filter(pasaFiltro);
+  el.innerHTML = lista.length ? lista.map(n => `<div class="fila-nota">
+      <div class="cab">${badgeQuien(n)}${n.fecha ? `<span class="dia-chip">📅 ${n.fecha.slice(8, 10)}/${n.fecha.slice(5, 7)}</span>` : ''}
+        <span class="cuando">apuntada ${fechaCorta(n.created_at)}</span>
+        ${n.user_id === uid ? `<button class="x" data-nid="${n.id}" title="Borrar nota">×</button>` : ''}</div>
+      <div class="cuerpo">${esc(n.body)}</div>
+    </div>`).join('') : '<div class="vacio">Sin notas. Apunta aquí el guion de una reunión, qué llevar a un evento…</div>';
+}
+$('notaAdd').addEventListener('click', async () => {
+  if (!uid) { alert('Inicia sesión para guardar notas.'); return; }
+  const body = $('notaBody').value.trim();
+  if (!body) { $('notaBody').focus(); return; }
+  const fila = { id: 'nota_' + Date.now(), user_id: uid, body, fecha: $('notaFecha').value || null, shared: $('notaShared').checked };
+  const { error } = await conReintento(() => sb.from('calendar_notas').insert(fila));
+  if (error) { alert('No se pudo guardar la nota: ' + error.message); return; }
+  $('notaBody').value = ''; $('notaFecha').value = '';
+  notas.unshift({ ...fila, created_at: new Date().toISOString() });
+  pintaNotas();
+});
+async function borraNota(id) {
+  if (!confirm('¿Borrar esta nota?')) return false;
+  const { error } = await conReintento(() => sb.from('calendar_notas').delete().eq('id', id));
+  if (error) { alert('No se pudo borrar la nota: ' + msgFallo(error)); return false; }
+  notas = notas.filter(n => n.id !== id);
+  pintaNotas();
+  return false; // ya repintado aquí; el manejador global no necesita render()
+}
+
+// ── Interacción global (eventos, tareas, panel) ───────────────────────────
+let diaPanel = null, tipoPanel = 'ev';
+function abrePanel(fecha) {
+  if (!uid) { alert('Inicia sesión para añadir.'); return; }
+  diaPanel = fecha;
+  const f = new Date(fecha + 'T12:00:00');
+  $('panelTitulo').textContent = fmt(f, { weekday: 'long', day: 'numeric', month: 'long' });
+  const t = turnoDe(f);
+  $('panelSub').textContent = t ? `Turno: ${t.label.toLowerCase()}` : 'Sin turno en el centro';
+  const evs = evDelDia(fecha), tas = taDelDia(fecha);
+  $('evlist').innerHTML = [
+    ...evs.map(ev => {
+      const s = estiloEv(ev);
+      return `<div class="row"><span class="dot" style="background:${s.dot}"></span>${badgeQuien(ev)}<span class="t">${horaDe(ev) ? horaDe(ev) + ' · ' : ''}${esc(ev.title)}</span>${ev.user_id === uid ? `<button class="del" data-id="${ev.id}">×</button>` : ''}</div>`;
+    }),
+    ...tas.map(ta => `<div class="row"><span class="dot" style="background:${PRIO[ta.priority] || PRIO.low}"></span>${badgeQuien(ta)}<span class="t"${ta.completed ? ' style="text-decoration:line-through;color:var(--soft)"' : ''}>☑ ${esc(ta.title)}</span>${ta.user_id === uid ? `<button class="del" data-tid="${ta.id}">×</button>` : ''}</div>`),
+  ].join('') || '<p style="font-size:12px;color:var(--muted)">Nada apuntado este día.</p>';
+  $('fTitulo').value = ''; $('fHora').value = '';
+  $('fShared').checked = false;
+  $('filaShared').style.display = NOMBRES[uid] ? 'flex' : 'none';
+  $('panel').classList.add('open');
+  $('fTitulo').focus();
+}
+
+// En Safari móvil una petición puede fallar con «TypeError: Load failed» por
+// un corte breve de red. Reintentamos las escrituras con backoff antes de
+// rendirnos; un error real (no de red) no se reintenta.
+const esRedFallo = m => /load failed|failed to fetch|networkerror|network request failed|timeout|the network connection was lost/i.test(m || '');
+async function conReintento(fn, intentos = 3) {
+  let err;
+  for (let i = 0; i < intentos; i++) {
+    try {
+      const res = await fn();
+      if (!res || !res.error) return res || {};
+      err = res.error;
+      if (!esRedFallo(err.message)) return res;
+    } catch (e) {
+      err = e;
+      if (!esRedFallo(e.message)) return { error: e };
+    }
+    await new Promise(r => setTimeout(r, 400 * (i + 1)));
+  }
+  return { error: err };
+}
+const msgFallo = error => esRedFallo(error?.message) ? 'sin conexión, inténtalo otra vez' : (error?.message || 'error');
+
+async function borraEvento(id) {
+  if (!confirm('¿Eliminar este evento?')) return false;
+  const { error } = await conReintento(() => sb.from('calendar_events').delete().eq('id', id));
+  if (error) { alert('No se pudo eliminar: ' + msgFallo(error)); return false; }
+  return true;
+}
+async function borraTarea(id) {
+  if (!confirm('¿Eliminar esta tarea?')) return false;
+  const { error } = await conReintento(() => sb.from('tasks').delete().eq('id', id));
+  if (error) { alert('No se pudo eliminar: ' + msgFallo(error)); return false; }
+  return true;
+}
+async function marcaTarea(id, done) {
+  const { error } = await conReintento(() => sb.from('tasks').update({ completed: done }).eq('id', id));
+  if (error) { alert('No se pudo actualizar: ' + msgFallo(error)); return false; }
+  return true;
+}
+
+let verAtrasadas = false;
+document.body.addEventListener('click', async e => {
+  const vb = e.target.closest('#verAtrBtn');
+  if (vb) { verAtrasadas = !verAtrasadas; renderCols(); return; }
+  const x = e.target.closest('.x, .del');
+  if (x) {
+    e.stopPropagation();
+    const ok = x.dataset.id ? await borraEvento(x.dataset.id) : x.dataset.tid ? await borraTarea(x.dataset.tid) : x.dataset.nid ? await borraNota(x.dataset.nid) : false;
+    if (ok) { $('panel').classList.remove('open'); render(); }
+    return;
+  }
+  const add = e.target.closest('.col-add');
+  if (add) { abrePanel(add.dataset.f); return; }
+  const celda = e.target.closest('.dia');
+  if (celda) { abrePanel(celda.dataset.f); return; }
+});
+document.body.addEventListener('change', async e => {
+  const cb = e.target.closest('input[type=checkbox][data-tid]');
+  if (!cb) return;
+  const ok = await marcaTarea(cb.dataset.tid, cb.checked);
+  if (ok) render(); else cb.checked = !cb.checked;
+});
+
+$('tabEv').onclick = () => { tipoPanel = 'ev'; $('tabEv').classList.add('on'); $('tabTa').classList.remove('on'); $('filaEv').style.display = ''; $('filaTa').style.display = 'none'; };
+$('tabTa').onclick = () => { tipoPanel = 'ta'; $('tabTa').classList.add('on'); $('tabEv').classList.remove('on'); $('filaEv').style.display = 'none'; $('filaTa').style.display = ''; };
+$('fCerrar').onclick = () => $('panel').classList.remove('open');
+$('panel').addEventListener('click', e => { if (e.target === $('panel')) $('panel').classList.remove('open'); });
+$('fVerDia').onclick = () => {
+  if (!diaPanel) return;
+  cursor = new Date(diaPanel + 'T00:00:00');
+  cambiaModo('dia');
+  $('panel').classList.remove('open');
+};
+$('fGuardar').onclick = async () => {
+  const titulo = $('fTitulo').value.trim();
+  if (!titulo || !diaPanel) return;
+  let error;
+  if (tipoPanel === 'ev') {
+    const hora = $('fHora').value;
+    const start = hora ? `${diaPanel}T${hora}` : diaPanel;
+    ({ error } = await conReintento(() => sb.from('calendar_events').insert({
+      id: `ev_cal_${Date.now()}`, user_id: uid, title: titulo,
+      start_date: start, end_date: start, type: $('fTipo').value,
+      shared: $('fShared').checked,
+    })));
+  } else {
+    ({ error } = await conReintento(() => sb.from('tasks').insert({
+      id: `task_cal_${Date.now()}`, user_id: uid, title: titulo, completed: false,
+      category: $('fCat').value, priority: $('fPrio').value, due_date: diaPanel,
+      shared: $('fShared').checked,
+    })));
+  }
+  if (error) { alert('No se pudo guardar: ' + msgFallo(error)); return; }
+  $('panel').classList.remove('open');
+  render();
+};
+
+// ── Navegación ────────────────────────────────────────────────────────────
+function cambiaModo(v) {
+  modo = v;
+  localStorage.setItem('fh_cal_modo', v);
+  render();
+}
+$('segVista').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]');
+  if (b) cambiaModo(b.dataset.v);
+});
+function mueve(dir) {
+  if (modo === 'mes') cursor = new Date(cursor.getFullYear(), cursor.getMonth() + dir, 1);
+  else { cursor = new Date(cursor); cursor.setDate(cursor.getDate() + dir * (modo === 'semana' ? 7 : modo === 'tres' ? 3 : 1)); }
+  render();
+}
+$('prev').onclick = () => mueve(-1);
+$('next').onclick = () => mueve(1);
+$('hoyBtn').onclick = () => { cursor = new Date(HOY); render(); };
+
+// ── ACTUALIZAR ─────────────────────────────────────────────────────────────
+// `render()` ya vuelve a leer de Supabase, así que recargar es llamarlo. Lo
+// que faltaba era la puerta: si apuntas algo por Telegram con el calendario
+// abierto, no había forma de verlo sin recargar la página entera.
+let recargando = false;
+let ultimaCarga = Date.now();
+const marcaCarga = () => { ultimaCarga = Date.now(); };
+async function recargar() {
+  if (recargando) return;
+  recargando = true;
+  const b = $('recargarBtn');
+  b.classList.add('girando');
+  b.disabled = true;
+  try { await render(); } finally {
+    recargando = false;
+    b.disabled = false;
+    b.classList.remove('girando');
+    marcaCarga();
+  }
+}
+$('recargarBtn').onclick = recargar;
+
+// Y al volver a la pestaña, que es justo cuando vuelves de Telegram. Con
+// margen de 20 s para no repetir la consulta si solo cambias de app un
+// segundo.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Date.now() - ultimaCarga > 20000) {
+    marcaCarga(); recargar();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.key === 'r' && !e.metaKey && !e.ctrlKey && !e.altKey) recargar();
+  if (e.key === 'ArrowLeft') mueve(-1);
+  if (e.key === 'ArrowRight') mueve(1);
+});
+
+// ── Asistente: qué tienes pendiente, claro ────────────────────────────────
+// 1) Resumen determinista inmediato (turno + agenda + tareas + atrasadas).
+// 2) Análisis en lenguaje natural vía la edge function ai-proxy de FileHub
+//    (claves server-side; si la sesión caducó se refresca y reintenta una vez).
+function diasAsistente() {
+  const dias = [];
+  let base;
+  if (modo === 'mes') {
+    const mismoMes = cursor.getFullYear() === HOY.getFullYear() && cursor.getMonth() === HOY.getMonth();
+    base = mismoMes ? new Date(HOY) : new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  } else if (modo === 'semana') base = rango().start;
+  else base = new Date(cursor);
+  const n = modo === 'dia' ? 1 : modo === 'tres' ? 3 : 7;
+  const d = new Date(base);
+  for (let i = 0; i < n; i++) { dias.push(new Date(d)); d.setDate(d.getDate() + 1); }
+  return dias;
+}
+function datosDia(d) {
+  const fecha = ymd(d);
+  return { d, fecha, turno: turnoDe(d), evs: evDelDia(fecha), tas: taDelDia(fecha), esHoy: fecha === HOY_S };
+}
+function pintaBrief(dias) {
+  $('agBrief').innerHTML = dias.map(x => {
+    const evsHtml = x.evs.length
+      ? x.evs.map(e => `<li><span class="hora">${horaDe(e) || '—'}</span><span>${esc(e.title)}</span></li>`).join('')
+      : '<li style="color:var(--soft)">Sin eventos</li>';
+    const pend = x.tas.filter(t => !t.completed);
+    const tasHtml = pend.length
+      ? pend.map(t => `<li><span class="prio" style="background:${PRIO[t.priority] || PRIO.low};margin-top:4px"></span><span>${esc(t.title)}</span></li>`).join('')
+      : '<li style="color:var(--soft)">Sin tareas pendientes</li>';
+    const atrHtml = x.esHoy && atrasadas.length
+      ? `<div class="grupo atrasada">Atrasadas</div><ul>${atrasadas.slice(0, 6).map(t =>
+          `<li class="atrasada"><span class="prio" style="background:var(--prio-high);margin-top:4px"></span><span>${esc(t.title)} <span class="fecha-atr">(${(t.due_date || '').slice(8, 10)}/${(t.due_date || '').slice(5, 7)})</span></span></li>`).join('')}</ul>`
+      : '';
+    return `<div class="ag-dia">
+      <h4>${fmt(x.d, { weekday: 'long', day: 'numeric', month: 'long' })}${x.esHoy ? '<span class="badge-hoy">Hoy</span>' : ''}</h4>
+      ${turnoEsTarde(x.turno) ? turnoChip(EGSTEK) : ''}
+      ${x.turno ? turnoChip(x.turno) : '<span class="vacio">Sin turno en el centro</span>'}
+      <div class="grupo">Agenda</div><ul>${evsHtml}</ul>
+      <div class="grupo">Tareas</div><ul>${tasHtml}</ul>
+      ${atrHtml}
+    </div>`;
+  }).join('');
+}
+function promptAsistente(dias) {
+  const lineas = dias.map(x => {
+    const evs = x.evs.map(e => `${horaDe(e) || 'sin hora'} ${e.title}`).join('; ') || 'ninguno';
+    const pend = x.tas.filter(t => !t.completed).map(t => `${t.title} (prioridad ${prioTxt[t.priority] || 'media'})`).join('; ') || 'ninguna';
+    return `${fmt(x.d, { weekday: 'long', day: 'numeric', month: 'long' })}${x.esHoy ? ' (HOY)' : ''}
+- Turno en el centro de salud: ${x.turno ? x.turno.label : 'libre'}${turnoEsTarde(x.turno) ? ' (la mañana, de 8:30 a 12:00, está dedicada a EGS TEK: desarrollo de webapps y proyectos)' : ''}
+- Eventos: ${evs}
+- Tareas pendientes con fecha: ${pend}`;
+  }).join('\n\n');
+  const atr = atrasadas.length
+    ? '\n\nTareas ATRASADAS sin completar: ' + atrasadas.map(t => `${t.title} (vencía ${t.due_date})`).join('; ')
+    : '';
+  const sf = sinFecha.length
+    ? '\nTareas pendientes sin fecha: ' + sinFecha.map(t => t.title).join('; ')
+    : '';
+  return `Estos son mis próximos días:\n\n${lineas}${atr}${sf}\n\nDime claramente qué tengo pendiente cada día.`;
+}
+async function llamaIA(userText) {
+  const body = {
+    messages: [{ role: 'user', content: userText }],
+    system: `Eres el asistente de agenda de ${quienSoy().desc}. Responde SIEMPRE en español, con tono claro, directo y ordenado. Estructura la respuesta día por día (empezando por hoy si aparece), en frases cortas o guiones. Para cada día: el turno de trabajo, los eventos con su hora y las tareas pendientes por prioridad. Avisa explícitamente de choques de horario entre turno y eventos, y recuerda las tareas atrasadas al principio si las hay. No inventes nada que no esté en los datos. Máximo unas 200 palabras.`,
+    maxTokens: 700,
+  };
+  let { data, error } = await sb.functions.invoke('ai-proxy', { body });
+  const es401 = (e, d) => (!!e && /401|unauthorized|non-2xx/i.test(e.message || '')) || (d?.error && /unauthorized/i.test(d.error));
+  if (es401(error, data)) {
+    try { await sb.auth.refreshSession(); } catch { /* sin sesión refrescable */ }
+    ({ data, error } = await sb.functions.invoke('ai-proxy', { body }));
+  }
+  if (!error && data?.content) return String(data.content);
+  throw new Error(error?.message || data?.error || 'sin respuesta');
+}
+let agentePedido = 0;
+async function abreAsistente() {
+  if (!uid) { alert('Inicia sesión para usar el asistente.'); return; }
+  const dias = diasAsistente();
+  const d1 = dias[0], d2 = dias[dias.length - 1];
+  $('agSub').textContent = dias.length === 1
+    ? fmt(d1, { weekday: 'long', day: 'numeric', month: 'long' })
+    : `Del ${d1.getDate()} ${fmt(d1, { month: 'short' })} al ${d2.getDate()} ${fmt(d2, { month: 'short' })}`;
+  pintaBrief(dias.map(datosDia));
+  if (!$('qaFecha').value) $('qaFecha').value = ymd(HOY);
+  $('agPanel').classList.add('open');
+  const ia = $('agIA');
+  ia.className = 'pensando'; ia.textContent = 'Pensando…';
+  const pedido = ++agentePedido;
+  try {
+    const txt = await llamaIA(promptAsistente(dias.map(datosDia)));
+    if (pedido !== agentePedido) return; // el usuario pidió otro resumen después
+    ia.className = ''; ia.textContent = txt;
+  } catch (err) {
+    if (pedido !== agentePedido) return;
+    ia.className = 'pensando';
+    ia.textContent = 'La IA no está disponible ahora mismo (' + err.message + '). El resumen de arriba ya recoge todo lo pendiente.';
+  }
+}
+// ── Tema claro / oscuro ────────────────────────────────────────────────────
+const TEMAS = ['auto', 'light', 'dark'];
+const TEMA_ICONO = { auto: '🌗', light: '☀️', dark: '🌙' };
+const TEMA_TXT = { auto: 'automático (sigue al sistema)', light: 'claro', dark: 'oscuro' };
+const mqOscuro = matchMedia('(prefers-color-scheme: dark)');
+function aplicaTema() {
+  const pref = document.documentElement.dataset.temaPref || 'auto';
+  const oscuro = pref === 'dark' || (pref === 'auto' && mqOscuro.matches);
+  document.documentElement.dataset.tema = oscuro ? 'dark' : 'light';
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', oscuro ? '#0b1326' : '#f4f6fa');
+  const b = $('temaBtn');
+  if (b) { b.textContent = TEMA_ICONO[pref]; b.title = `Tema ${TEMA_TXT[pref]} — toca para cambiar`; }
+}
+$('temaBtn').onclick = () => {
+  const pref = document.documentElement.dataset.temaPref || 'auto';
+  const sig = TEMAS[(TEMAS.indexOf(pref) + 1) % TEMAS.length];
+  document.documentElement.dataset.temaPref = sig;
+  localStorage.setItem('fh_cal_tema', sig);
+  aplicaTema();
+};
+mqOscuro.addEventListener('change', aplicaTema);
+aplicaTema();
+
+$('agRefrescar').onclick = abreAsistente;
+$('agFab').onclick = abreAsistente;
+
+// ── Mando en lenguaje natural → agente de FileHub (crea/ajusta y refresca) ──
+async function mandaComando() {
+  const txt = $('agCmd').value.trim();
+  if (!txt) { $('agCmd').focus(); return; }
+  if (!uid) { $('agCmdRes').textContent = 'Entra con tu cuenta para pedirme cosas.'; return; }
+  const res = $('agCmdRes');
+  res.textContent = '⏳ Pensando…';
+  const pide = () => sb.functions.invoke('agente', { body: { text: txt } });
+  try {
+    let { data, error } = await pide();
+    if (error && /401|unauthor/i.test(error.message || '')) {
+      try { await sb.auth.refreshSession(); } catch { /* sin sesión refrescable */ }
+      ({ data, error } = await pide());
+    }
+    if (error || data?.error) throw new Error(data?.error || error?.message || 'sin respuesta');
+    const acc = Array.isArray(data?.acciones) && data.acciones.length ? ' · ' + data.acciones.join(' ') : '';
+    res.textContent = (data?.speech || 'Hecho.') + acc;
+    $('agCmd').value = '';
+    await render();   // trae lo que el agente haya creado/cambiado
+  } catch (e) {
+    res.textContent = '⚠️ ' + e.message;
+  }
+}
+$('agCmdBtn').onclick = mandaComando;
+$('agCmd').addEventListener('keydown', e => { if (e.key === 'Enter') mandaComando(); });
+$('agCerrar').onclick = () => $('agPanel').classList.remove('open');
+$('agPanel').addEventListener('click', e => { if (e.target === $('agPanel')) $('agPanel').classList.remove('open'); });
+
+// ── Apuntar rápido desde el asistente (evento o tarea, propio o común) ─────
+let qaTipo = 'ev';
+$('qaEv').onclick = () => { qaTipo = 'ev'; $('qaEv').classList.add('on'); $('qaTa').classList.remove('on'); $('qaHora').style.display = ''; };
+$('qaTa').onclick = () => { qaTipo = 'ta'; $('qaTa').classList.add('on'); $('qaEv').classList.remove('on'); $('qaHora').style.display = 'none'; };
+$('qaGuardar').onclick = async () => {
+  const titulo = $('qaTitulo').value.trim();
+  const fecha = $('qaFecha').value || ymd(HOY);
+  if (!titulo) { $('qaTitulo').focus(); return; }
+  const compartida = $('qaShared').checked;
+  let error;
+  if (qaTipo === 'ev') {
+    const hora = $('qaHora').value;
+    const start = hora ? `${fecha}T${hora}` : fecha;
+    ({ error } = await conReintento(() => sb.from('calendar_events').insert({
+      id: `ev_cal_${Date.now()}`, user_id: uid, title: titulo,
+      start_date: start, end_date: start, type: 'personal', shared: compartida,
+    })));
+  } else {
+    ({ error } = await conReintento(() => sb.from('tasks').insert({
+      id: `task_cal_${Date.now()}`, user_id: uid, title: titulo, completed: false,
+      category: 'personal', priority: 'medium', due_date: fecha, shared: compartida,
+    })));
+  }
+  const m = $('qaMsg');
+  if (error) { m.textContent = '⚠️ No se pudo guardar: ' + msgFallo(error); return; }
+  m.textContent = `✓ ${qaTipo === 'ev' ? 'Evento guardado' : 'Tarea guardada'}: «${titulo}» (${fecha})${compartida ? ' · 👥 común' : ''}`;
+  $('qaTitulo').value = '';
+  render();
+};
+
+// ── Posibles eventos: búsqueda REAL en internet vía la edge function `agente`
+//    (el mismo cerebro del bot de Telegram; funciona con la sesión de
+//    cualquier perfil, Carlos o Montse). ────────────────────────────────────
+async function buscaPosibles() {
+  const q = $('peQuery').value.trim();
+  if (!q) { $('peQuery').focus(); return; }
+  const box = $('peRes');
+  box.innerHTML = '<div class="pensando" style="margin-top:8px">Buscando en internet… (puede tardar medio minuto)</div>';
+  const pide = () => sb.functions.invoke('agente', { body: { text: q, voz: true } });
+  try {
+    let { data, error } = await pide();
+    if (error && /401|unauthor/i.test(error.message || '')) {
+      try { await sb.auth.refreshSession(); } catch { /* sin sesión refrescable */ }
+      ({ data, error } = await pide());
+    }
+    if (error || data?.error) throw new Error(data?.error || error?.message || 'sin respuesta');
+    const fuentes = (data?.datos?.busqueda?.resultados || []).slice(0, 5);
+    box.innerHTML = `
+      <div id="peTxt" style="font-size:13px;line-height:1.55;white-space:pre-wrap;margin-top:8px"></div>
+      ${fuentes.length ? '<div class="sec-t" style="margin-top:10px">Fuentes</div>' + fuentes.map(f =>
+        `<div style="font-size:12.5px;margin-top:5px;overflow-wrap:break-word">🔗 <a href="${esc(f.url)}" target="_blank" rel="noopener" style="color:var(--indigo)">${esc(f.titulo || f.url)}</a></div>`).join('') : ''}
+      <button class="btn" id="peAlCal" style="margin-top:10px;width:100%">➕ Apuntarlo arriba (elige día y guarda)</button>`;
+    $('peTxt').textContent = data?.speech || 'Sin respuesta.';
+    $('peAlCal').onclick = () => {
+      if (!$('qaTitulo').value.trim()) $('qaTitulo').value = q.slice(0, 90);
+      $('qaTitulo').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('qaTitulo').focus();
+    };
+  } catch (err) {
+    box.innerHTML = `<div class="pensando" style="margin-top:8px">No he podido buscar: ${esc(err.message)}</div>`;
+  }
+}
+$('peBuscar').onclick = buscaPosibles;
+$('peQuery').addEventListener('keydown', e => { if (e.key === 'Enter') buscaPosibles(); });
+
+// ── Revisión semanal: cada 7 días, repaso de tareas viejas pendientes ─────
+// Hito y aplazamiento en localStorage (por navegador): fh_cal_revision_ts /
+// fh_cal_revision_snooze. Si no hay tareas viejas, el ciclo se cumple sin banner.
+const DIA_MS = 86400000;
+let viejas = [], revComprobada = false;
+async function revisionSemanal() {
+  if (!uid || revComprobada) return;
+  revComprobada = true;
+  const ts = +localStorage.getItem('fh_cal_revision_ts') || 0;
+  const snooze = +localStorage.getItem('fh_cal_revision_snooze') || 0;
+  const ahora = Date.now();
+  if (ahora - ts < 7 * DIA_MS || ahora < snooze) return;
+  const corte = new Date(ahora - 7 * DIA_MS).toISOString();
+  const { data, error } = await sb.from('tasks')
+    .select('id,title,priority,created_at,due_date')
+    .eq('user_id', uid).eq('completed', false)
+    .lt('created_at', corte)
+    // Sin fecha o vencida hace poco: los fósiles muy antiguos no se repasan.
+    .or(`due_date.is.null,due_date.gte.${ATRAS_DESDE}`)
+    .order('created_at').limit(50);
+  if (error || !data) return;
+  if (!data.length) { localStorage.setItem('fh_cal_revision_ts', String(ahora)); return; }
+  viejas = data;
+  $('avisoTxt').textContent = viejas.length === 1
+    ? '🔔 Revisión semanal: 1 tarea lleva más de 7 días pendiente.'
+    : `🔔 Revisión semanal: ${viejas.length} tareas llevan más de 7 días pendientes.`;
+  $('avisoRevision').classList.add('on');
+}
+function pintaRevision() {
+  $('revLista').innerHTML = viejas.length ? viejas.map(t => `<div class="rev-row">
+      <span class="prio" style="background:${PRIO[t.priority] || PRIO.low}"></span>
+      <span class="t">${esc(t.title)} <span class="ult-fecha">(desde ${fechaCorta(t.created_at)})</span></span>
+      <button class="btn" data-rev-ok="${t.id}">✅ Hecha</button>
+      <button class="btn" data-rev-no="${t.id}">⏳ Pendiente</button>
+    </div>`).join('') : '<p style="font-size:13px;color:var(--muted)">Todo revisado. Ciclo cumplido: el próximo aviso, en 7 días.</p>';
+}
+function cierraRevision() {
+  localStorage.setItem('fh_cal_revision_ts', String(Date.now()));
+  localStorage.removeItem('fh_cal_revision_snooze');
+  $('avisoRevision').classList.remove('on');
+  $('revision').classList.remove('open');
+  render();
+}
+$('revAbrir').onclick = () => { pintaRevision(); $('revision').classList.add('open'); };
+$('revLuego').onclick = () => {
+  localStorage.setItem('fh_cal_revision_snooze', String(Date.now() + DIA_MS));
+  $('avisoRevision').classList.remove('on');
+};
+$('revCerrar').onclick = cierraRevision;
+$('revision').addEventListener('click', async e => {
+  if (e.target === $('revision')) { cierraRevision(); return; }
+  const ok = e.target.closest('[data-rev-ok]');
+  const no = e.target.closest('[data-rev-no]');
+  if (!ok && !no) return;
+  const id = ok ? ok.dataset.revOk : no.dataset.revNo;
+  if (ok && !(await marcaTarea(id, true))) return;
+  viejas = viejas.filter(t => String(t.id) !== String(id));
+  pintaRevision();
+});
+
+// ── Sesión ────────────────────────────────────────────────────────────────
+// Google OAuth: mismo flujo que la webapp (AuthView) — redirige a Google y
+// vuelve AQUÍ mismo; supabase-js procesa el #access_token del retorno solo
+// (detectSessionInUrl) y la sesión queda compartida con la app (mismo dominio).
+$('gbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: `${location.origin}${location.pathname}`,
+      queryParams: { access_type: 'offline', prompt: 'select_account' },
+    },
+  });
+  if (error) alert('No se pudo iniciar con Google: ' + error.message);
+};
+$('lbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('lemail').value.trim(), password: $('lpass').value });
+  if (error) { alert('No se pudo entrar: ' + error.message); return; }
+  location.reload();
+};
+function aplicaSesion(session) {
+  const nuevo = session?.user?.id || null;
+  if (nuevo === uid) return;
+  uid = nuevo;
+  emailSesion = (session?.user?.email || '').toLowerCase();
+  $('login').style.display = uid ? 'none' : 'block';
+  pintaViernesBtn();
+  render();
+  revisionSemanal();
+}
+// Al volver de Google, SIGNED_IN llega en cuanto el SDK procesa el hash.
+sb.auth.onAuthStateChange((_ev, session) => {
+  aplicaSesion(session);
+  if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname);
+});
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  uid = session?.user?.id || null;
+  emailSesion = (session?.user?.email || '').toLowerCase();
+  $('login').style.display = uid ? 'none' : 'block';
+  pintaViernesBtn();
+  await render();
+  revisionSemanal();
+})();
+</script>
+
+</body>
+</html>

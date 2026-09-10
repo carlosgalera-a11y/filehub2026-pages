@@ -1,0 +1,3 @@
+# FileHub es una app personal privada: no indexar nada.
+User-agent: *
+Disallow: /
