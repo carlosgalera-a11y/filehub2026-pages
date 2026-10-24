@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="fhbg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#8083ff"/>
+      <stop offset="55%" stop-color="#6c70f0"/>
+      <stop offset="100%" stop-color="#5b5fdb"/>
+    </linearGradient>
+    <linearGradient id="fhglow" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#e8e9ff" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" ry="112" fill="url(#fhbg)"/>
+  <path d="M 312 64 L 168 298 L 240 298 L 200 448 L 344 214 L 272 214 Z"
+        fill="url(#fhglow)"
+        stroke="#ffffff"
+        stroke-width="12"
+        stroke-linejoin="round"
+        stroke-linecap="round"/>
+</svg>
