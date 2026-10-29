@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f4f6fa">
+<title>Panel · FileHub</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-calendario-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-calendario-180.png">
+<meta name="apple-mobile-web-app-title" content="Panel">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest-tablet.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Mismo tema que calendario.html (fh_cal_tema, compartido en este dominio): se
+  // aplica antes de pintar para no ver un fogonazo blanco al abrir en oscuro.
+  (function () {
+    var pref = localStorage.getItem('fh_cal_tema') || 'auto';
+    var oscuro = pref === 'dark' || (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.tema = oscuro ? 'dark' : 'light';
+  })();
+</script>
+<style>
+  /* Panel fijo para la tablet (horizontal, ~1280×800). Tokens = calendario.html. */
+  :root {
+    --ink: #0f172a; --muted: #64748b; --soft: #94a3b8;
+    --line: #e5e9f2; --bg: #f4f6fa; --card: #ffffff;
+    --indigo: #4f46e5; --indigo-soft: #eef2ff; --indigo-ring: #4f46e51a;
+    --shadow: 0 1px 2px rgba(15,23,42,.05), 0 4px 14px rgba(15,23,42,.05);
+    --radius: 14px;
+    --seg-bg: #e9edf5; --seg-on: #ffffff;
+    --overlay: #0f172a59; --sheet-shadow: 0 -8px 30px #00000033;
+    --aviso-bg: #fffbeb; --aviso-line: #fde68a; --aviso-fg: #92400e;
+    --atr-fecha: #dc2626;
+    --tarea: #0ea5e9; --montse: #db2777;
+    --t-urg-bg: #dc2626; --t-urg-fg: #ffffff;
+    --t-agm-bg: #16a34a; --t-agm-fg: #ffffff;
+    --t-agt-bg: #2563eb; --t-agt-fg: #ffffff;
+    --t-egs-bg: #facc15; --t-egs-fg: #4a3403;
+    --ev-personal-bg: #e0e7ff; --ev-personal-fg: #4338ca; --ev-personal-dot: #6366f1;
+    --ev-work-bg: #fef3c7;     --ev-work-fg: #b45309;     --ev-work-dot: #f59e0b;
+    --ev-fitness-bg: #d1fae5;  --ev-fitness-fg: #047857;  --ev-fitness-dot: #10b981;
+    --ev-trip-bg: #cffafe;     --ev-trip-fg: #0e7490;     --ev-trip-dot: #06b6d4;
+    --ev-guardia-bg: #fee2e2;  --ev-guardia-fg: #b91c1c;  --ev-guardia-dot: #ef4444;
+    --prio-high: #ef4444; --prio-medium: #f59e0b; --prio-low: #94a3b8;
+    /* Fuentes de las tareas */
+    --src-fh: #4f46e5; --src-fh-bg: #eef2ff;
+    --src-egs: #0d9488; --src-egs-bg: #ccfbf1;
+    --src-ag: #7c3aed; --src-ag-bg: #ede9fe;
+    --col-bg: #eef1f7;
+    /* Áreas de la casa */
+    --area-limpieza: #0ea5e9; --area-cocina: #f97316; --area-compra: #10b981; --area-otro: #8b5cf6;
+    color-scheme: light;
+  }
+  html[data-tema="dark"] {
+    --ink: #f8fafc; --muted: #94a3b8; --soft: #64748b;
+    --line: #283449; --bg: #0b1326; --card: #131b2e;
+    --indigo: #8083ff; --indigo-soft: #8083ff26; --indigo-ring: #8083ff2e;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.30);
+    --seg-bg: #1b2438; --seg-on: #222a3d;
+    --overlay: #020617b3; --sheet-shadow: 0 -8px 30px #00000066;
+    --aviso-bg: #3a2c0c; --aviso-line: #6b5312; --aviso-fg: #fcd34d;
+    --atr-fecha: #f87171;
+    --tarea: #38bdf8; --montse: #f472b6;
+    --ev-personal-bg: #232a4d; --ev-personal-fg: #c0c1ff; --ev-personal-dot: #8083ff;
+    --ev-work-bg: #3a2c12;     --ev-work-fg: #fcd34d;     --ev-work-dot: #f59e0b;
+    --ev-fitness-bg: #10322a;  --ev-fitness-fg: #6ee7b7;  --ev-fitness-dot: #4edea3;
+    --ev-trip-bg: #113240;     --ev-trip-fg: #67e8f9;     --ev-trip-dot: #22d3ee;
+    --ev-guardia-bg: #3a1c1f;  --ev-guardia-fg: #fca5a5;  --ev-guardia-dot: #f87171;
+    --prio-high: #f87171; --prio-medium: #fbbf24; --prio-low: #64748b;
+    --src-fh: #8083ff; --src-fh-bg: #8083ff26;
+    --src-egs: #2dd4bf; --src-egs-bg: #2dd4bf1f;
+    --src-ag: #a78bfa; --src-ag-bg: #a78bfa24;
+    --col-bg: #0f1729;
+    --area-limpieza: #38bdf8; --area-cocina: #fb923c; --area-compra: #4edea3; --area-otro: #a78bfa;
+    color-scheme: dark;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.4;
+    overflow: hidden; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
+  }
+  h1, h2, h3, h4, .reloj b, .num, .stat .n { font-family: 'Hanken Grotesk', 'Inter', sans-serif; }
+  button { font-family: inherit; color: inherit; }
+  .app {
+    height: 100vh; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px;
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+  }
+
+  /* ── Cabecera ── */
+  .top { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; }
+  .reloj { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .reloj b { font-size: 36px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .reloj span { color: var(--muted); font-weight: 600; font-size: 15px; white-space: nowrap; }
+  .turnos-hoy { display: flex; gap: 6px; flex-wrap: wrap; }
+  .top .der { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .seg { display: inline-flex; background: var(--seg-bg); border-radius: 12px; padding: 3px; gap: 2px; }
+  .seg button {
+    border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 14px;
+    padding: 8px 14px; border-radius: 9px; cursor: pointer;
+  }
+  .seg button.on { background: var(--seg-on); color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.12); }
+  .btn {
+    border: 1px solid var(--line); background: var(--card); border-radius: 10px; min-width: 40px; height: 40px;
+    padding: 0 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn:active, .seg button:active { transform: scale(.97); }
+  .nav { display: inline-flex; gap: 6px; }
+
+  /* ── Cuerpo: vista + lateral ── */
+  .cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; min-height: 0; }
+  .vista, .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .vista { display: flex; flex-direction: column; min-height: 0; padding: 12px 12px 10px; }
+  .vista-cab { display: flex; align-items: center; gap: 10px; margin: 0 2px 10px; flex-wrap: wrap; }
+  .vista-cab h2 { font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
+  .chips { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .chips button {
+    border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 12px;
+    font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer;
+  }
+  .chips button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  #contenido { flex: 1; min-height: 0; overflow: auto; }
+  .lateral { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+
+  .chip-t {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; letter-spacing: .01em;
+  }
+  .turnos-hoy .chip-t { font-size: 13px; padding: 5px 10px; border-radius: 8px; }
+  .vacio { color: var(--soft); font-size: 13px; padding: 6px 2px; }
+  .quien { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; font-size: 9px; font-weight: 800; background: var(--indigo-soft); color: var(--indigo); flex: none; }
+  .quien.m { background: color-mix(in srgb, var(--montse) 18%, transparent); color: var(--montse); }
+
+  /* ── Mes ── */
+  .v-mes { overflow: hidden !important; }
+  .mes { display: grid; grid-template-rows: auto repeat(var(--filas), minmax(0, 1fr)); gap: 4px; height: 100%; }
+  .mes-dows, .mes-fila { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; min-height: 0; }
+  .mes-dows span { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .celda {
+    border: 1px solid var(--line); border-radius: 10px; padding: 4px 5px; overflow: hidden; min-height: 0;
+    display: flex; flex-direction: column; gap: 2px; cursor: pointer;
+  }
+  .celda.fuera { opacity: .42; }
+  .celda.hoy { border-color: var(--indigo); box-shadow: inset 0 0 0 1px var(--indigo); background: var(--indigo-soft); }
+  .celda .num { font-size: 13px; font-weight: 800; line-height: 1.2; }
+  .celda.hoy .num { color: var(--indigo); }
+  .celda .chip-t { font-size: 9.5px; padding: 1px 5px; border-radius: 5px; }
+  .it { font-size: 11.5px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 4px; align-items: center; min-width: 0; }
+  .it > span { overflow: hidden; text-overflow: ellipsis; }
+  .it b { font-weight: 700; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+  .cuad { width: 8px; height: 8px; border-radius: 2px; border: 1.5px solid var(--tarea); flex: none; }
+  .hecha { opacity: .5; text-decoration: line-through; }
+  .tag { font-style: normal; font-size: 8.5px; font-weight: 800; padding: 0 4px; border-radius: 4px; flex: none; letter-spacing: .03em; }
+  .tag.egs { background: var(--src-egs-bg); color: var(--src-egs); }
+  .tag.ag { background: var(--src-ag-bg); color: var(--src-ag); }
+  .tag.casa { background: color-mix(in srgb, var(--area-otro) 18%, transparent); color: var(--area-otro); }
+  .mas { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+
+  /* ── Semana ── */
+  .semana { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; height: 100%; }
+  .scol { border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .scol.hoy { border-color: var(--indigo); box-shadow: inset 0 0 0 1px var(--indigo); }
+  .scol-cab { padding: 8px 8px 6px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+  .scol-cab .num { font-size: 15px; font-weight: 800; }
+  .scol-cab .chip-t { white-space: normal; font-size: 10.5px; }
+  .scol-cab .num small { font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; margin-right: 4px; }
+  .scol.hoy .scol-cab .num { color: var(--indigo); }
+  .scol-lista { overflow: auto; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+  .ficha { border-radius: 8px; padding: 5px 7px; font-size: 12.5px; line-height: 1.3; word-break: break-word; cursor: pointer; }
+  .ficha b { display: block; font-size: 11px; opacity: .85; }
+  .ficha.fh { background: var(--src-fh-bg); border-left: 3px solid var(--tarea); }
+  .ficha.egs { background: var(--src-egs-bg); border-left: 3px solid var(--src-egs); }
+  .ficha.casa { background: color-mix(in srgb, var(--area-otro) 14%, transparent); border-left: 3px solid var(--area-otro); }
+
+  /* ── Día ── */
+  .dia { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+  .dia-cab { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .dia h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 4px 0 8px; }
+  .dia section + section { margin-top: 12px; }
+  .ev-fila { display: flex; gap: 12px; padding: 10px 12px; border-radius: 12px; margin-bottom: 6px; align-items: baseline; }
+  .ev-fila .h { font-family: 'Hanken Grotesk', sans-serif; font-weight: 800; font-size: 18px; min-width: 52px; font-variant-numeric: tabular-nums; }
+  .ev-fila .tt { font-weight: 600; font-size: 15px; }
+  .lfila {
+    display: flex; gap: 10px; align-items: center; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line);
+    margin-bottom: 6px; cursor: pointer; font-size: 14px;
+  }
+  .lfila .meta { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  /* ── Kanban ── */
+  .kanban { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; height: 100%; }
+  .kcol { background: var(--col-bg); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .kcol h3 { padding: 10px 12px 6px; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .kcol h3 .n { margin-left: auto; font-size: 12px; color: var(--muted); background: var(--card); border-radius: 999px; padding: 1px 8px; }
+  .klista { overflow: auto; padding: 2px 8px 10px; display: flex; flex-direction: column; gap: 7px; min-height: 0; }
+  .tarjeta {
+    background: var(--card); border-radius: 10px; padding: 8px 10px; border-left: 4px solid var(--c); box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .tarjeta.fh { --c: var(--src-fh); } .tarjeta.egs { --c: var(--src-egs); } .tarjeta.ag { --c: var(--src-ag); }
+  .tarjeta .t { font-weight: 600; font-size: 13.5px; line-height: 1.3; word-break: break-word; }
+  .tarjeta .m { font-size: 11.5px; color: var(--muted); margin-top: 4px; display: flex; gap: 4px 8px; flex-wrap: wrap; align-items: center; }
+  .fuente { font-weight: 700; color: var(--c); }
+  .venc { color: var(--atr-fecha); font-weight: 700; }
+  .prio { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .masbtn { border: 1px dashed var(--soft); background: transparent; color: var(--muted); border-radius: 10px; padding: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+
+  /* ── Lateral: resumen + parte ── */
+  .stats { display: grid; gap: 8px; }
+  .stat {
+    display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 10px;
+    padding: 8px 12px; border-left: 4px solid var(--c); cursor: pointer; border-radius: 12px;
+  }
+  .stat .l { font-size: 14px; font-weight: 700; }
+  .stat .n { font-size: 30px; font-weight: 800; line-height: 1; text-align: center; color: var(--c); font-variant-numeric: tabular-nums; }
+  .stat .d { font-size: 12px; color: var(--muted); line-height: 1.3; }
+  .stat .d .venc { font-weight: 700; }
+  .parte { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 14px; }
+  .parte-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .parte-cab h3 { font-size: 15px; font-weight: 800; }
+  .parte-nav { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .parte-nav button { border: none; background: var(--seg-bg); border-radius: 8px; width: 30px; height: 30px; font-size: 16px; cursor: pointer; }
+  .parte-nav button:disabled { opacity: .35; }
+  .md { overflow: auto; flex: 1; min-height: 0; font-size: 14px; line-height: 1.5; }
+  .md p { margin-bottom: 8px; }
+  .md ul { margin: 0 0 8px 18px; }
+  .md li { margin-bottom: 4px; }
+  .md h4 { font-size: 14px; margin: 8px 0 4px; }
+  .md code { font-size: 12.5px; background: var(--seg-bg); padding: 0 4px; border-radius: 4px; }
+  .pie { font-size: 11.5px; color: var(--muted); padding: 0 4px; }
+  .pie .aviso { color: var(--aviso-fg); background: var(--aviso-bg); border: 1px solid var(--aviso-line); border-radius: 8px; padding: 6px 8px; display: block; margin-top: 4px; }
+
+  /* ── Casa: gastos con Montse, tareas compartidas y reparto de la casa ── */
+  .casa { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 10px; min-height: 100%; }
+  .casa-cab { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .casa-cab .chips { margin-left: 0; }
+  .casa-cab .sep { flex: 1; }
+  .casa-cab .btn { height: 34px; font-size: 13.5px; }
+  .casa-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .casa-stat { padding: 8px 12px; border-left: 4px solid var(--c); border-radius: 12px; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 58px; cursor: pointer; }
+  .casa-stat .n { font-size: 21px; font-weight: 800; color: var(--c); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .casa-stat .l { font-size: 12px; color: var(--muted); font-weight: 600; line-height: 1.3; }
+  .casa-cuerpo { display: grid; gap: 12px; min-height: 0; }
+  .casa-abajo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .casa-panel { display: flex; flex-direction: column; min-height: 0; min-width: 0; gap: 8px; }
+  .casa-panel h4 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .casa-panel h4 .n { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 600; }
+  .casa-panel h4 a { color: var(--indigo); text-decoration: none; text-transform: none; letter-spacing: 0; font-weight: 600; }
+  .rutinas { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; height: min(400px, 50vh); }
+  .rutinas.tablero { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .rcol { background: var(--col-bg); border-radius: 10px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .rcol.hoy { box-shadow: inset 0 0 0 2px var(--indigo); }
+  .rcol-cab { padding: 6px 7px 4px; font-size: 12.5px; font-weight: 800; display: flex; align-items: baseline; gap: 4px; }
+  .rcol-cab small { font-weight: 600; color: var(--muted); text-transform: uppercase; font-size: 10.5px; }
+  .rcol-cab .n { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 600; }
+  .rlista { overflow: auto; padding: 0 5px 6px; display: flex; flex-direction: column; gap: 5px; }
+  .rut { background: var(--card); border-radius: 8px; padding: 6px 8px; border-left: 4px solid var(--c); box-shadow: var(--shadow); cursor: pointer; font-size: 12.5px; line-height: 1.3; }
+  .rut .t { font-weight: 600; word-break: break-word; }
+  .rut .m { font-size: 11px; color: var(--muted); margin-top: 3px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+  .rut .m b { color: var(--atr-fecha); }
+  .rut.hecha { opacity: .55; } .rut.hecha .t { text-decoration: line-through; }
+  .pers { display: inline-grid; place-items: center; min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; font-size: 9.5px; font-weight: 800; background: var(--indigo-soft); color: var(--indigo); flex: none; }
+  .pers.m { background: color-mix(in srgb, var(--montse) 18%, transparent); color: var(--montse); }
+  .pers.a { background: var(--seg-bg); color: var(--ink); }
+  .gasto { display: flex; gap: 8px; align-items: center; padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; margin-bottom: 5px; cursor: pointer; }
+  .gasto .sub { font-size: 11px; color: var(--muted); display: block; }
+  .gasto .imp { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .barras { display: grid; gap: 4px; font-size: 11.5px; margin-bottom: 8px; }
+  .barra { display: grid; grid-template-columns: 76px minmax(0, 1fr) 64px; gap: 6px; align-items: center; }
+  .barra i { display: block; height: 8px; border-radius: 4px; background: var(--src-fh); }
+  .barra b { text-align: right; font-variant-numeric: tabular-nums; }
+  .lista-scroll { overflow: auto; max-height: 280px; }
+  .lfila.hecha { opacity: .5; }
+  /* Formularios de las hojas */
+  .form { display: grid; gap: 10px; margin-bottom: 14px; }
+  .form label { font-size: 12px; font-weight: 700; color: var(--muted); display: grid; gap: 4px; }
+  .form input, .form select { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 10px; padding: 10px 12px; font-size: 16px; font-family: inherit; }
+  .form .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opc { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opc button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .opc button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn.peligro { color: var(--atr-fecha); }
+
+  /* ── Hoja de detalle ── */
+  .hoja { position: fixed; inset: 0; background: var(--overlay); display: none; align-items: flex-end; justify-content: center; z-index: 20; }
+  .hoja.on { display: flex; }
+  .hoja-in {
+    background: var(--card); width: min(560px, 100%); border-radius: 18px 18px 0 0; padding: 18px 20px 22px;
+    box-shadow: var(--sheet-shadow); max-height: 80vh; overflow: auto;
+  }
+  .hoja-in h3 { font-size: 18px; line-height: 1.3; margin: 6px 0 8px; }
+  .hoja-in .det { font-size: 13.5px; color: var(--muted); display: grid; gap: 4px; margin-bottom: 14px; }
+  .hoja-in .acc { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hoja-in .acc .btn { height: 46px; flex: 1; min-width: 120px; }
+  .btn.prim { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+
+  /* ── Acceso ── */
+  #login { position: fixed; inset: 0; background: var(--bg); display: none; align-items: center; justify-content: center; z-index: 30; padding: 16px; }
+  #login .caja { width: min(380px, 100%); padding: 22px; }
+  #login h3 { font-size: 17px; margin-bottom: 6px; }
+  #login p { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  #login input { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 10px; padding: 11px 12px; font-size: 16px; margin-bottom: 8px; font-family: inherit; }
+  #login .btn { width: 100%; height: 44px; margin-bottom: 8px; }
+
+  /* Vertical o pantallas pequeñas: el lateral pasa debajo y se desplaza todo. */
+  @media (max-width: 980px), (orientation: portrait) {
+    body { overflow: auto; }
+    .app { height: auto; min-height: 100dvh; }
+    .cuerpo { grid-template-columns: 1fr; }
+    .vista { height: 72vh; }
+    .parte { max-height: 70vh; }
+  }
+  @media (max-width: 700px) {
+    .kanban { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
+    .semana { grid-template-columns: repeat(7, minmax(130px, 1fr)); }
+    .dia { grid-template-columns: 1fr; }
+    .casa-abajo { grid-template-columns: 1fr; }
+    .casa-stats { grid-template-columns: 1fr; }
+    .rutinas { grid-template-columns: repeat(7, minmax(120px, 1fr)); overflow-x: auto; }
+    .reloj b { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="reloj"><b id="hora">--:--</b><span id="fecha"></span></div>
+    <div class="turnos-hoy" id="turnoHoy"></div>
+    <div class="der">
+      <nav class="seg" id="segVista">
+        <button data-v="mes">Mes</button><button data-v="semana">Semana</button><button data-v="dia">Día</button><button data-v="kanban">Kanban</button><button data-v="casa">Casa</button>
+      </nav>
+      <div class="nav" id="navFechas">
+        <button class="btn" id="atras" aria-label="Anterior">‹</button>
+        <button class="btn" id="hoyBtn">Hoy</button>
+        <button class="btn" id="adelante" aria-label="Siguiente">›</button>
+      </div>
+      <button class="btn" id="temaBtn" title="Tema"></button>
+      <button class="btn" id="recargarBtn" title="Recargar datos">⟳</button>
+      <button class="btn" id="pantallaBtn" title="Pantalla completa">⛶</button>
+    </div>
+  </header>
+  <main class="cuerpo">
+    <section class="vista">
+      <div class="vista-cab">
+        <h2 id="titulo"></h2>
+        <div class="chips" id="filtroFuente">
+          <button data-f="todo">Todo</button><button data-f="fh">FileHub</button><button data-f="egs">EGStrategy</button><button data-f="ag">Agentes</button>
+        </div>
+      </div>
+      <div id="contenido"></div>
+    </section>
+    <aside class="lateral">
+      <div class="stats" id="stats"></div>
+      <div class="parte card">
+        <div class="parte-cab">
+          <h3>☀️ Parte del agente</h3>
+          <div class="parte-nav"><button id="parteAnt" aria-label="Parte anterior">‹</button><span id="parteFecha"></span><button id="parteSig" aria-label="Parte siguiente">›</button></div>
+        </div>
+        <div id="parteTexto" class="md"></div>
+      </div>
+      <div class="pie" id="estado"></div>
+    </aside>
+  </main>
+</div>
+
+<div id="login">
+  <div class="caja card">
+    <h3>Panel de FileHub</h3>
+    <p>Entra con tu cuenta de FileHub. Si ya tienes sesión en el calendario de este navegador, se usa sola.</p>
+    <button class="btn prim" id="gbtn">Entrar con Google</button>
+    <input id="lemail" type="email" placeholder="Correo" autocomplete="username">
+    <input id="lpass" type="password" placeholder="Contraseña" autocomplete="current-password">
+    <button class="btn" id="lbtn">Entrar</button>
+  </div>
+</div>
+<div class="hoja" id="hoja"><div class="hoja-in" id="hojaIn"></div></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://igvadjgjpyuvzailjqwg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndmFkamdqcHl1dnphaWxqcXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NDI3MTAsImV4cCI6MjA4ODAxODcxMH0.eAqKCHDzrkvMTseaBP0I_JICP1owX60-cp3agYqRz4Q';
+// Mismo proyecto y storage por defecto que calendario.html → en el mismo dominio la sesión se comparte sola.
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+// ?demo → datos de ejemplo, sin sesión ni Supabase (para probar la pantalla).
+const DEMO = new URLSearchParams(location.search).has('demo');
+
+const UID_CARLOS = '69428dff-f2b6-46ae-8120-0052e9bbed51';
+const UID_MONTSE = '94c1791d-3a28-4452-a166-233cb9783749';
+const NOMBRES = { [UID_CARLOS]: 'Carlos', [UID_MONTSE]: 'Montse' };
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const deYmd = s => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
+const masDias = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const fmt = (d, o) => d.toLocaleDateString('es-ES', o);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const fechaCorta = s => s ? cap(fmt(deYmd(s), { weekday: 'short', day: 'numeric', month: 'short' })).replace(/[.,]/g, '') : '';
+const HOY = new Date(); HOY.setHours(0, 0, 0, 0);
+const HOY_S = ymd(HOY);
+const SEMANA_S = ymd(masDias(HOY, 7));
+// Como calendario.html: las vencidas de hace más de 75 días no cuentan como pendientes.
+const ATRAS_DESDE = ymd(masDias(HOY, -75));
+const DOWS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+// ── Turnos del centro de salud (los mismos que calendario.html) ────────────
+const T = {
+  URG_T: { label: 'URGENCIAS 13–20', bg: 'var(--t-urg-bg)', fg: 'var(--t-urg-fg)' },
+  AG_M:  { label: 'AGENDA 8–15',     bg: 'var(--t-agm-bg)', fg: 'var(--t-agm-fg)' },
+  AG_T:  { label: 'AGENDA 13–20',    bg: 'var(--t-agt-bg)', fg: 'var(--t-agt-fg)' },
+};
+const EGSTEK = { label: '💻 EGS TEK 8:30–12', bg: 'var(--t-egs-bg)', fg: 'var(--t-egs-fg)' };
+function isoWeek(d) {
+  const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = x.getUTCDay() || 7;
+  x.setUTCDate(x.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1));
+  return Math.ceil(((x - y0) / 86400000 + 1) / 7);
+}
+// El botón «Viernes» del calendario lo guarda en este navegador; aquí solo se lee.
+const vierPar = localStorage.getItem('fh_cal_viernes_even') || 'M';
+function turnoDe(d) {
+  if (!DEMO && uid && uid !== UID_CARLOS) return null;
+  const dow = d.getDay();
+  if (dow === 1) return T.URG_T;
+  if (dow === 2 || dow === 4) return T.AG_M;
+  if (dow === 3) return T.AG_T;
+  if (dow === 5) {
+    const even = isoWeek(d) % 2 === 0;
+    return (even && vierPar === 'M') || (!even && vierPar === 'T') ? T.AG_M : T.AG_T;
+  }
+  return null;
+}
+const chip = t => `<span class="chip-t" style="background:${t.bg};color:${t.fg}">${t.label}</span>`;
+// Las mañanas con turno de tarde son de EGS TEK (8:30–12), como en el calendario.
+function chipsTurno(d) {
+  const t = turnoDe(d);
+  if (!t) return '';
+  return (t === T.URG_T || t === T.AG_T ? chip(EGSTEK) : '') + chip(t);
+}
+
+// ── Estado ─────────────────────────────────────────────────────────────────
+let uid = null, emailSesion = '';
+let vista = localStorage.getItem('fh_tab_vista') || 'mes';
+let fuente = localStorage.getItem('fh_tab_fuente') || 'todo';
+let cursor = new Date(HOY);
+let mesCargado = '';
+// FileHub: eventos y tareas del mes visible, pendientes (kanban) y hechas hace poco.
+let eventos = [], tareasMes = [], pendientes = [], hechasFH = [];
+// Lo que sube el PC (panel_tablet): partes diarios, tablero de los agentes y EGStrategy.
+let partes = [], tablero = null, egs = null, panelFalta = false;
+// Casa (Carlos + Montse): gastos del piso (piso_horta_gastos) y rutinas/tareas de casa (casa_items).
+let gastos = [], casa = [];
+const COLS_CASA = 'id,kind,title,assignee,done,fecha,hora,categoria,prioridad,cada_dias,ultima_vez,datos,notas,created_at';
+let parteIdx = 0, verSinFecha = false, ultimaCarga = 0, cargando = false, errorCarga = '';
+
+const TIPO_EV = {
+  personal: { bg: 'var(--ev-personal-bg)', fg: 'var(--ev-personal-fg)', dot: 'var(--ev-personal-dot)' },
+  work:     { bg: 'var(--ev-work-bg)',     fg: 'var(--ev-work-fg)',     dot: 'var(--ev-work-dot)' },
+  fitness:  { bg: 'var(--ev-fitness-bg)',  fg: 'var(--ev-fitness-fg)',  dot: 'var(--ev-fitness-dot)' },
+  trip:     { bg: 'var(--ev-trip-bg)',     fg: 'var(--ev-trip-fg)',     dot: 'var(--ev-trip-dot)' },
+  guardia:  { bg: 'var(--ev-guardia-bg)',  fg: 'var(--ev-guardia-fg)',  dot: 'var(--ev-guardia-dot)' },
+};
+const estiloEv = ev => /guardia/i.test(ev.title || '') ? TIPO_EV.guardia : (TIPO_EV[ev.type] || TIPO_EV.personal);
+const horaDe = e => (e.start_date || '').length > 10 ? (e.start_date || '').slice(11, 16) : '';
+const PRIO = { high: 'var(--prio-high)', medium: 'var(--prio-medium)', low: 'var(--prio-low)' };
+const PRIO_EGS = { blocker: 'high', alta: 'high', media: 'medium', baja: 'low' };
+const CATEG = { personal: 'Personal', work: 'Trabajo', finance: 'Finanzas', other: 'Otros' };
+const ESTADO_AG = { todo: 'en cola', ready: 'lista', triage: 'por clasificar', running: 'en marcha', blocked: 'espera tu «sí»', done: 'hecha' };
+const badgeQuien = x => x.shared && x.user_id !== uid
+  ? `<span class="quien${x.user_id === UID_MONTSE ? ' m' : ''}" title="Compartida · de ${NOMBRES[x.user_id] || '—'}">${(NOMBRES[x.user_id] || '?')[0]}</span>` : '';
+const egsTareas = () => (egs?.contenido?.ok && Array.isArray(egs.contenido.tareas)) ? egs.contenido.tareas : [];
+const agTareas = () => Array.isArray(tablero?.contenido?.tareas) ? tablero.contenido.tareas : [];
+const dueDe = t => (t.due_date || '').slice(0, 10);
+
+// ── Datos ──────────────────────────────────────────────────────────────────
+function rangoMes(c) {
+  const primero = new Date(c.getFullYear(), c.getMonth(), 1);
+  const ultimo = new Date(c.getFullYear(), c.getMonth() + 1, 0);
+  const inicio = masDias(primero, -((primero.getDay() + 6) % 7));
+  const fin = masDias(ultimo, 7 - ((ultimo.getDay() + 6) % 7));
+  return { inicio, fin, filas: Math.round((fin - inicio) / (7 * 86400000)), desde: ymd(inicio), hasta: ymd(fin) };
+}
+const esRedFallo = m => /load failed|failed to fetch|networkerror|network request failed|timeout|the network connection was lost/i.test(m || '');
+async function conReintento(fn, intentos = 3) {
+  let r;
+  for (let i = 0; i < intentos; i++) {
+    r = await fn();
+    if (!r.error || !esRedFallo(r.error.message)) return r;
+    await new Promise(ok => setTimeout(ok, 700 * (i + 1)));
+  }
+  return r;
+}
+
+async function cargar() {
+  if (cargando) return;
+  cargando = true;
+  try {
+    if (DEMO) { if (!ultimaCarga) datosDemo(); }
+    else if (uid) {
+      const { desde, hasta } = rangoMes(cursor);
+      const cols = 'id,title,completed,category,priority,due_date,user_id,shared,stage';
+      const miasOComunes = `user_id.eq.${uid},shared.eq.true`;
+      const [ev, ta, pe, he, pt, ga, ca] = await Promise.all([
+        conReintento(() => sb.from('calendar_events').select('id,title,start_date,end_date,type,user_id,shared')
+          .gte('start_date', desde).lt('start_date', hasta).order('start_date')),
+        conReintento(() => sb.from('tasks').select(cols).or(miasOComunes)
+          .gte('due_date', desde).lt('due_date', hasta).order('due_date')),
+        conReintento(() => sb.from('tasks').select(cols).or(miasOComunes).eq('completed', false)
+          .order('due_date', { ascending: true, nullsFirst: false }).limit(800)),
+        conReintento(() => sb.from('tasks').select(cols).or(miasOComunes).eq('completed', true)
+          .gte('due_date', ymd(masDias(HOY, -7))).lte('due_date', HOY_S).order('due_date', { ascending: false }).limit(20)),
+        conReintento(() => sb.from('panel_tablet').select('tipo,fecha,contenido,generado_at,updated_at')
+          .gte('fecha', ymd(masDias(HOY, -10))).order('fecha', { ascending: false })),
+        // El saldo necesita todos los gastos; las RLS solo dejan verlos a Carlos y Montse (otra sesión: []).
+        conReintento(() => sb.from('piso_horta_gastos').select('id,title,amount,category,paid_by,beneficiario,fecha,created_by')
+          .order('fecha', { ascending: false }).limit(3000)),
+        conReintento(() => sb.from('casa_items').select(COLS_CASA).in('kind', ['limpieza', 'tarea']).order('created_at')),
+      ]);
+      const err = ev.error || ta.error || pe.error || he.error;
+      if (err) throw err;
+      eventos = ev.data || [];
+      tareasMes = ta.data || [];
+      pendientes = (pe.data || []).filter(t => !dueDe(t) || dueDe(t) >= ATRAS_DESDE);
+      hechasFH = he.data || [];
+      // Si la tabla aún no existe (migración panel_tablet sin aplicar), el resto del panel funciona igual.
+      panelFalta = !!pt.error;
+      const filas = pt.data || [];
+      partes = filas.filter(f => f.tipo === 'parte');
+      tablero = filas.find(f => f.tipo === 'tablero') || null;
+      egs = filas.find(f => f.tipo === 'egstrategy') || null;
+      // Un beneficiario raro inflaría el saldo del pagador: se normaliza a «ambos», como hace FileHub.
+      gastos = (ga.data || []).map(g => ({ ...g, amount: Number(g.amount) || 0, beneficiario: ['carlos', 'montse'].includes(g.beneficiario) ? g.beneficiario : 'ambos' }));
+      casa = ca.data || [];
+      mesCargado = desde;
+    }
+    errorCarga = '';
+    ultimaCarga = Date.now();
+  } catch (e) {
+    errorCarga = esRedFallo(e?.message) ? 'sin conexión' : (e?.message || 'error');
+  } finally {
+    cargando = false;
+  }
+  render();
+}
+
+// Elementos de un día en el calendario: eventos (por hora), tareas de casa (de los dos, con su hora),
+// tareas de FileHub y tareas de EGStrategy que vencen.
+function itemsDia(f) {
+  const ev = eventos.filter(e => (e.start_date || '').slice(0, 10) === f)
+    .map(e => ({ k: 'ev', hora: horaDe(e), titulo: e.title, est: estiloEv(e), raw: e }));
+  const cs = casa.filter(t => t.kind === 'tarea' && t.fecha === f)
+    .map(t => ({ k: 'casa', hora: (t.hora || '').slice(0, 5), titulo: t.title, raw: t }));
+  const conHora = [...ev, ...cs].sort((a, b) => (a.hora || '99').localeCompare(b.hora || '99'));
+  const fh = tareasMes.filter(t => dueDe(t) === f).map(t => ({ k: 'fh', titulo: t.title, raw: t }));
+  const eg = egsTareas().filter(t => t.vence === f).map(t => ({ k: 'egs', titulo: t.texto, raw: t }));
+  return [...conHora, ...fh, ...eg];
+}
+function itemMini(it) {
+  if (it.k === 'ev') return `<div class="it"><i class="dot" style="background:${it.est.dot}"></i><span>${it.hora ? `<b>${it.hora}</b> ` : ''}${esc(it.titulo)}</span></div>`;
+  if (it.k === 'fh') return `<div class="it${it.raw.completed ? ' hecha' : ''}"><i class="cuad"></i><span>${esc(it.titulo)}</span></div>`;
+  if (it.k === 'casa') return `<div class="it${it.raw.done ? ' hecha' : ''}"><i class="tag casa">CASA</i><span>${it.hora ? `<b>${it.hora}</b> ` : ''}${esc(it.titulo)}</span></div>`;
+  return `<div class="it"><i class="tag egs">EGS</i><span>${esc(it.titulo)}</span></div>`;
+}
+function ficha(it) {
+  if (it.k === 'ev') return `<div class="ficha" style="background:${it.est.bg};color:${it.est.fg}">${it.hora ? `<b>${it.hora}</b>` : ''}${esc(it.titulo)}</div>`;
+  if (it.k === 'fh') return `<div class="ficha fh${it.raw.completed ? ' hecha' : ''}" data-fh="${esc(it.raw.id)}">${esc(it.titulo)}</div>`;
+  if (it.k === 'casa') return `<div class="ficha casa${it.raw.done ? ' hecha' : ''}" data-casa="${esc(it.raw.id)}">${it.hora ? `<b>${it.hora}</b>` : ''}${esc(it.titulo)}</div>`;
+  return `<div class="ficha egs" data-egs="${esc(it.raw.id)}"><i class="tag egs">EGS</i> ${esc(it.titulo)}</div>`;
+}
+
+// ── Vistas ─────────────────────────────────────────────────────────────────
+function htmlMes() {
+  const { inicio, filas } = rangoMes(cursor);
+  const mes = cursor.getMonth();
+  let h = `<div class="mes" style="--filas:${filas}"><div class="mes-dows">${DOWS.map(d => `<span>${d}</span>`).join('')}</div>`;
+  for (let f = 0; f < filas; f++) {
+    h += '<div class="mes-fila">';
+    for (let c = 0; c < 7; c++) {
+      const d = masDias(inicio, f * 7 + c), s = ymd(d), its = itemsDia(s);
+      const turno = chipsTurno(d);
+      // Con dos chips (EGS TEK + turno de tarde) caben menos líneas.
+      const max = filas > 5 ? (turno.includes(EGSTEK.label) ? 1 : 2) : (turno.includes(EGSTEK.label) ? 2 : 3);
+      h += `<div class="celda${d.getMonth() !== mes ? ' fuera' : ''}${s === HOY_S ? ' hoy' : ''}" data-dia="${s}">`
+        + `<div class="num">${d.getDate()}</div>${turno}${its.slice(0, max).map(itemMini).join('')}`
+        + (its.length > max ? `<div class="mas">+${its.length - max} más</div>` : '') + '</div>';
+    }
+    h += '</div>';
+  }
+  return h + '</div>';
+}
+function htmlSemana() {
+  const lunes = masDias(cursor, -((cursor.getDay() + 6) % 7));
+  let h = '<div class="semana">';
+  for (let i = 0; i < 7; i++) {
+    const d = masDias(lunes, i), s = ymd(d), its = itemsDia(s);
+    h += `<div class="scol${s === HOY_S ? ' hoy' : ''}"><div class="scol-cab" data-dia="${s}">`
+      + `<div class="num"><small>${fmt(d, { weekday: 'short' }).replace('.', '')}</small>${d.getDate()}</div>${chipsTurno(d)}</div>`
+      + `<div class="scol-lista">${its.map(ficha).join('') || '<div class="vacio">—</div>'}</div></div>`;
+  }
+  return h + '</div>';
+}
+const filaFH = t => `<div class="lfila${t.completed ? ' hecha' : ''}" data-fh="${esc(t.id)}"><i class="cuad"></i>${badgeQuien(t)}<span>${esc(t.title)}</span>`
+  + `<span class="meta">${t.priority ? `<i class="prio" style="background:${PRIO[t.priority] || PRIO.low}"></i> ` : ''}${esc(CATEG[t.category] || t.category || '')}</span></div>`;
+const filaEGS = t => `<div class="lfila" data-egs="${esc(t.id)}"><i class="tag egs">EGS</i><span>${esc(t.texto)}</span>`
+  + `<span class="meta">${esc(t.proyecto)} · ${esc(t.estadoNombre)}</span></div>`;
+const filaCasa = t => `<div class="lfila${t.done ? ' hecha' : ''}" data-casa="${esc(t.id)}"><span class="pers ${t.assignee === 'montse' ? 'm' : t.assignee === 'ambos' ? 'a' : ''}">${t.assignee === 'ambos' ? 'C+M' : t.assignee === 'montse' ? 'M' : 'C'}</span>`
+  + `<span>${esc(t.title)}</span><span class="meta">${t.hora ? t.hora.slice(0, 5) : t.fecha ? fechaCorta(t.fecha) : 'sin fecha'}</span></div>`;
+function htmlDia() {
+  const s = ymd(cursor), its = itemsDia(s);
+  const ev = its.filter(i => i.k === 'ev' || (i.k === 'casa' && i.hora));
+  let h = `<div class="dia"><div class="dia-cab">${chipsTurno(cursor)}</div><div><section><h4>Agenda</h4>`;
+  h += ev.length ? ev.map(i => i.k === 'casa'
+      ? `<div class="ev-fila${i.raw.done ? ' hecha' : ''}" style="background:color-mix(in srgb, var(--area-otro) 14%, transparent)" data-casa="${esc(i.raw.id)}"><span class="h">${i.hora}</span><span class="tt">📌 ${esc(i.titulo)}</span></div>`
+      : `<div class="ev-fila" style="background:${i.est.bg};color:${i.est.fg}"><span class="h">${i.hora || 'Todo el día'}</span><span class="tt">${esc(i.titulo)}</span></div>`).join('')
+    : '<div class="vacio">Sin eventos.</div>';
+  h += '</section></div><div><section><h4>Tareas del día</h4>';
+  const fh = tareasMes.filter(t => dueDe(t) === s), eg = egsTareas().filter(t => t.vence === s);
+  const cs = casa.filter(t => t.kind === 'tarea' && t.fecha === s && !t.hora);
+  h += (fh.length || eg.length || cs.length) ? cs.map(filaCasa).join('') + fh.map(filaFH).join('') + eg.map(filaEGS).join('') : '<div class="vacio">Nada que venza este día.</div>';
+  h += '</section>';
+  if (s === HOY_S) {
+    const atrFH = pendientes.filter(t => dueDe(t) && dueDe(t) < HOY_S);
+    const atrEG = egsTareas().filter(t => t.vence && t.vence < HOY_S);
+    if (atrFH.length || atrEG.length) {
+      h += `<section><h4>Atrasadas (${atrFH.length + atrEG.length})</h4>`
+        + atrEG.map(filaEGS).join('') + atrFH.slice(0, 15).map(filaFH).join('')
+        + (atrFH.length > 15 ? `<div class="vacio">… y ${atrFH.length - 15} más en el kanban.</div>` : '') + '</section>';
+    }
+  }
+  return h + '</div></div>';
+}
+
+// Kanban común: FileHub (stage/completed), EGStrategy (estado del proyecto) y tablero de los agentes (status).
+const COLS = [
+  { id: 'hacer', nombre: 'Por hacer' },
+  { id: 'curso', nombre: 'En curso' },
+  { id: 'espera', nombre: 'Esperando / revisión' },
+  { id: 'hecho', nombre: 'Hecho' },
+];
+function itemsKanban() {
+  const out = [];
+  for (const t of pendientes) out.push({ fuente: 'fh', id: t.id, titulo: t.title, col: t.stage === 'en-curso' ? 'curso' : 'hacer', vence: dueDe(t) || null, prio: t.priority, meta: CATEG[t.category] || t.category || '', raw: t });
+  for (const t of hechasFH) out.push({ fuente: 'fh', id: t.id, titulo: t.title, col: 'hecho', vence: null, prio: null, meta: fechaCorta(dueDe(t)), raw: t });
+  for (const t of egsTareas()) out.push({ fuente: 'egs', id: t.id, titulo: t.texto, col: { 'en-curso': 'curso', revision: 'espera' }[t.estado] || 'hacer', vence: t.vence, prio: PRIO_EGS[t.prioridad], meta: `${t.proyecto} · ${t.estadoNombre}`, raw: t });
+  for (const t of agTareas()) out.push({ fuente: 'ag', id: t.id, titulo: t.titulo, col: { blocked: 'espera', running: 'curso', done: 'hecho' }[t.estado] || 'hacer', vence: null, prio: null, meta: `${t.agente || 'agente'} · ${ESTADO_AG[t.estado] || t.estado}`, raw: t });
+  return out.filter(x => fuente === 'todo' || x.fuente === fuente);
+}
+const FUENTE_TXT = { fh: 'FileHub', egs: 'EGStrategy', ag: 'Agentes' };
+function tarjeta(x) {
+  const venc = x.vence && x.vence < HOY_S, hoy = x.vence === HOY_S;
+  return `<div class="tarjeta ${x.fuente}" data-${x.fuente}="${esc(x.id)}"><div class="t">${x.fuente === 'fh' ? badgeQuien(x.raw) + ' ' : ''}${esc(x.titulo)}</div>`
+    + `<div class="m"><span class="fuente">${FUENTE_TXT[x.fuente]}</span>`
+    + (x.vence ? `<span class="${venc ? 'venc' : ''}">${hoy ? 'hoy' : (venc ? 'venció ' : '') + fechaCorta(x.vence)}</span>` : '')
+    + (x.prio ? `<i class="prio" style="background:${PRIO[x.prio] || PRIO.low}" title="prioridad ${x.prio}"></i>` : '')
+    + (x.meta ? `<span>${esc(x.meta)}</span>` : '') + '</div></div>';
+}
+function htmlKanban() {
+  const todos = itemsKanban();
+  // Orden: vencidas y con fecha primero (la más próxima arriba), sin fecha al final.
+  const orden = (a, b) => (a.vence || '9999').localeCompare(b.vence || '9999');
+  return '<div class="kanban">' + COLS.map(c => {
+    let l = todos.filter(x => x.col === c.id).sort(orden);
+    // Las tareas de FileHub sin fecha (muchas) van plegadas al final de «Por hacer».
+    const sinFecha = c.id === 'hacer' ? l.filter(x => x.fuente === 'fh' && !x.vence) : [];
+    if (sinFecha.length && !verSinFecha) l = l.filter(x => !(x.fuente === 'fh' && !x.vence));
+    const MAX = 60, total = l.length + (verSinFecha ? 0 : sinFecha.length);
+    return `<div class="kcol"><h3>${c.nombre}<span class="n">${total}</span></h3><div class="klista">`
+      + (l.slice(0, MAX).map(tarjeta).join('') || '<div class="vacio">Nada aquí.</div>')
+      + (l.length > MAX ? `<div class="vacio">… y ${l.length - MAX} más.</div>` : '')
+      + (sinFecha.length ? `<button class="masbtn" id="verSinFecha">${verSinFecha ? 'Ocultar' : 'Ver'} ${sinFecha.length} sin fecha de FileHub</button>` : '')
+      + '</div></div>';
+  }).join('') + '</div>';
+}
+// ── Casa: gastos con Montse, tareas compartidas y reparto de la casa ──────
+// Mismo modelo que la app Casa (carlosgalera-a11y.github.io/casa), así lo apuntado aquí se ve allí y al revés:
+// rutina = casa_items kind 'limpieza' con cada_dias + ultima_vez (toca en última + cada); categoria 'alterna' =
+// al hacerla pasa a la otra persona. El área (limpieza/cocina/compra/otro) va en datos.area, que Casa conserva.
+const PERSONAS = { carlos: 'Carlos', montse: 'Montse', ambos: 'Los dos' };
+const AREAS = {
+  limpieza: { n: 'Limpieza', ic: '🧹', c: 'var(--area-limpieza)' }, cocina: { n: 'Cocina', ic: '🍳', c: 'var(--area-cocina)' },
+  compra:   { n: 'Compra',   ic: '🛒', c: 'var(--area-compra)' },   otro:   { n: 'Otro',   ic: '🏠', c: 'var(--area-otro)' },
+};
+const CAT_GASTO = { comida: '🍽️ Comida', casa: '🏠 Casa', luz: '⚡ Luz', alquiler: '🔑 Alquiler', otros: '• Otros', ajuste: '⇄ Ajuste de cuentas' };
+let persona = localStorage.getItem('fh_tab_persona') || 'ambos';   // ambos (juntos) | carlos | montse
+let casaModo = localStorage.getItem('fh_tab_casa') || 'semana';     // semana | tablero
+const yoCasa = () => emailSesion.startsWith('montsemaymo') ? 'montse' : 'carlos';
+const areaDe = r => AREAS[r.datos?.area] ? r.datos.area : 'limpieza';
+const rutinas = () => casa.filter(r => r.kind === 'limpieza');
+const tareasCasa = () => casa.filter(r => r.kind === 'tarea' && !r.done);
+const dePersona = p => persona === 'ambos' || p === persona || p === 'ambos';
+const chipPers = p => `<span class="pers ${p === 'montse' ? 'm' : p === 'ambos' ? 'a' : ''}" title="${PERSONAS[p] || ''}">${p === 'ambos' ? 'C+M' : p === 'montse' ? 'M' : 'C'}</span>`;
+// Cuándo toca una rutina (como en la app Casa): última vez + cada N días; sin última vez, hoy.
+const proximaDe = r => r.ultima_vez ? ymd(masDias(deYmd(r.ultima_vez), r.cada_dias || 7)) : HOY_S;
+// Hecha de verdad ese día: al crear una rutina, «última vez» se calcula hacia atrás para que toque el día
+// elegido, y eso no es una limpieza real anterior a la fecha de alta.
+const hechaEl = (r, s) => r.ultima_vez === s && (!r.created_at || r.created_at.slice(0, 10) <= s);
+const diasEntre = (a, b) => Math.round((deYmd(b) - deYmd(a)) / 86400000);
+const eur = n => n.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+// Saldo estilo Tricount (igual que hortaBalance en FileHub): >0 → le deben a p.
+const parteDe = (g, p) => g.beneficiario === 'ambos' ? g.amount / 2 : (g.beneficiario === p ? g.amount : 0);
+const saldoDe = p => gastos.reduce((s, g) => s + (g.paid_by === p ? g.amount : 0) - parteDe(g, p), 0);
+
+const TAREA_CASA = { n: 'Tarea de casa', ic: '📌', c: 'var(--area-otro)' };
+function rut(r, s) {
+  const esRut = r.kind === 'limpieza', a = esRut ? AREAS[areaDe(r)] : TAREA_CASA;
+  const hecha = esRut ? r.ultima_vez === s : !!r.done;
+  const prox = esRut ? proximaDe(r) : (r.fecha || HOY_S), atraso = hecha ? 0 : diasEntre(prox, HOY_S);
+  let cuando = '';
+  if (atraso > 0) cuando = `<b>atrasada ${atraso} d</b>`;
+  else if (!esRut && r.hora) cuando = r.hora.slice(0, 5);
+  else if (esRut && s !== prox && !hecha) cuando = `toca ${fechaCorta(prox)}`;
+  return `<div class="rut${hecha ? ' hecha' : ''}" style="--c:${a.c}" data-casa="${esc(r.id)}"><div class="t">${a.ic} ${esc(r.title)}</div>`
+    + `<div class="m">${chipPers(r.assignee)}${esRut ? `<span>cada ${r.cada_dias || 7} d</span>` : ''}${cuando ? `<span>${cuando}</span>` : ''}</div></div>`;
+}
+const rcol = (cab, l, hoy = false) => `<div class="rcol${hoy ? ' hoy' : ''}"><div class="rcol-cab">${cab}<span class="n">${l.length || ''}</span></div>`
+  + `<div class="rlista">${l.join('') || '<div class="vacio">—</div>'}</div></div>`;
+function htmlRutinas() {
+  const R = rutinas().filter(r => dePersona(r.assignee)), T = tareasCasa().filter(t => dePersona(t.assignee));
+  if (casaModo === 'semana') {
+    const lunes = masDias(cursor, -((cursor.getDay() + 6) % 7));
+    let h = '<div class="rutinas">';
+    for (let i = 0; i < 7; i++) {
+      const d = masDias(lunes, i), s = ymd(d);
+      // Lo que toca ese día; las atrasadas se amontonan en hoy. Lo hecho ese día se ve tachado.
+      const pend = R.filter(r => proximaDe(r) === s || (s === HOY_S && proximaDe(r) < HOY_S)).sort((x, y) => proximaDe(x).localeCompare(proximaDe(y)));
+      const hechas = R.filter(r => hechaEl(r, s));
+      const tar = T.filter(t => t.fecha === s || (s === HOY_S && t.fecha && t.fecha < HOY_S));
+      h += rcol(`<small>${fmt(d, { weekday: 'short' }).replace('.', '')}</small>${d.getDate()}`, [...tar, ...pend].map(r => rut(r, s)).concat(hechas.map(r => rut(r, s))), s === HOY_S);
+    }
+    return h + '</div>';
+  }
+  const prox = r => r.kind === 'limpieza' ? proximaDe(r) : (r.fecha || HOY_S);
+  const todo = [...T, ...R].sort((x, y) => prox(x).localeCompare(prox(y)));
+  const en7 = ymd(masDias(HOY, 7)), hace7 = ymd(masDias(HOY, -7));
+  return '<div class="rutinas tablero">'
+    + rcol('Atrasadas', todo.filter(r => prox(r) < HOY_S).map(r => rut(r, HOY_S)))
+    + rcol('Hoy', todo.filter(r => prox(r) === HOY_S).map(r => rut(r, HOY_S)), true)
+    + rcol('Próximos 7 días', todo.filter(r => prox(r) > HOY_S && prox(r) <= en7).map(r => rut(r, prox(r))))
+    + rcol('Hechas · 7 días', R.filter(r => r.ultima_vez && r.ultima_vez >= hace7 && r.ultima_vez <= HOY_S && hechaEl(r, r.ultima_vez)).sort((x, y) => y.ultima_vez.localeCompare(x.ultima_vez)).map(r => rut(r, r.ultima_vez)))
+    + '</div>';
+}
+function htmlCasa() {
+  const sC = saldoDe('carlos'), mes = HOY_S.slice(0, 7);
+  const delMes = gastos.filter(g => (g.fecha || '').startsWith(mes) && g.category !== 'ajuste');
+  const totalMes = delMes.reduce((s, g) => s + g.amount, 0);
+  const porCat = Object.entries(delMes.reduce((o, g) => { o[g.category || 'otros'] = (o[g.category || 'otros'] || 0) + g.amount; return o; }, {})).sort((a, b) => b[1] - a[1]);
+  const hoyCasa = rutinas().filter(r => dePersona(r.assignee) && proximaDe(r) <= HOY_S);
+  const saldoTxt = Math.abs(sC) < 0.5 ? 'En paz' : sC > 0 ? `Montse debe ${eur(sC)} a Carlos` : `Carlos debe ${eur(-sC)} a Montse`;
+  const chips = (cls, act, opts, on) => `<div class="chips ${cls}">${opts.map(([v, t]) => `<button data-${act}="${v}"${on === v ? ' class="on"' : ''}>${t}</button>`).join('')}</div>`;
+  // Tareas pendientes compartidas: las de FileHub marcadas «compartida» (de los dos) y las tareas de casa.
+  const compartidas = pendientes.filter(t => t.shared && dePersona(t.user_id === UID_MONTSE ? 'montse' : 'carlos'));
+  const tCasa = tareasCasa().filter(t => dePersona(t.assignee)).sort((a, b) => (a.fecha || '9999').localeCompare(b.fecha || '9999') || (a.hora || '99').localeCompare(b.hora || '99'));
+  return `<div class="casa">
+    <div class="casa-cab">
+      ${chips('', 'pers', [['ambos', '👫 Juntos'], ['carlos', 'Carlos'], ['montse', 'Montse']], persona)}
+      ${chips('', 'cmodo', [['semana', 'Semana'], ['tablero', 'Tablero']], casaModo)}
+      <span class="sep"></span>
+      <button class="btn" id="nuevaRutina">+ Rutina</button><button class="btn" id="nuevoGasto">+ Gasto</button>
+    </div>
+    <div class="casa-stats">
+      <div class="casa-stat card" style="--c:${Math.abs(sC) < 0.5 ? 'var(--src-egs)' : sC > 0 ? 'var(--indigo)' : 'var(--montse)'}" data-gastos><div class="n">${Math.abs(sC) < 0.5 ? '✓' : eur(Math.abs(sC))}</div><div class="l">${saldoTxt}</div></div>
+      <div class="casa-stat card" style="--c:var(--src-fh)" data-gastos><div class="n">${eur(totalMes)}</div><div class="l">${cap(fmt(HOY, { month: 'long' }))} · ${delMes.length} gasto${delMes.length === 1 ? '' : 's'} del piso</div></div>
+      <div class="casa-stat card" style="--c:var(--area-limpieza)" data-cmodo="tablero"><div class="n">${hoyCasa.length}</div><div class="l">${hoyCasa.length === 1 ? 'rutina toca hoy' : 'rutinas tocan hoy'}${persona === 'ambos' ? '' : ' · ' + PERSONAS[persona]}</div></div>
+    </div>
+    <div class="casa-cuerpo">
+      <div class="casa-panel"><h4>Reparto de la casa<span class="n">${rutinas().length} rutinas</span></h4>${htmlRutinas()}</div>
+      <div class="casa-abajo">
+        <div class="casa-panel">
+          <h4>Gastos del piso<a href="https://carlosgalera-a11y.github.io/gastos/" target="_blank" rel="noopener">Abrir gastos ↗</a></h4>
+          ${porCat.length ? `<div class="barras">${porCat.slice(0, 4).map(([c, n]) => `<div class="barra"><span>${(CAT_GASTO[c] || c).replace(/^\S+ /, '')}</span><i style="width:${Math.round(n / porCat[0][1] * 100)}%"></i><b>${eur(n)}</b></div>`).join('')}</div>` : ''}
+          <div class="lista-scroll">${gastos.slice(0, 10).map(g => `<div class="gasto" data-gasto="${esc(g.id)}">${chipPers(g.paid_by)}<span>${esc(g.title)}<span class="sub">${fechaCorta(g.fecha)} · pagó ${PERSONAS[g.paid_by] || '?'} · para ${g.beneficiario === 'ambos' ? 'los dos' : PERSONAS[g.beneficiario]}</span></span><span class="imp">${eur(g.amount)}</span></div>`).join('') || '<div class="vacio">Sin gastos todavía.</div>'}</div>
+        </div>
+        <div class="casa-panel">
+          <h4>Tareas pendientes<span class="n">${compartidas.length + tCasa.length}</span></h4>
+          <div class="lista-scroll">${tCasa.map(filaCasa).join('') + compartidas.map(filaFH).join('') || '<div class="vacio">Nada pendiente entre los dos.</div>'}</div>
+        </div>
+      </div>
+    </div></div>`;
+}
+
+function tituloVista() {
+  if (vista === 'mes') return cap(fmt(cursor, { month: 'long', year: 'numeric' }));
+  if (vista === 'semana' || (vista === 'casa' && casaModo === 'semana')) {
+    const l = masDias(cursor, -((cursor.getDay() + 6) % 7)), d = masDias(l, 6);
+    return (vista === 'casa' ? 'Casa · ' : '') + `${fmt(l, { day: 'numeric', month: 'short' })} – ${fmt(d, { day: 'numeric', month: 'short', year: 'numeric' })}`.replace(/\./g, '');
+  }
+  if (vista === 'dia') return cap(fmt(cursor, { weekday: 'long', day: 'numeric', month: 'long' }));
+  return vista === 'casa' ? 'Casa' : 'Tareas';
+}
+
+// ── Lateral ────────────────────────────────────────────────────────────────
+function pintaStats() {
+  const atr = pendientes.filter(t => dueDe(t) && dueDe(t) < HOY_S).length;
+  const hoy = pendientes.filter(t => dueDe(t) === HOY_S).length;
+  const sem = pendientes.filter(t => dueDe(t) > HOY_S && dueDe(t) <= SEMANA_S).length;
+  const eg = egsTareas(), egAtr = eg.filter(t => t.vence && t.vence < HOY_S).length, egHoy = eg.filter(t => t.vence === HOY_S).length;
+  const ag = agTareas(), agEsp = ag.filter(t => t.estado === 'blocked').length;
+  const agCola = ag.filter(t => ['todo', 'ready', 'triage'].includes(t.estado)).length, agMarcha = ag.filter(t => t.estado === 'running').length;
+  const parts = (...p) => p.filter(Boolean).join(' · ') || 'al día';
+  const egsDet = panelFalta ? 'falta activar el panel'
+    : !egs ? 'esperando al PC'
+    : !egs.contenido?.ok ? 'falta la sesión en el PC'
+    : parts(egAtr && `<span class="venc">${egAtr} vencida${egAtr > 1 ? 's' : ''}</span>`, egHoy && `${egHoy} hoy`);
+  // Número grande: FileHub = lo que vence en 7 días (con atrasadas); EGStrategy = mis pendientes;
+  // Agentes = tareas del tablero que esperan el «sí» de Carlos.
+  const stat = (c, f, n, l, d) => `<div class="stat card" style="--c:var(${c})" data-fuente="${f}"><div class="n">${n}</div><div><div class="l">${l}</div><div class="d">${d}</div></div></div>`;
+  $('stats').innerHTML =
+    stat('--src-fh', 'fh', atr + hoy + sem, 'FileHub · próximos 7 días',
+      parts(atr && `<span class="venc">${atr} atrasada${atr > 1 ? 's' : ''}</span>`, hoy && `${hoy} para hoy`))
+    + stat('--src-egs', 'egs', egs?.contenido?.ok ? eg.length : '—', 'EGStrategy · mis pendientes', egsDet)
+    + stat('--src-ag', 'ag', tablero ? agEsp : '—', 'Agentes · esperan tu «sí»',
+      tablero ? parts(agCola && `${agCola} en cola`, agMarcha && `${agMarcha} en marcha`) : (panelFalta ? 'falta activar el panel' : 'esperando al PC'));
+}
+// Markdown sencillo del parte (negritas, cursivas, listas y títulos).
+function md(txt) {
+  const inline = s => esc(s)
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/(^|[\s(«])[*_](?!\s)(.+?)[*_](?=[\s).,:;!?»—-]|$)/g, '$1<i>$2</i>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+  let h = '', lista = false;
+  for (const linea of String(txt).split(/\r?\n/)) {
+    const l = linea.trim(), li = l.match(/^[-*•]\s+(.*)/);
+    if (li) { if (!lista) { h += '<ul>'; lista = true; } h += `<li>${inline(li[1])}</li>`; continue; }
+    if (lista) { h += '</ul>'; lista = false; }
+    if (!l) continue;
+    const tit = l.match(/^#{1,4}\s+(.*)/);
+    h += tit ? `<h4>${inline(tit[1])}</h4>` : `<p>${inline(l)}</p>`;
+  }
+  return h + (lista ? '</ul>' : '');
+}
+function pintaParte() {
+  if (panelFalta || !partes.length) {
+    $('parteFecha').textContent = '';
+    $('parteAnt').disabled = $('parteSig').disabled = true;
+    $('parteTexto').innerHTML = `<p class="vacio">${panelFalta
+      ? 'El panel aún no está activado en Supabase (falta la migración <code>panel_tablet</code>).'
+      : 'Todavía no ha llegado ningún parte. El PC los sube cada 20 minutos.'}</p>`;
+    return;
+  }
+  parteIdx = Math.min(Math.max(parteIdx, 0), partes.length - 1);
+  const p = partes[parteIdx], gen = p.generado_at ? new Date(p.generado_at) : null;
+  $('parteFecha').textContent = (p.fecha === HOY_S ? 'Hoy' : fechaCorta(p.fecha))
+    + (gen ? ' · ' + gen.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '');
+  $('parteAnt').disabled = parteIdx >= partes.length - 1;
+  $('parteSig').disabled = parteIdx <= 0;
+  $('parteTexto').innerHTML = md(p.contenido?.texto || '');
+}
+function hace(ms) {
+  const min = Math.round((Date.now() - ms) / 60000);
+  return min < 1 ? 'ahora' : min < 60 ? `hace ${min} min` : `hace ${Math.round(min / 60)} h`;
+}
+function pintaEstado() {
+  const pc = Math.max(...[tablero, egs].filter(Boolean).map(f => Date.parse(f.updated_at) || 0), 0);
+  let h = ultimaCarga ? `Actualizado ${new Date(ultimaCarga).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : 'Cargando…';
+  if (pc) h += ` · PC ${hace(pc)}`;
+  if (errorCarga) h += `<span class="aviso">No se pudo recargar: ${esc(errorCarga)}. Se reintenta solo.</span>`;
+  else if (pc && Date.now() - pc > 90 * 60000) h += '<span class="aviso">El PC no sube datos desde hace más de hora y media (¿apagado?).</span>';
+  else if (egs && !egs.contenido?.ok) h += '<span class="aviso">EGStrategy: falta iniciar sesión en el PC (node herramientas/mcp-egstrategy/entrar.mjs).</span>';
+  $('estado').innerHTML = h;
+}
+
+function render() {
+  document.querySelectorAll('#segVista button').forEach(b => b.classList.toggle('on', b.dataset.v === vista));
+  document.querySelectorAll('#filtroFuente button').forEach(b => b.classList.toggle('on', b.dataset.f === fuente));
+  $('navFechas').style.visibility = vista === 'kanban' || (vista === 'casa' && casaModo !== 'semana') ? 'hidden' : '';
+  $('filtroFuente').style.display = vista === 'kanban' ? '' : 'none';
+  $('titulo').textContent = tituloVista();
+  $('turnoHoy').innerHTML = chipsTurno(HOY);
+  const c = $('contenido');
+  c.className = 'v-' + vista;
+  c.innerHTML = vista === 'mes' ? htmlMes() : vista === 'semana' ? htmlSemana() : vista === 'dia' ? htmlDia() : vista === 'casa' ? htmlCasa() : htmlKanban();
+  pintaStats(); pintaParte(); pintaEstado();
+}
+
+// ── Hoja de detalle (tocar una tarea) ──────────────────────────────────────
+const abreHoja = html => { $('hojaIn').innerHTML = html; $('hoja').classList.add('on'); };
+const cierraHoja = () => $('hoja').classList.remove('on');
+function hojaFH(id) {
+  const t = [...pendientes, ...hechasFH, ...tareasMes].find(x => String(x.id) === String(id));
+  if (!t) return;
+  const est = t.completed ? 'Hecha' : t.stage === 'en-curso' ? 'En curso' : 'Por hacer';
+  abreHoja(`<span class="fuente" style="--c:var(--src-fh)">FileHub</span><h3>${esc(t.title)}</h3>
+    <div class="det"><span>${est}${dueDe(t) ? ' · vence ' + fechaCorta(dueDe(t)) : ' · sin fecha'}</span>
+    <span>${esc(CATEG[t.category] || t.category || '')}${t.priority ? ' · prioridad ' + ({ high: 'alta', medium: 'media', low: 'baja' }[t.priority] || t.priority) : ''}${t.shared ? ' · compartida' : ''}</span></div>
+    <div class="acc">
+      ${!t.completed && t.stage !== 'en-curso' ? `<button class="btn" data-acc="curso" data-id="${esc(t.id)}">▶ En curso</button>` : ''}
+      ${t.completed || t.stage === 'en-curso' ? `<button class="btn" data-acc="hacer" data-id="${esc(t.id)}">↩ Por hacer</button>` : ''}
+      ${!t.completed ? `<button class="btn prim" data-acc="hecha" data-id="${esc(t.id)}">✓ Hecha</button>` : ''}
+      <button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+function hojaEGS(id) {
+  const t = egsTareas().find(x => x.id === id);
+  if (!t) return;
+  abreHoja(`<span class="fuente" style="--c:var(--src-egs)">EGStrategy</span><h3>${esc(t.texto)}</h3>
+    <div class="det"><span>${esc(t.proyecto)} · ${esc(t.estadoNombre)}${t.vence ? ' · vence ' + fechaCorta(t.vence) : ' · sin fecha'}</span>
+    <span>Prioridad ${esc(t.prioridad)}${t.subtareas ? ' · subtareas ' + esc(t.subtareas) : ''}</span></div>
+    <div class="acc"><a class="btn prim" style="display:grid;place-items:center;text-decoration:none" href="https://egsstrategy.com/" target="_blank" rel="noopener">Abrir EGStrategy</a>
+    <button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+function hojaAG(id) {
+  const t = agTareas().find(x => x.id === id);
+  if (!t) return;
+  abreHoja(`<span class="fuente" style="--c:var(--src-ag)">Agentes · ${esc(t.agente || '')}</span><h3>${esc(t.titulo)}</h3>
+    <div class="det"><span>${esc(ESTADO_AG[t.estado] || t.estado)} · ${esc(t.id)}</span>
+    ${t.estado === 'blocked' ? '<span>Espera tu respuesta: contéstale al coordinador por Telegram.</span>' : ''}</div>
+    <div class="acc"><button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+async function accionFH(id, acc) {
+  const cambios = acc === 'hecha' ? { completed: true, stage: null } : acc === 'curso' ? { completed: false, stage: 'en-curso' } : { completed: false, stage: null };
+  if (DEMO) {
+    for (const t of [...pendientes, ...hechasFH, ...tareasMes]) if (String(t.id) === String(id)) Object.assign(t, cambios);
+    pendientes = [...pendientes, ...hechasFH].filter((t, i, a) => !t.completed && a.findIndex(x => x.id === t.id) === i);
+    hechasFH = [...hechasFH, ...tareasMes].filter((t, i, a) => t.completed && a.findIndex(x => x.id === t.id) === i);
+    cierraHoja(); render(); return;
+  }
+  const { error } = await conReintento(() => sb.from('tasks').update(cambios).eq('id', id));
+  if (error) { alert('No se pudo guardar: ' + (esRedFallo(error.message) ? 'sin conexión, inténtalo otra vez' : error.message)); return; }
+  cierraHoja();
+  await cargar();
+}
+// ── Hojas de Casa: rutina / tarea de casa, gasto y sus formularios ────────
+const opc = (g, opts, on) => `<div class="opc" data-g="${g}">${opts.map(([v, t]) => `<button type="button" data-v="${v}"${on === v ? ' class="on"' : ''}>${t}</button>`).join('')}</div>`;
+const elegido = g => $('hojaIn').querySelector(`.opc[data-g="${g}"] .on`)?.dataset.v;
+const campo = n => $('hojaIn').querySelector(`[name="${n}"]`)?.value.trim();
+function hojaCasa(id) {
+  const r = casa.find(x => x.id === id);
+  if (!r) return;
+  const esRut = r.kind === 'limpieza', a = esRut ? AREAS[areaDe(r)] : TAREA_CASA, prox = esRut ? proximaDe(r) : r.fecha;
+  const hechaHoy = esRut ? r.ultima_vez === HOY_S : !!r.done;
+  abreHoja(`<span class="fuente" style="--c:${a.c}">${a.ic} ${a.n}</span><h3>${esc(r.title)}</h3>
+    <div class="det"><span>${PERSONAS[r.assignee] || '—'}${esRut ? ` · cada ${r.cada_dias || 7} días · ${r.categoria === 'alterna' ? 'se alterna Carlos ↔ Montse' : 'siempre la misma persona'}` : ''}</span>
+    <span>${esRut ? (r.ultima_vez ? `Última vez ${fechaCorta(r.ultima_vez)} · ` : 'Sin hacer todavía · ') + (prox < HOY_S ? `<span class="venc">atrasada ${diasEntre(prox, HOY_S)} días</span>` : prox === HOY_S ? 'toca hoy' : `toca ${fechaCorta(prox)}`) : (r.fecha ? `${fechaCorta(r.fecha)}${r.hora ? ' · ' + r.hora.slice(0, 5) : ''}` : 'Sin fecha')}</span>
+    ${r.notas ? `<span>${esc(r.notas)}</span>` : ''}</div>
+    <div class="acc">
+      ${hechaHoy ? `<button class="btn" data-cacc="pendiente" data-id="${esc(r.id)}">↩ Pendiente</button>` : `<button class="btn prim" data-cacc="hecha" data-id="${esc(r.id)}">✓ Hecha hoy</button>`}
+      ${['carlos', 'montse', 'ambos'].filter(p => p !== r.assignee).map(p => `<button class="btn" data-cacc="asigna:${p}" data-id="${esc(r.id)}">→ ${PERSONAS[p]}</button>`).join('')}
+      ${esRut ? `<button class="btn" data-cacc="editar" data-id="${esc(r.id)}">✏️ Editar</button>` : ''}
+      <button class="btn peligro" data-cacc="borrar" data-id="${esc(r.id)}">🗑 Borrar</button>
+      <button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+function formRutina(r = null) {
+  const area = r ? areaDe(r) : 'limpieza', cada = r?.cada_dias || 7;
+  const proxima = r ? proximaDe(r) : HOY_S;
+  abreHoja(`<span class="fuente" style="--c:var(--area-limpieza)">🏠 Casa</span><h3>${r ? 'Editar rutina' : 'Nueva rutina'}</h3>
+    <div class="form">
+      <label>Qué hay que hacer<input name="title" maxlength="300" value="${esc(r?.title || '')}" placeholder="Fregar el baño, hacer la compra…"></label>
+      <label>Área${opc('area', Object.entries(AREAS).map(([k, v]) => [k, `${v.ic} ${v.n}`]), area)}</label>
+      <label>Le toca a${opc('assignee', [['carlos', 'Carlos'], ['montse', 'Montse'], ['ambos', 'Los dos']], r?.assignee || 'ambos')}</label>
+      <label>Turno${opc('categoria', [['fijo', 'Siempre la misma persona'], ['alterna', '⇄ Se alterna']], r?.categoria || 'fijo')}</label>
+      <div class="fila"><label>Cada cuántos días<input name="cada_dias" type="number" min="1" max="365" value="${cada}"></label>
+      <label>Próxima vez<input name="proxima" type="date" value="${proxima}"></label></div>
+    </div>
+    <div class="acc"><button class="btn prim" data-guardar="rutina" data-id="${esc(r?.id || '')}">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>`);
+  $('hojaIn').querySelector('[name="title"]').focus();
+}
+function formGasto() {
+  abreHoja(`<span class="fuente" style="--c:var(--src-fh)">💶 Gastos del piso</span><h3>Nuevo gasto</h3>
+    <div class="form">
+      <label>Qué<input name="title" maxlength="200" placeholder="Compra súper, luz, cena…"></label>
+      <div class="fila"><label>Importe (€)<input name="amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0,00"></label>
+      <label>Fecha<input name="fecha" type="date" value="${HOY_S}"></label></div>
+      <label>Pagó${opc('paid_by', [['carlos', 'Carlos'], ['montse', 'Montse']], yoCasa())}</label>
+      <label>Para${opc('beneficiario', [['ambos', 'Los dos (a medias)'], ['carlos', 'Solo Carlos'], ['montse', 'Solo Montse']], 'ambos')}</label>
+      <label>Categoría<select name="category">${Object.entries(CAT_GASTO).filter(([k]) => k !== 'ajuste').map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+    </div>
+    <div class="acc"><button class="btn prim" data-guardar="gasto">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>`);
+  $('hojaIn').querySelector('[name="title"]').focus();
+}
+function hojaGasto(id) {
+  const g = gastos.find(x => x.id === id);
+  if (!g) return;
+  abreHoja(`<span class="fuente" style="--c:var(--src-fh)">💶 ${(CAT_GASTO[g.category] || g.category || '').replace(/^\S+ /, '')}</span><h3>${esc(g.title)} · ${eur(g.amount)}</h3>
+    <div class="det"><span>${fechaCorta(g.fecha)} · pagó ${PERSONAS[g.paid_by] || '?'} · para ${g.beneficiario === 'ambos' ? 'los dos, a medias' : PERSONAS[g.beneficiario]}</span>${g.created_by ? `<span>Apuntado por ${esc(g.created_by)}</span>` : ''}</div>
+    <div class="acc"><button class="btn peligro" data-gacc="borrar" data-id="${esc(g.id)}">🗑 Borrar</button><button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+const avisaFallo = (error, que) => alert(`No se pudo ${que}: ` + (esRedFallo(error?.message) ? 'sin conexión, inténtalo otra vez' : error?.message || 'error'));
+async function escribe(tabla, fn, que) {
+  if (DEMO) return true;
+  const { error } = await conReintento(() => fn(sb.from(tabla)));
+  if (error) { avisaFallo(error, que); return false; }
+  return true;
+}
+async function accionCasa(id, acc) {
+  const r = casa.find(x => x.id === id);
+  if (!r) return;
+  const esRut = r.kind === 'limpieza';
+  if (acc === 'editar') return formRutina(r);
+  if (acc === 'borrar') {
+    if (!confirm(`¿Borrar «${r.title}»?`)) return;
+    if (!(await escribe('casa_items', q => q.delete().eq('id', id), 'borrar'))) return;
+    casa = casa.filter(x => x.id !== id);
+  } else {
+    let cambio;
+    if (acc === 'hecha') {
+      cambio = esRut ? { ultima_vez: HOY_S } : { done: true };
+      // Turno alterno: al hacerla, la próxima le toca a la otra persona (como en la app Casa).
+      if (esRut && r.categoria === 'alterna' && r.assignee !== 'ambos') cambio.assignee = r.assignee === 'carlos' ? 'montse' : 'carlos';
+    } else if (acc === 'pendiente') cambio = esRut ? { ultima_vez: null } : { done: false };
+    else if (acc.startsWith('asigna:')) cambio = { assignee: acc.slice(7) };
+    else return;
+    if (!(await escribe('casa_items', q => q.update({ ...cambio, updated_at: new Date().toISOString() }).eq('id', id), 'guardar'))) return;
+    Object.assign(r, cambio);
+  }
+  cierraHoja(); render();
+}
+async function guardaRutina(id) {
+  const title = campo('title'), cada = Math.min(365, Math.max(1, Math.round(Number(campo('cada_dias'))) || 7));
+  const proxima = /^\d{4}-\d{2}-\d{2}$/.test(campo('proxima') || '') ? campo('proxima') : HOY_S;
+  if (!title) { alert('Escribe qué hay que hacer.'); return; }
+  const r = id ? casa.find(x => x.id === id) : null;
+  // La app Casa calcula «toca» como última + cada: para que toque el día elegido, última = ese día − cada.
+  const fila = { title, assignee: elegido('assignee') || 'ambos', categoria: elegido('categoria') || 'fijo', cada_dias: cada,
+    ultima_vez: ymd(masDias(deYmd(proxima), -cada)), datos: { ...(r?.datos || {}), area: elegido('area') || 'limpieza' } };
+  if (r) {
+    if (!(await escribe('casa_items', q => q.update({ ...fila, updated_at: new Date().toISOString() }).eq('id', id), 'guardar'))) return;
+    Object.assign(r, fila);
+  } else {
+    const nueva = { kind: 'limpieza', ...fila, created_by: emailSesion || null };
+    if (DEMO) { casa.push({ id: 'c' + Date.now(), ...nueva, created_at: new Date().toISOString() }); }
+    else {
+      const { data, error } = await conReintento(() => sb.from('casa_items').insert(nueva).select(COLS_CASA).single());
+      if (error) { avisaFallo(error, 'guardar'); return; }
+      casa.push(data);
+    }
+  }
+  cierraHoja(); render();
+}
+async function guardaGasto() {
+  const title = campo('title'), amount = Math.round(Number(String(campo('amount')).replace(',', '.')) * 100) / 100;
+  if (!title) { alert('Escribe qué es el gasto.'); return; }
+  if (!(amount > 0)) { alert('Pon un importe mayor que cero.'); return; }
+  const g = { id: crypto.randomUUID(), title, amount, category: campo('category') || 'otros', paid_by: elegido('paid_by') || yoCasa(),
+    beneficiario: elegido('beneficiario') || 'ambos', fecha: /^\d{4}-\d{2}-\d{2}$/.test(campo('fecha') || '') ? campo('fecha') : HOY_S, created_by: PERSONAS[yoCasa()] };
+  if (!(await escribe('piso_horta_gastos', q => q.insert(g), 'guardar'))) return;
+  gastos = [g, ...gastos].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  cierraHoja(); render();
+}
+async function borraGasto(id) {
+  const g = gastos.find(x => x.id === id);
+  if (!g || !confirm(`¿Borrar «${g.title}» (${eur(g.amount)})?`)) return;
+  if (!(await escribe('piso_horta_gastos', q => q.delete().eq('id', id), 'borrar'))) return;
+  gastos = gastos.filter(x => x.id !== id);
+  cierraHoja(); render();
+}
+$('hoja').addEventListener('click', e => {
+  if (e.target === $('hoja') || e.target.closest('[data-cerrar]')) { cierraHoja(); return; }
+  const o = e.target.closest('.opc button');
+  if (o) { o.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === o)); return; }
+  const b = e.target.closest('[data-acc]');
+  if (b) return accionFH(b.dataset.id, b.dataset.acc);
+  const c = e.target.closest('[data-cacc]');
+  if (c) return accionCasa(c.dataset.id, c.dataset.cacc);
+  const g = e.target.closest('[data-gacc]');
+  if (g) return borraGasto(g.dataset.id);
+  const s = e.target.closest('[data-guardar]');
+  if (s) return s.dataset.guardar === 'gasto' ? guardaGasto() : guardaRutina(s.dataset.id);
+});
+
+// ── Interacción ────────────────────────────────────────────────────────────
+function cambiaVista(v) { vista = v; localStorage.setItem('fh_tab_vista', v); render(); }
+$('segVista').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b) cambiaVista(b.dataset.v); });
+$('filtroFuente').addEventListener('click', e => {
+  const b = e.target.closest('button[data-f]');
+  if (!b) return;
+  fuente = b.dataset.f; localStorage.setItem('fh_tab_fuente', fuente); render();
+});
+$('stats').addEventListener('click', e => {
+  const s = e.target.closest('[data-fuente]');
+  if (!s) return;
+  fuente = s.dataset.fuente; localStorage.setItem('fh_tab_fuente', fuente); cambiaVista('kanban');
+});
+$('contenido').addEventListener('click', e => {
+  const t = e.target;
+  if (t.closest('#verSinFecha')) { verSinFecha = !verSinFecha; render(); return; }
+  if (t.closest('#nuevaRutina')) return formRutina();
+  if (t.closest('#nuevoGasto')) return formGasto();
+  const pe = t.closest('[data-pers]'), cm = t.closest('[data-cmodo]');
+  if (pe) { persona = pe.dataset.pers; localStorage.setItem('fh_tab_persona', persona); render(); return; }
+  if (cm) { casaModo = cm.dataset.cmodo; localStorage.setItem('fh_tab_casa', casaModo); render(); return; }
+  if (t.closest('[data-gastos]')) return formGasto();
+  const fh = t.closest('[data-fh]'), eg = t.closest('[data-egs]'), ag = t.closest('[data-ag]'), cs = t.closest('[data-casa]'), ga = t.closest('[data-gasto]');
+  if (fh) return hojaFH(fh.dataset.fh);
+  if (eg) return hojaEGS(eg.dataset.egs);
+  if (ag) return hojaAG(ag.dataset.ag);
+  if (cs) return hojaCasa(cs.dataset.casa);
+  if (ga) return hojaGasto(ga.dataset.gasto);
+  const dia = t.closest('[data-dia]');
+  if (dia) { cursor = deYmd(dia.dataset.dia); cambiaVista('dia'); }
+});
+// Solo se vuelve a pedir a Supabase si el cursor sale del mes cargado.
+const irA = async d => { cursor = d; if (!DEMO && rangoMes(cursor).desde !== mesCargado) await cargar(); else render(); };
+const mueve = dir => irA(vista === 'mes' ? new Date(cursor.getFullYear(), cursor.getMonth() + dir, 1)
+  : masDias(cursor, dir * (vista === 'semana' || vista === 'casa' ? 7 : 1)));
+$('atras').onclick = () => mueve(-1);
+$('adelante').onclick = () => mueve(1);
+$('hoyBtn').onclick = () => irA(new Date(HOY));
+$('parteAnt').onclick = () => { parteIdx++; pintaParte(); };
+$('parteSig').onclick = () => { parteIdx--; pintaParte(); };
+$('recargarBtn').onclick = () => cargar();
+$('pantallaBtn').onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen?.();
+  else document.documentElement.requestFullscreen?.().catch(() => {});
+  despierta();
+};
+
+// Tema: el mismo interruptor que el calendario (auto → claro → oscuro).
+const TEMAS = ['auto', 'light', 'dark'], TEMA_ICONO = { auto: '🌗', light: '☀️', dark: '🌙' };
+const mqOscuro = matchMedia('(prefers-color-scheme: dark)');
+function aplicaTema() {
+  const pref = localStorage.getItem('fh_cal_tema') || 'auto';
+  const oscuro = pref === 'dark' || (pref === 'auto' && mqOscuro.matches);
+  document.documentElement.dataset.tema = oscuro ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]').content = oscuro ? '#0b1326' : '#f4f6fa';
+  $('temaBtn').textContent = TEMA_ICONO[pref];
+}
+$('temaBtn').onclick = () => {
+  const pref = localStorage.getItem('fh_cal_tema') || 'auto';
+  localStorage.setItem('fh_cal_tema', TEMAS[(TEMAS.indexOf(pref) + 1) % TEMAS.length]);
+  aplicaTema();
+};
+mqOscuro.addEventListener?.('change', aplicaTema);
+aplicaTema();
+
+// ── Pantalla fija: reloj, pantalla siempre encendida y recarga sola ────────
+function reloj() {
+  const n = new Date();
+  if (ymd(n) !== HOY_S) { location.reload(); return; } // cambio de día: todo se recalcula
+  $('hora').textContent = n.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  $('fecha').textContent = cap(fmt(n, { weekday: 'long', day: 'numeric', month: 'long' }));
+}
+reloj();
+setInterval(reloj, 10000);
+let bloqueo = null;
+async function despierta() {
+  try { if ('wakeLock' in navigator && document.visibilityState === 'visible' && !bloqueo) { bloqueo = await navigator.wakeLock.request('screen'); bloqueo.addEventListener('release', () => { bloqueo = null; }); } } catch { /* sin permiso: la tablet se apagará según sus ajustes */ }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  despierta();
+  if (Date.now() - ultimaCarga > 60000) cargar();
+});
+document.addEventListener('pointerdown', despierta, { once: true });
+setInterval(() => { if (document.visibilityState === 'visible') cargar(); }, 5 * 60000);
+
+// ── Sesión (la misma que calendario.html) ──────────────────────────────────
+$('gbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${location.origin}${location.pathname}`, queryParams: { access_type: 'offline', prompt: 'select_account' } },
+  });
+  if (error) alert('No se pudo iniciar con Google: ' + error.message);
+};
+$('lbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('lemail').value.trim(), password: $('lpass').value });
+  if (error) { alert('No se pudo entrar: ' + error.message); return; }
+  location.reload();
+};
+function aplicaSesion(session) {
+  const nuevo = session?.user?.id || null;
+  if (nuevo === uid && ultimaCarga) return;
+  uid = nuevo;
+  emailSesion = (session?.user?.email || '').toLowerCase();
+  $('login').style.display = uid || DEMO ? 'none' : 'flex';
+  if (uid || DEMO) cargar(); else render();
+}
+sb.auth.onAuthStateChange((_ev, session) => {
+  aplicaSesion(session);
+  if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname + location.search);
+});
+(async () => {
+  despierta();
+  if (DEMO) { aplicaSesion(null); return; }
+  const { data: { session } } = await sb.auth.getSession();
+  aplicaSesion(session);
+})();
+
+// ── Datos de ejemplo (?demo) ───────────────────────────────────────────────
+function datosDemo() {
+  const d = n => ymd(masDias(HOY, n)), yo = UID_CARLOS;
+  const ta = (id, title, n, extra = {}) => ({ id, title, due_date: n === null ? null : d(n), completed: false, category: 'personal', priority: 'medium', user_id: yo, shared: false, stage: null, ...extra });
+  eventos = [
+    { id: 'e1', title: 'Reunión de equipo', start_date: d(0) + 'T09:00', type: 'work' },
+    { id: 'e2', title: 'Cena con amigos', start_date: d(1) + 'T21:00', type: 'personal' },
+    { id: 'e3', title: 'Gimnasio', start_date: d(2) + 'T19:30', type: 'fitness' },
+    { id: 'e4', title: 'Guardia', start_date: d(4), type: 'work' },
+    { id: 'e5', title: 'Viaje', start_date: d(9), type: 'trip' },
+    { id: 'e6', title: 'Formación', start_date: d(-3) + 'T16:00', type: 'work' },
+    { id: 'e7', title: 'Dentista', start_date: d(0) + 'T17:30', type: 'personal' },
+  ].map(e => ({ user_id: yo, shared: false, ...e }));
+  pendientes = [
+    ta('f1', 'Renovar ITV del coche', -2, { priority: 'high' }),
+    ta('f2', 'Preparar sesión clínica', 0, { category: 'work', stage: 'en-curso' }),
+    ta('f3', 'Comprar regalo cumpleaños', 1, { shared: true, user_id: UID_MONTSE }),
+    ta('f4', 'Pedir cita revisión', 3),
+    ta('f5', 'Revisar seguro hogar', 6, { category: 'finance', priority: 'low' }),
+    ta('f6', 'Ordenar fotos del verano', null),
+    ta('f7', 'Leer artículo pendiente', null),
+  ];
+  hechasFH = [ta('f8', 'Pagar recibo comunidad', -1, { completed: true, category: 'finance' })];
+  tareasMes = [...pendientes, ...hechasFH];
+  const ahora = new Date().toISOString();
+  egs = { updated_at: ahora, contenido: { ok: true, tareas: [
+    { id: 'g1', texto: 'Revisar textos de la portada', estado: 'revision', estadoNombre: 'En revisión', proyecto: 'Web', vence: d(-1), prioridad: 'alta' },
+    { id: 'g2', texto: 'Grabar vídeo del curso', estado: 'en-curso', estadoNombre: 'En curso', proyecto: 'Cursos', vence: d(2), prioridad: 'media', subtareas: '1/3' },
+    { id: 'g3', texto: 'Feedback del panel del profesor', estado: 'pendiente', estadoNombre: 'Pendiente', proyecto: 'Campus', vence: d(0), prioridad: 'blocker' },
+    { id: 'g4', texto: 'Propuesta visual de certificados', estado: 'pendiente', estadoNombre: 'Pendiente', proyecto: 'Campus', vence: null, prioridad: 'baja' },
+  ] } };
+  tablero = { updated_at: ahora, contenido: { tareas: [
+    { id: 't_a1', titulo: 'T3: tests por tema y avance bloqueado', estado: 'blocked', agente: 'egstek' },
+    { id: 't_a2', titulo: 'Montar vídeos y subir al sandbox', estado: 'blocked', agente: 'egstek' },
+    { id: 't_a3', titulo: 'Revisar ramas activas y planificar merge', estado: 'running', agente: 'medikai' },
+    { id: 't_a4', titulo: 'Cambiar la voz de los cursos a voz natural', estado: 'todo', agente: 'egstek' },
+    { id: 't_a5', titulo: 'Copia semanal cifrada', estado: 'done', agente: 'egstrategy' },
+  ] } };
+  partes = [
+    { fecha: d(0), generado_at: new Date(HOY.getTime() + 7.5 * 3600000).toISOString(), contenido: { texto: '☀️ **Parte de ejemplo — 7:30**\n\n**Tu día:** reunión a las 9:00 y dentista a las 17:30.\n\n**🔴 Pendientes tuyas:**\n- **T3 (egstek)** bloqueada: espera tu «sí».\n- **3 PRs >3 días** en egstek-mvp.\n\n**📧 Correos (últimas 24 h):**\n- *Formación* — nuevo vídeo disponible.\n- *Proveedor* — factura de octubre. **Pide respuesta.**\n\nSin nada más urgente. Buen día 👍' } },
+    { fecha: d(-1), generado_at: new Date(HOY.getTime() - 16.5 * 3600000).toISOString(), contenido: { texto: '☀️ **Parte de ayer**\n\nAgenda vacía. Sin correos importantes.' } },
+  ];
+  const rutina = (id, title, area, assignee, cada, ultima, categoria = 'fijo') => ({ id, kind: 'limpieza', title, assignee, cada_dias: cada, ultima_vez: ultima === null ? null : d(ultima), categoria, datos: { area } });
+  casa = [
+    rutina('c1', 'Baño', 'limpieza', 'carlos', 7, -9, 'alterna'),
+    rutina('c2', 'Aspirar y fregar', 'limpieza', 'montse', 7, -7, 'alterna'),
+    rutina('c3', 'Cocinar entre semana', 'cocina', 'ambos', 1, -1),
+    rutina('c4', 'Compra grande', 'compra', 'ambos', 7, -5),
+    rutina('c5', 'Cambiar sábanas', 'limpieza', 'ambos', 14, -12),
+    rutina('c6', 'Limpiar nevera', 'cocina', 'montse', 30, -3),
+    rutina('c7', 'Sacar el vidrio', 'otro', 'carlos', 7, null),
+    rutina('c8', 'Menú de la semana', 'cocina', 'ambos', 7, -7),
+    rutina('c9', 'Plancha', 'limpieza', 'montse', 7, 0),
+    { id: 'c10', kind: 'tarea', title: 'Recoger paquete en Correos', assignee: 'carlos', fecha: d(1), hora: '18:00', done: false },
+  ];
+  const gasto = (id, title, amount, category, paid_by, beneficiario, n) => ({ id, title, amount, category, paid_by, beneficiario, fecha: d(n), created_by: PERSONAS[paid_by] });
+  gastos = [
+    gasto('g1', 'Compra súper', 64.3, 'comida', 'montse', 'ambos', 0),
+    gasto('g2', 'Luz octubre', 58.2, 'luz', 'carlos', 'ambos', -2),
+    gasto('g3', 'Cena viernes', 42, 'comida', 'carlos', 'ambos', -4),
+    gasto('g4', 'Bombillas', 12.9, 'casa', 'montse', 'ambos', -6),
+    gasto('g5', 'Alquiler', 950, 'alquiler', 'carlos', 'ambos', -8),
+    gasto('g6', 'Farmacia', 9.4, 'otros', 'montse', 'montse', -9),
+  ];
+}
+</script>
+</body>
+</html>
