@@ -1,0 +1,1152 @@
+{
+  "title": "Pisos Barcelona 800-1400€ · Búsqueda automática",
+  "updated": "2026-03-28T20:21:19.551107",
+  "filters": {
+    "city": "Barcelona",
+    "minPrice": 800,
+    "maxPrice": 1400,
+    "excludeZones": [
+      "raval",
+      "la mina",
+      "trinitat",
+      "ciutat vella"
+    ],
+    "nearMetro": "L3/L5 (Vall d'Hebron)"
+  },
+  "stats": {
+    "total_encontrados": 124,
+    "total_contactados": 17,
+    "por_portal": {
+      "idealista": {
+        "encontrados": 124,
+        "contactados": 17
+      },
+      "fotocasa": {
+        "encontrados": 0,
+        "contactados": 0
+      },
+      "habitaclia": {
+        "encontrados": 0,
+        "contactados": 0
+      }
+    }
+  },
+  "pisos": [
+    {
+      "titulo": "Estudio en Avenida de Can Baró, 1, Can Baró, Barcelona",
+      "precio": 800,
+      "m2": 65,
+      "zona": "Estudio en Avenida de Can Baró, 1, Can Baró, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110850105/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Gran Via de les Corts Catalanes, 571, L'Antiga Esquerra de l'Eixample, Barcelona",
+      "precio": 800,
+      "m2": 30,
+      "zona": "Estudio en Gran Via de les Corts Catalanes, 571, L'Antiga Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111048811/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Ático en CL Magalhaes, 33, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 800,
+      "m2": 20,
+      "zona": "Ático en CL Magalhaes, 33, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/109929026/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de la Mare de Déu de Port, La Marina del Port, Barcelona",
+      "precio": 826,
+      "m2": 60,
+      "zona": "Piso en Calle de la Mare de Déu de Port, La Marina del Port, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110932238/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Torrent de l'Olla, 191, Vila de Gràcia, Barcelona",
+      "precio": 830,
+      "m2": 29,
+      "zona": "Piso en Torrent de l'Olla, 191, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/35414867/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en El Baix Guinardó, Barcelona",
+      "precio": 850,
+      "m2": 24,
+      "zona": "Estudio en El Baix Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111048225/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Praga, El Baix Guinardó, Barcelona",
+      "precio": 850,
+      "m2": 30,
+      "zona": "Estudio en Calle de Praga, El Baix Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110806771/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Praga, El Baix Guinardó, Barcelona",
+      "precio": 850,
+      "m2": 40,
+      "zona": "Estudio en Calle de Praga, El Baix Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110802790/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Sant Paulí de Nola, 6, La Font de la Guatlla, Barcelona",
+      "precio": 868,
+      "m2": 49,
+      "zona": "Piso en Calle de Sant Paulí de Nola, 6, La Font de la Guatlla, Barcelona",
+      "url": "https://www.idealista.com/inmueble/91860756/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Taquígraf Garriga, 91, Les Corts, Barcelona",
+      "precio": 927,
+      "m2": 51,
+      "zona": "Piso en Calle del Taquígraf Garriga, 91, Les Corts, Barcelona",
+      "url": "https://www.idealista.com/inmueble/86949590/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de la Diputació, La Dreta de l'Eixample, Barcelona",
+      "precio": 935,
+      "m2": 26,
+      "zona": "Estudio en Calle de la Diputació, La Dreta de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/95610160/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Casanova, L'Antiga Esquerra de l'Eixample, Barcelona",
+      "precio": 940,
+      "m2": 62,
+      "zona": "Piso en Casanova, L'Antiga Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/38321216/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Mozart, Vila de Gràcia, Barcelona",
+      "precio": 950,
+      "m2": 35,
+      "zona": "Estudio en Calle de Mozart, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110902138/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle Gran de Gràcia, 74, Vila de Gràcia, Barcelona",
+      "precio": 950,
+      "m2": 60,
+      "zona": "Estudio en Calle Gran de Gràcia, 74, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/108868363/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de los Castillejos, El Baix Guinardó, Barcelona",
+      "precio": 950,
+      "m2": 48,
+      "zona": "Piso en Calle de los Castillejos, El Baix Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111019701/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Dante Alighieri, El Carmel, Barcelona",
+      "precio": 950,
+      "m2": 55,
+      "zona": "Piso en Calle de Dante Alighieri, El Carmel, Barcelona",
+      "url": "https://www.idealista.com/inmueble/98792320/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en mare de deu dels Àngels, 49, La Teixonera, Barcelona",
+      "precio": 950,
+      "m2": 35,
+      "zona": "Estudio en mare de deu dels Àngels, 49, La Teixonera, Barcelona",
+      "url": "https://www.idealista.com/inmueble/108619785/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Ronda de Sant Antoni, Sant Antoni, Barcelona",
+      "precio": 950,
+      "m2": 30,
+      "zona": "Estudio en Ronda de Sant Antoni, Sant Antoni, Barcelona",
+      "url": "https://www.idealista.com/inmueble/106408418/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Les Corts, Barcelona",
+      "precio": 950,
+      "m2": 45,
+      "zona": "Piso en Les Corts, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110934384/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de los Castillejos, 221, La Sagrada Família, Barcelona",
+      "precio": 956,
+      "m2": 51,
+      "zona": "Piso en Calle de los Castillejos, 221, La Sagrada Família, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111040327/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Ático en Calle de la Conca de Tremp, El Carmel, Barcelona",
+      "precio": 973,
+      "m2": 55,
+      "zona": "Ático en Calle de la Conca de Tremp, El Carmel, Barcelona",
+      "url": "https://www.idealista.com/inmueble/97013179/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Sigüenza, 70, El Carmel, Barcelona",
+      "precio": 990,
+      "m2": 38,
+      "zona": "Piso en Calle de Sigüenza, 70, El Carmel, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111024200/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de València, s/n, La Nova Esquerra de l'Eixample, Barcelona",
+      "precio": 990,
+      "m2": 44,
+      "zona": "Piso en Calle de València, s/n, La Nova Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111024220/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Móra d'Ebre, El Coll, Barcelona",
+      "precio": 995,
+      "m2": 29,
+      "zona": "Piso en Calle de Móra d'Ebre, El Coll, Barcelona",
+      "url": "https://www.idealista.com/inmueble/104543807/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Avenida Diagonal, 309, La Dreta de l'Eixample, Barcelona",
+      "precio": 1000,
+      "m2": 32,
+      "zona": "Estudio en Avenida Diagonal, 309, La Dreta de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111047334/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Tamarit, Sant Antoni, Barcelona",
+      "precio": 1000,
+      "m2": 29,
+      "zona": "Estudio en Calle de Tamarit, Sant Antoni, Barcelona",
+      "url": "https://www.idealista.com/inmueble/39983410/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Ático en Avenida de sant ramon nonat, La Maternitat i Sant Ramon, Barcelona",
+      "precio": 1000,
+      "m2": 50,
+      "zona": "Ático en Avenida de sant ramon nonat, La Maternitat i Sant Ramon, Barcelona",
+      "url": "https://www.idealista.com/inmueble/32399940/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Padilla, 375, El Baix Guinardó, Barcelona",
+      "precio": 1037,
+      "m2": 73,
+      "zona": "Piso en Calle de Padilla, 375, El Baix Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111025130/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de la Concòrdia, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1060,
+      "m2": 80,
+      "zona": "Piso en Calle de la Concòrdia, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111027544/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Villar, El Guinardó, Barcelona",
+      "precio": 1065,
+      "m2": 33,
+      "zona": "Estudio en Calle de Villar, El Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110176619/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en de Mir Geribert, Hostafrancs, Barcelona",
+      "precio": 1069,
+      "m2": 105,
+      "zona": "Piso en de Mir Geribert, Hostafrancs, Barcelona",
+      "url": "https://www.idealista.com/inmueble/105911001/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Ático en Calle Gran de Gràcia, 138, Vila de Gràcia, Barcelona",
+      "precio": 1090,
+      "m2": 35,
+      "zona": "Ático en Calle Gran de Gràcia, 138, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/27733406/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Joan Gamper, Les Corts, Barcelona",
+      "precio": 1090,
+      "m2": 30,
+      "zona": "Estudio en Calle de Joan Gamper, Les Corts, Barcelona",
+      "url": "https://www.idealista.com/inmueble/107099686/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Fastenrath, 7, La Teixonera, Barcelona",
+      "precio": 1100,
+      "m2": 45,
+      "zona": "Estudio en Calle de Fastenrath, 7, La Teixonera, Barcelona",
+      "url": "https://www.idealista.com/inmueble/106377669/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Ático en El Carmel, Barcelona",
+      "precio": 1100,
+      "m2": 50,
+      "zona": "Ático en El Carmel, Barcelona",
+      "url": "https://www.idealista.com/inmueble/108450569/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Sant Antoni, Barcelona",
+      "precio": 1100,
+      "m2": 29,
+      "zona": "Estudio en Sant Antoni, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111019748/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Comte Borrell, 180, La Nova Esquerra de l'Eixample, Barcelona",
+      "precio": 1100,
+      "m2": 51,
+      "zona": "Piso en Calle del Comte Borrell, 180, La Nova Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111020076/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Nàpols, El Fort Pienc, Barcelona",
+      "precio": 1100,
+      "m2": 35,
+      "zona": "Estudio en Calle de Nàpols, El Fort Pienc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110726645/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle del Consell de Cent, La Dreta de l'Eixample, Barcelona",
+      "precio": 1100,
+      "m2": 18,
+      "zona": "Estudio en Calle del Consell de Cent, La Dreta de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/108662579/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Pamplona, La Vila Olímpica del Poblenou, Barcelona",
+      "precio": 1100,
+      "m2": 31,
+      "zona": "Piso en Calle de Pamplona, La Vila Olímpica del Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/96809786/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle Alcalá de Guadaira, 23, Sant Martí de Provençals, Barcelona",
+      "precio": 1100,
+      "m2": 66,
+      "zona": "Piso en Calle Alcalá de Guadaira, 23, Sant Martí de Provençals, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110998603/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en CL Provença, 139, L'Antiga Esquerra de l'Eixample, Barcelona",
+      "precio": 1122,
+      "m2": 45,
+      "zona": "Piso en CL Provença, 139, L'Antiga Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110079003/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de l'Alba, Vila de Gràcia, Barcelona",
+      "precio": 1125,
+      "m2": 68,
+      "zona": "Piso en Calle de l'Alba, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111028538/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle d'Aribau, L'Antiga Esquerra de l'Eixample, Barcelona",
+      "precio": 1127,
+      "m2": 60,
+      "zona": "Piso en Calle d'Aribau, L'Antiga Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111022405/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Avenida de la Mare de Déu de Montserrat, El Guinardó, Barcelona",
+      "precio": 1133,
+      "m2": 78,
+      "zona": "Piso en Avenida de la Mare de Déu de Montserrat, El Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111021056/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Llull, 130, El Poblenou, Barcelona",
+      "precio": 1145,
+      "m2": 25,
+      "zona": "Estudio en Calle de Llull, 130, El Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/104075057/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Plaza de la Torre, 7, Vila de Gràcia, Barcelona",
+      "precio": 1150,
+      "m2": 50,
+      "zona": "Estudio en Plaza de la Torre, 7, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/108659643/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Rosalia de Castro, El Baix Guinardó, Barcelona",
+      "precio": 1150,
+      "m2": 65,
+      "zona": "Piso en Calle de Rosalia de Castro, El Baix Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110035915/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Calàbria, La Nova Esquerra de l'Eixample, Barcelona",
+      "precio": 1150,
+      "m2": 26,
+      "zona": "Estudio en Calle de Calàbria, La Nova Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/83794618/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle del Rector Triadó, Hostafrancs, Barcelona",
+      "precio": 1150,
+      "m2": 47,
+      "zona": "Estudio en Calle del Rector Triadó, Hostafrancs, Barcelona",
+      "url": "https://www.idealista.com/inmueble/103789083/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Puig i Valls, 150, Sants - Badal, Barcelona",
+      "precio": 1150,
+      "m2": 24,
+      "zona": "Estudio en Calle de Puig i Valls, 150, Sants - Badal, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110225440/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de la Llacuna, El Poblenou, Barcelona",
+      "precio": 1155,
+      "m2": 85,
+      "zona": "Piso en Calle de la Llacuna, El Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110996195/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Pintor Pahissa, 33, La Maternitat i Sant Ramon, Barcelona",
+      "precio": 1174,
+      "m2": 80,
+      "zona": "Piso en Calle del Pintor Pahissa, 33, La Maternitat i Sant Ramon, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111030194/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Galileu, Sants, Barcelona",
+      "precio": 1175,
+      "m2": 50,
+      "zona": "Estudio en Calle de Galileu, Sants, Barcelona",
+      "url": "https://www.idealista.com/inmueble/104377302/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Rambla de Badal, Sants, Barcelona",
+      "precio": 1190,
+      "m2": 28,
+      "zona": "Piso en Rambla de Badal, Sants, Barcelona",
+      "url": "https://www.idealista.com/inmueble/84255513/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Sant Dalmir, La Teixonera, Barcelona",
+      "precio": 1195,
+      "m2": 80,
+      "zona": "Piso en Calle de Sant Dalmir, La Teixonera, Barcelona",
+      "url": "https://www.idealista.com/inmueble/102092763/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Rosselló, El Camp de l'Arpa del Clot, Barcelona",
+      "precio": 1195,
+      "m2": 41,
+      "zona": "Piso en Calle del Rosselló, El Camp de l'Arpa del Clot, Barcelona",
+      "url": "https://www.idealista.com/inmueble/99569388/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Ático en Calle de Milà i Fontanals, Vila de Gràcia, Barcelona",
+      "precio": 1200,
+      "m2": 45,
+      "zona": "Ático en Calle de Milà i Fontanals, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110244872/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle d'Aulèstia i Pijoan, 18, Vila de Gràcia, Barcelona",
+      "precio": 1200,
+      "m2": 40,
+      "zona": "Piso en Calle d'Aulèstia i Pijoan, 18, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110817671/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Canigó, Horta, Barcelona",
+      "precio": 1200,
+      "m2": 60,
+      "zona": "Piso en Calle del Canigó, Horta, Barcelona",
+      "url": "https://www.idealista.com/inmueble/109762172/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de la Gran Vista, El Carmel, Barcelona",
+      "precio": 1200,
+      "m2": 23,
+      "zona": "Estudio en Calle de la Gran Vista, El Carmel, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110807532/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Joan Güell, 72, Sants, Barcelona",
+      "precio": 1200,
+      "m2": 70,
+      "zona": "Piso en Calle de Joan Güell, 72, Sants, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111047702/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Jacquard, Sants, Barcelona",
+      "precio": 1200,
+      "m2": 40,
+      "zona": "Piso en Calle de Jacquard, Sants, Barcelona",
+      "url": "https://www.idealista.com/inmueble/107248453/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle d'En Fontrodona, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1200,
+      "m2": 61,
+      "zona": "Piso en Calle d'En Fontrodona, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110795232/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Salvà, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1200,
+      "m2": 50,
+      "zona": "Piso en Calle de Salvà, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/107536581/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle d'En Fontrodona, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1200,
+      "m2": 50,
+      "zona": "Piso en Calle d'En Fontrodona, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110348304/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Carretera de Collblanc, La Maternitat i Sant Ramon, Barcelona",
+      "precio": 1200,
+      "m2": 28,
+      "zona": "Estudio en Carretera de Collblanc, La Maternitat i Sant Ramon, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110187889/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Avenida de Sant Ramon Nonat, 10, La Maternitat i Sant Ramon, Barcelona",
+      "precio": 1200,
+      "m2": 50,
+      "zona": "Piso en Avenida de Sant Ramon Nonat, 10, La Maternitat i Sant Ramon, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111007787/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Ático en Calle de Trinxant, El Camp de l'Arpa del Clot, Barcelona",
+      "precio": 1200,
+      "m2": 60,
+      "zona": "Ático en Calle de Trinxant, El Camp de l'Arpa del Clot, Barcelona",
+      "url": "https://www.idealista.com/inmueble/99015757/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Paseo de la Zona Franca, s/n, La Marina del Port, Barcelona",
+      "precio": 1220,
+      "m2": 77,
+      "zona": "Piso en Paseo de la Zona Franca, s/n, La Marina del Port, Barcelona",
+      "url": "https://www.idealista.com/inmueble/107834414/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Passatge de Jaume Roig, La Maternitat i Sant Ramon, Barcelona",
+      "precio": 1226,
+      "m2": 74,
+      "zona": "Piso en Passatge de Jaume Roig, La Maternitat i Sant Ramon, Barcelona",
+      "url": "https://www.idealista.com/inmueble/104102564/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de la Diputació, El Fort Pienc, Barcelona",
+      "precio": 1239,
+      "m2": 60,
+      "zona": "Piso en Calle de la Diputació, El Fort Pienc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110955470/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Ventalló, El Camp d'En Grassot i Gràcia Nova, Barcelona",
+      "precio": 1240,
+      "m2": 40,
+      "zona": "Piso en Calle de Ventalló, El Camp d'En Grassot i Gràcia Nova, Barcelona",
+      "url": "https://www.idealista.com/inmueble/108616562/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Torrent de les Flors, Vila de Gràcia, Barcelona",
+      "precio": 1250,
+      "m2": 49,
+      "zona": "Piso en Calle del Torrent de les Flors, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/103242985/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Còrsega, Vila de Gràcia, Barcelona",
+      "precio": 1250,
+      "m2": 35,
+      "zona": "Estudio en Calle de Còrsega, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111014973/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Mozart, Vila de Gràcia, Barcelona",
+      "precio": 1250,
+      "m2": 33,
+      "zona": "Piso en Calle de Mozart, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/34304178/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Villarroel, Sant Antoni, Barcelona",
+      "precio": 1250,
+      "m2": 56,
+      "zona": "Piso en Calle de Villarroel, Sant Antoni, Barcelona",
+      "url": "https://www.idealista.com/inmueble/81834047/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Dúplex en Calle de la Puríssima Concepció, 16 b, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1250,
+      "m2": 90,
+      "zona": "Dúplex en Calle de la Puríssima Concepció, 16 b, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/86236545/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Estudio en Calle de Burgos, 49, Sants, Barcelona",
+      "precio": 1250,
+      "m2": 66,
+      "zona": "Estudio en Calle de Burgos, 49, Sants, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110972768/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de l'Encarnació, El Baix Guinardó, Barcelona",
+      "precio": 1268,
+      "m2": 80,
+      "zona": "Piso en Calle de l'Encarnació, El Baix Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110745601/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle d'en Grassot, El Camp d'En Grassot i Gràcia Nova, Barcelona",
+      "precio": 1273,
+      "m2": 54,
+      "zona": "Piso en Calle d'en Grassot, El Camp d'En Grassot i Gràcia Nova, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110970923/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Comte Borrell, Sant Antoni, Barcelona",
+      "precio": 1275,
+      "m2": 29,
+      "zona": "Piso en Calle del Comte Borrell, Sant Antoni, Barcelona",
+      "url": "https://www.idealista.com/inmueble/83073745/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Ático en Lope de vega, 44, El Poblenou, Barcelona",
+      "precio": 1275,
+      "m2": 51,
+      "zona": "Ático en Lope de vega, 44, El Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110054566/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Gran Via de les Corts Catalanes, Sant Martí de Provençals, Barcelona",
+      "precio": 1292,
+      "m2": 70,
+      "zona": "Piso en Gran Via de les Corts Catalanes, Sant Martí de Provençals, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110799545/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Sales i Ferré, El Guinardó, Barcelona",
+      "precio": 1295,
+      "m2": 75,
+      "zona": "Piso en Calle de Sales i Ferré, El Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/109644970/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Marroc, Provençals del Poblenou, Barcelona",
+      "precio": 1295,
+      "m2": 60,
+      "zona": "Piso en Calle del Marroc, Provençals del Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/96545553/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Torrent de Can Mariner, Horta, Barcelona",
+      "precio": 1300,
+      "m2": 50,
+      "zona": "Piso en Torrent de Can Mariner, Horta, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110977963/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Sicília, El Fort Pienc, Barcelona",
+      "precio": 1300,
+      "m2": 53,
+      "zona": "Estudio en Calle de Sicília, El Fort Pienc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111026753/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Avenida Diagonal, El Fort Pienc, Barcelona",
+      "precio": 1300,
+      "m2": 53,
+      "zona": "Estudio en Avenida Diagonal, El Fort Pienc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110817608/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en CL Magalhaes, 33, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1300,
+      "m2": 38,
+      "zona": "Piso en CL Magalhaes, 33, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110310387/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Watt, Sants, Barcelona",
+      "precio": 1300,
+      "m2": 55,
+      "zona": "Estudio en Calle de Watt, Sants, Barcelona",
+      "url": "https://www.idealista.com/inmueble/101026168/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en CL Mare De Deu De Port, 281, La Marina del Port, Barcelona",
+      "precio": 1300,
+      "m2": 79,
+      "zona": "Piso en CL Mare De Deu De Port, 281, La Marina del Port, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110311523/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Caballero, Les Corts, Barcelona",
+      "precio": 1300,
+      "m2": 55,
+      "zona": "Estudio en Calle de Caballero, Les Corts, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110915067/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del dos de Maig, El Camp de l'Arpa del Clot, Barcelona",
+      "precio": 1300,
+      "m2": 70,
+      "zona": "Piso en Calle del dos de Maig, El Camp de l'Arpa del Clot, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111029095/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de la Selva de Mar, Sant Martí de Provençals, Barcelona",
+      "precio": 1324,
+      "m2": 75,
+      "zona": "Piso en Calle de la Selva de Mar, Sant Martí de Provençals, Barcelona",
+      "url": "https://www.idealista.com/inmueble/103538914/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Padilla, La Sagrada Família, Barcelona",
+      "precio": 1325,
+      "m2": 95,
+      "zona": "Piso en Calle de Padilla, La Sagrada Família, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111048666/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Estudio en Les Corts, Barcelona",
+      "precio": 1325,
+      "m2": 30,
+      "zona": "Estudio en Les Corts, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111003321/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Martí, El Camp d'En Grassot i Gràcia Nova, Barcelona",
+      "precio": 1329,
+      "m2": 80,
+      "zona": "Piso en Calle de Martí, El Camp d'En Grassot i Gràcia Nova, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110856801/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Consell de Cent, La Nova Esquerra de l'Eixample, Barcelona",
+      "precio": 1330,
+      "m2": 76,
+      "zona": "Piso en Calle del Consell de Cent, La Nova Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/106812019/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Ático en Calle Espanya Industria, 8, s/n, Hostafrancs, Barcelona",
+      "precio": 1340,
+      "m2": 35,
+      "zona": "Ático en Calle Espanya Industria, 8, s/n, Hostafrancs, Barcelona",
+      "url": "https://www.idealista.com/inmueble/103176051/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Estudio en Baixada de Briz, Vallcarca i els Penitents, Barcelona",
+      "precio": 1350,
+      "m2": 64,
+      "zona": "Estudio en Baixada de Briz, Vallcarca i els Penitents, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110972982/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Ático en Calle de Sant Antoni Maria Claret, El Baix Guinardó, Barcelona",
+      "precio": 1350,
+      "m2": 27,
+      "zona": "Ático en Calle de Sant Antoni Maria Claret, El Baix Guinardó, Barcelona",
+      "url": "https://www.idealista.com/inmueble/109793467/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle del Taulat, El Poblenou, Barcelona",
+      "precio": 1350,
+      "m2": 55,
+      "zona": "Piso en Calle del Taulat, El Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/109838780/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle de la Llacuna, El Poblenou, Barcelona",
+      "precio": 1350,
+      "m2": 44,
+      "zona": "Piso en Calle de la Llacuna, El Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/39345433/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle del Sospir, 27, El Camp de l'Arpa del Clot, Barcelona",
+      "precio": 1350,
+      "m2": 50,
+      "zona": "Piso en Calle del Sospir, 27, El Camp de l'Arpa del Clot, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110190424/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle de Calàbria, 206, La Nova Esquerra de l'Eixample, Barcelona",
+      "precio": 1355,
+      "m2": 50,
+      "zona": "Piso en Calle de Calàbria, 206, La Nova Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110996337/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle de Londres, La Nova Esquerra de l'Eixample, Barcelona",
+      "precio": 1380,
+      "m2": 35,
+      "zona": "Piso en Calle de Londres, La Nova Esquerra de l'Eixample, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111030635/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Paseo de Calvell, El Poblenou, Barcelona",
+      "precio": 1380,
+      "m2": 63,
+      "zona": "Piso en Paseo de Calvell, El Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/105902170/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle de Sant Cugat del Vallès, La Salut, Barcelona",
+      "precio": 1390,
+      "m2": 35,
+      "zona": "Piso en Calle de Sant Cugat del Vallès, La Salut, Barcelona",
+      "url": "https://www.idealista.com/inmueble/103282174/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle de Sant Pere Màrtir, Vila de Gràcia, Barcelona",
+      "precio": 1390,
+      "m2": 45,
+      "zona": "Piso en Calle de Sant Pere Màrtir, Vila de Gràcia, Barcelona",
+      "url": "https://www.idealista.com/inmueble/100397073/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Chalet pareado en Calle de Sant Cugat del Vallès, La Salut, Barcelona",
+      "precio": 1390,
+      "m2": 35,
+      "zona": "Chalet pareado en Calle de Sant Cugat del Vallès, La Salut, Barcelona",
+      "url": "https://www.idealista.com/inmueble/103593661/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle de Còrsega, La Sagrada Família, Barcelona",
+      "precio": 1390,
+      "m2": 63,
+      "zona": "Piso en Calle de Còrsega, La Sagrada Família, Barcelona",
+      "url": "https://www.idealista.com/inmueble/96098658/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle Nou de la Rambla, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1390,
+      "m2": 64,
+      "zona": "Piso en Calle Nou de la Rambla, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/101225445/",
+      "portal": "idealista",
+      "contactado": true
+    },
+    {
+      "titulo": "Piso en Calle del Baró de la Barre, Vallcarca i els Penitents, Barcelona",
+      "precio": 1395,
+      "m2": 39,
+      "zona": "Piso en Calle del Baró de la Barre, Vallcarca i els Penitents, Barcelona",
+      "url": "https://www.idealista.com/inmueble/107682071/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Galileu, Sants, Barcelona",
+      "precio": 1395,
+      "m2": 49,
+      "zona": "Piso en Calle de Galileu, Sants, Barcelona",
+      "url": "https://www.idealista.com/inmueble/95882105/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Blai, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1400,
+      "m2": 52,
+      "zona": "Piso en Calle de Blai, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/107883998/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Avenida del Paral·lel, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "precio": 1400,
+      "m2": 100,
+      "zona": "Piso en Avenida del Paral·lel, El Poble Sec - Parc de Montjuïc, Barcelona",
+      "url": "https://www.idealista.com/inmueble/88334584/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Taquígraf Garriga, 123, Les Corts, Barcelona",
+      "precio": 1400,
+      "m2": 49,
+      "zona": "Piso en Calle del Taquígraf Garriga, 123, Les Corts, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111048520/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Taquígraf Garriga, 24, Les Corts, Barcelona",
+      "precio": 1400,
+      "m2": 49,
+      "zona": "Piso en Calle del Taquígraf Garriga, 24, Les Corts, Barcelona",
+      "url": "https://www.idealista.com/inmueble/111026740/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle de Sor Eulàlia d'Anzizu, Pedralbes, Barcelona",
+      "precio": 1400,
+      "m2": 42,
+      "zona": "Piso en Calle de Sor Eulàlia d'Anzizu, Pedralbes, Barcelona",
+      "url": "https://www.idealista.com/inmueble/83972976/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en El Poblenou, Barcelona",
+      "precio": 1400,
+      "m2": 51,
+      "zona": "Piso en El Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110901277/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Pallars, Provençals del Poblenou, Barcelona",
+      "precio": 1400,
+      "m2": 30,
+      "zona": "Estudio en Calle de Pallars, Provençals del Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110825800/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Estudio en Calle de Pallars, 433, Provençals del Poblenou, Barcelona",
+      "precio": 1400,
+      "m2": 24,
+      "zona": "Estudio en Calle de Pallars, 433, Provençals del Poblenou, Barcelona",
+      "url": "https://www.idealista.com/inmueble/110792668/",
+      "portal": "idealista",
+      "contactado": false
+    },
+    {
+      "titulo": "Piso en Calle del Pont del Treball Digne, 7, La Verneda i la Pau, Barcelona",
+      "precio": 1400,
+      "m2": 50,
+      "zona": "Piso en Calle del Pont del Treball Digne, 7, La Verneda i la Pau, Barcelona",
+      "url": "https://www.idealista.com/inmueble/109910159/",
+      "portal": "idealista",
+      "contactado": false
+    }
+  ]
+}

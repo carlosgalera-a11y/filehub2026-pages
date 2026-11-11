@@ -1,0 +1,2064 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f4f6fa">
+<title>Panel · FileHub</title>
+<link rel="icon" type="image/png" sizes="192x192" href="/icon-calendario-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icon-calendario-180.png">
+<meta name="apple-mobile-web-app-title" content="Panel">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest-tablet.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+  // Mismo tema que calendario.html (fh_cal_tema, compartido en este dominio): se
+  // aplica antes de pintar para no ver un fogonazo blanco al abrir en oscuro.
+  (function () {
+    var pref = localStorage.getItem('fh_cal_tema') || 'auto';
+    var oscuro = pref === 'dark' || (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.tema = oscuro ? 'dark' : 'light';
+    // ?solo=resumen | viajes | vuelos → una sola vista, sin cabecera ni lateral (incrustada en calendario.html).
+    var solo = new URLSearchParams(location.search).get('solo');
+    if (solo === 'resumen' || solo === 'viajes' || solo === 'vuelos') document.documentElement.classList.add('solo');
+  })();
+</script>
+<style>
+  /* Panel fijo para la tablet (horizontal, ~1280×800). Tokens = calendario.html. */
+  :root {
+    --ink: #0f172a; --muted: #64748b; --soft: #94a3b8;
+    --line: #e5e9f2; --bg: #f4f6fa; --card: #ffffff;
+    --indigo: #4f46e5; --indigo-soft: #eef2ff; --indigo-ring: #4f46e51a;
+    --shadow: 0 1px 2px rgba(15,23,42,.05), 0 4px 14px rgba(15,23,42,.05);
+    --radius: 14px;
+    --seg-bg: #e9edf5; --seg-on: #ffffff;
+    --overlay: #0f172a59; --sheet-shadow: 0 -8px 30px #00000033;
+    --aviso-bg: #fffbeb; --aviso-line: #fde68a; --aviso-fg: #92400e;
+    --atr-fecha: #dc2626;
+    --tarea: #0ea5e9; --montse: #db2777;
+    --t-urg-bg: #dc2626; --t-urg-fg: #ffffff;
+    --t-agm-bg: #16a34a; --t-agm-fg: #ffffff;
+    --t-agt-bg: #2563eb; --t-agt-fg: #ffffff;
+    --t-egs-bg: #facc15; --t-egs-fg: #4a3403;
+    --ev-personal-bg: #e0e7ff; --ev-personal-fg: #4338ca; --ev-personal-dot: #6366f1;
+    --ev-work-bg: #fef3c7;     --ev-work-fg: #b45309;     --ev-work-dot: #f59e0b;
+    --ev-fitness-bg: #d1fae5;  --ev-fitness-fg: #047857;  --ev-fitness-dot: #10b981;
+    --ev-trip-bg: #cffafe;     --ev-trip-fg: #0e7490;     --ev-trip-dot: #06b6d4;
+    --ev-guardia-bg: #fee2e2;  --ev-guardia-fg: #b91c1c;  --ev-guardia-dot: #ef4444;
+    --prio-high: #ef4444; --prio-medium: #f59e0b; --prio-low: #94a3b8;
+    /* Fuentes de las tareas */
+    --src-fh: #4f46e5; --src-fh-bg: #eef2ff;
+    --src-egs: #0d9488; --src-egs-bg: #ccfbf1;
+    --src-ag: #7c3aed; --src-ag-bg: #ede9fe;
+    --col-bg: #eef1f7;
+    /* Áreas de la casa */
+    --area-limpieza: #0ea5e9; --area-cocina: #f97316; --area-compra: #10b981; --area-otro: #8b5cf6;
+    color-scheme: light;
+  }
+  html[data-tema="dark"] {
+    --ink: #f8fafc; --muted: #94a3b8; --soft: #64748b;
+    --line: #283449; --bg: #0b1326; --card: #131b2e;
+    --indigo: #8083ff; --indigo-soft: #8083ff26; --indigo-ring: #8083ff2e;
+    --shadow: 0 1px 2px rgba(0,0,0,.35), 0 6px 18px rgba(0,0,0,.30);
+    --seg-bg: #1b2438; --seg-on: #222a3d;
+    --overlay: #020617b3; --sheet-shadow: 0 -8px 30px #00000066;
+    --aviso-bg: #3a2c0c; --aviso-line: #6b5312; --aviso-fg: #fcd34d;
+    --atr-fecha: #f87171;
+    --tarea: #38bdf8; --montse: #f472b6;
+    --ev-personal-bg: #232a4d; --ev-personal-fg: #c0c1ff; --ev-personal-dot: #8083ff;
+    --ev-work-bg: #3a2c12;     --ev-work-fg: #fcd34d;     --ev-work-dot: #f59e0b;
+    --ev-fitness-bg: #10322a;  --ev-fitness-fg: #6ee7b7;  --ev-fitness-dot: #4edea3;
+    --ev-trip-bg: #113240;     --ev-trip-fg: #67e8f9;     --ev-trip-dot: #22d3ee;
+    --ev-guardia-bg: #3a1c1f;  --ev-guardia-fg: #fca5a5;  --ev-guardia-dot: #f87171;
+    --prio-high: #f87171; --prio-medium: #fbbf24; --prio-low: #64748b;
+    --src-fh: #8083ff; --src-fh-bg: #8083ff26;
+    --src-egs: #2dd4bf; --src-egs-bg: #2dd4bf1f;
+    --src-ag: #a78bfa; --src-ag-bg: #a78bfa24;
+    --col-bg: #0f1729;
+    --area-limpieza: #38bdf8; --area-cocina: #fb923c; --area-compra: #4edea3; --area-otro: #a78bfa;
+    color-scheme: dark;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.4;
+    overflow: hidden; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
+  }
+  h1, h2, h3, h4, .reloj b, .num, .stat .n { font-family: 'Hanken Grotesk', 'Inter', sans-serif; }
+  button { font-family: inherit; color: inherit; }
+  .app {
+    height: 100vh; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px;
+    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+  }
+
+  /* ── Cabecera ── */
+  .top { display: flex; align-items: center; gap: 12px 16px; flex-wrap: wrap; }
+  .reloj { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .reloj b { font-size: 36px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .reloj span { color: var(--muted); font-weight: 600; font-size: 15px; white-space: nowrap; }
+  .turnos-hoy { display: flex; gap: 6px; flex-wrap: wrap; }
+  .top .der { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .seg { display: inline-flex; background: var(--seg-bg); border-radius: 12px; padding: 3px; gap: 2px; }
+  .seg button {
+    border: none; background: transparent; color: var(--muted); font-weight: 600; font-size: 14px;
+    padding: 8px 14px; border-radius: 9px; cursor: pointer;
+  }
+  .seg button.on { background: var(--seg-on); color: var(--ink); box-shadow: 0 1px 3px rgba(15,23,42,.12); }
+  .btn {
+    border: 1px solid var(--line); background: var(--card); border-radius: 10px; min-width: 40px; height: 40px;
+    padding: 0 12px; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  .btn:active, .seg button:active { transform: scale(.97); }
+  .nav { display: inline-flex; gap: 6px; }
+
+  /* ── Cuerpo: vista + lateral ── */
+  .cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; min-height: 0; }
+  .vista, .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow);
+  }
+  .vista { display: flex; flex-direction: column; min-height: 0; padding: 12px 12px 10px; }
+  .vista-cab { display: flex; align-items: center; gap: 10px; margin: 0 2px 10px; flex-wrap: wrap; }
+  .vista-cab h2 { font-size: 20px; font-weight: 800; letter-spacing: -.01em; }
+  .chips { display: flex; gap: 6px; margin-left: auto; flex-wrap: wrap; }
+  .chips button {
+    border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 5px 12px;
+    font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer;
+  }
+  .chips button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  #contenido { flex: 1; min-height: 0; overflow: auto; }
+  .lateral { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+
+  .chip-t {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 6px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; letter-spacing: .01em;
+  }
+  .turnos-hoy .chip-t { font-size: 13px; padding: 5px 10px; border-radius: 8px; }
+  .vacio { color: var(--soft); font-size: 13px; padding: 6px 2px; }
+  .quien { display: inline-grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; font-size: 9px; font-weight: 800; background: var(--indigo-soft); color: var(--indigo); flex: none; }
+  .quien.m { background: color-mix(in srgb, var(--montse) 18%, transparent); color: var(--montse); }
+
+  /* ── Mes ── */
+  .v-mes { overflow: hidden !important; }
+  .mes { display: grid; grid-template-rows: auto repeat(var(--filas), minmax(0, 1fr)); gap: 4px; height: 100%; }
+  .mes-dows, .mes-fila { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; min-height: 0; }
+  .mes-dows span { text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .celda {
+    border: 1px solid var(--line); border-radius: 10px; padding: 4px 5px; overflow: hidden; min-height: 0;
+    display: flex; flex-direction: column; gap: 2px; cursor: pointer;
+  }
+  .celda.fuera { opacity: .42; }
+  .celda.hoy { border-color: var(--indigo); box-shadow: inset 0 0 0 1px var(--indigo); background: var(--indigo-soft); }
+  .celda .num { font-size: 13px; font-weight: 800; line-height: 1.2; }
+  .celda.hoy .num { color: var(--indigo); }
+  .celda .chip-t { font-size: 9.5px; padding: 1px 5px; border-radius: 5px; }
+  .it { font-size: 11.5px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; gap: 4px; align-items: center; min-width: 0; }
+  .it > span { overflow: hidden; text-overflow: ellipsis; }
+  .it b { font-weight: 700; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex: none; }
+  .cuad { width: 8px; height: 8px; border-radius: 2px; border: 1.5px solid var(--tarea); flex: none; }
+  .hecha { opacity: .5; text-decoration: line-through; }
+  .tag { font-style: normal; font-size: 8.5px; font-weight: 800; padding: 0 4px; border-radius: 4px; flex: none; letter-spacing: .03em; }
+  .tag.egs { background: var(--src-egs-bg); color: var(--src-egs); }
+  .tag.ag { background: var(--src-ag-bg); color: var(--src-ag); }
+  .tag.casa { background: color-mix(in srgb, var(--area-otro) 18%, transparent); color: var(--area-otro); }
+  .mas { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+
+  /* ── Semana ── */
+  .semana { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; height: 100%; }
+  .scol { border: 1px solid var(--line); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .scol.hoy { border-color: var(--indigo); box-shadow: inset 0 0 0 1px var(--indigo); }
+  .scol-cab { padding: 8px 8px 6px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
+  .scol-cab .num { font-size: 15px; font-weight: 800; }
+  .scol-cab .chip-t { white-space: normal; font-size: 10.5px; }
+  .scol-cab .num small { font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; margin-right: 4px; }
+  .scol.hoy .scol-cab .num { color: var(--indigo); }
+  .scol-lista { overflow: auto; padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+  .ficha { border-radius: 8px; padding: 5px 7px; font-size: 12.5px; line-height: 1.3; word-break: break-word; cursor: pointer; }
+  .ficha b { display: block; font-size: 11px; opacity: .85; }
+  .ficha.fh { background: var(--src-fh-bg); border-left: 3px solid var(--tarea); }
+  .ficha.egs { background: var(--src-egs-bg); border-left: 3px solid var(--src-egs); }
+  .ficha.casa { background: color-mix(in srgb, var(--area-otro) 14%, transparent); border-left: 3px solid var(--area-otro); }
+
+  /* ── Día ── */
+  /* ── Fin de semana y Compras ── */
+  .finde { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; height: 100%; }
+  .finde .scol-cab .num { font-size: 18px; }
+  .finde .scol-cab .num small { font-size: 13px; }
+  .finde .scol-lista { gap: 7px; padding: 8px; }
+  .finde .ficha { font-size: 14.5px; padding: 9px 11px; }
+  .finde .ficha b { display: inline; font-size: 13px; margin-right: 6px; }
+  .finde-planes { font-size: 12.5px; font-weight: 800; color: var(--muted); margin-top: 8px; }
+  .finde .hoy-fila .btn { height: 34px; min-width: 34px; padding: 0 8px; }
+  .compras { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; align-items: start; }
+  .compra { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; margin-bottom: 6px; cursor: pointer; font-size: 13.5px; }
+  .compra.hecha { opacity: .55; }
+  .compra.hecha .compra-t { text-decoration: line-through; }
+  .compra-ok { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--ink); font-size: 15px; cursor: pointer; }
+  .compra-t { flex: 1; min-width: 0; line-height: 1.3; word-break: break-word; }
+  .compra-t small { display: block; margin-top: 2px; color: var(--muted); font-size: 11.5px; }
+  .compra b { white-space: nowrap; }
+  .fila-borra { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: var(--atr-fecha); font-size: 14px; cursor: pointer; }
+  .hoy-card .compra { margin: 0 0 6px; }
+  .hoy-card .compra .quien { margin-right: 5px; vertical-align: 1px; }
+  .gastos-mes { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  @media (max-width: 700px) { .finde { grid-template-columns: minmax(0, 1fr); height: auto; } }
+
+  /* ── Viajes (cuaderno) y Vuelos ── */
+  .vj-tira { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 10px; }
+  .vj-sel { flex: none; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 8px 12px; cursor: pointer; text-align: left; }
+  .vj-sel.on { border-color: var(--indigo); box-shadow: inset 0 0 0 1px var(--indigo); background: var(--indigo-soft); }
+  .vj-sel .e { font-size: 22px; }
+  .vj-sel b { display: block; font-size: 14px; }
+  .vj-sel small { color: var(--muted); font-size: 12px; font-weight: 600; }
+  .vj-portada { border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; background: linear-gradient(135deg, var(--indigo-soft), transparent 70%), var(--card); border: 1px solid var(--line); display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .vj-portada .e { font-size: 42px; line-height: 1; }
+  .vj-portada h3 { font-size: 24px; font-weight: 800; letter-spacing: -.01em; }
+  .vj-portada .sub { color: var(--muted); font-weight: 600; font-size: 13.5px; }
+  .vj-portada .notas { font-size: 13px; color: var(--muted); margin-top: 4px; max-width: 70ch; }
+  .vj-pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+  .vj-pill { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: var(--seg-bg); white-space: nowrap; }
+  .vj-pill.aviso { background: var(--aviso-bg); color: var(--aviso-fg); }
+  .vj-pill.ok { background: var(--ev-fitness-bg); color: var(--ev-fitness-fg); }
+  .vj-dias { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; align-items: start; }
+  .vj-dia { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .vj-dia.hoy { border-color: var(--indigo); box-shadow: inset 0 0 0 1px var(--indigo); }
+  .vj-dia-cab { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--col-bg); }
+  .vj-dia-cab .n { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; background: var(--card); font-family: 'Hanken Grotesk', sans-serif; font-weight: 800; font-size: 16px; flex: none; }
+  .vj-dia.hoy .vj-dia-cab .n { background: var(--indigo); color: #fff; }
+  .vj-dia-cab b { font-size: 14px; display: block; }
+  .vj-dia-cab small { color: var(--muted); font-size: 12px; }
+  .vj-lista { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .vj-it { display: flex; gap: 8px; align-items: flex-start; border-radius: 9px; padding: 7px 9px; font-size: 13px; line-height: 1.3; background: var(--col-bg); border-left: 3px solid var(--soft); }
+  .vj-it.Ver { border-left-color: var(--ev-personal-dot); }
+  .vj-it.Comer { border-left-color: var(--area-cocina); }
+  .vj-it.Moverse { border-left-color: var(--ev-trip-dot); }
+  .vj-it.Dormir { border-left-color: var(--ev-fitness-dot); }
+  .vj-it .h { font-weight: 800; font-variant-numeric: tabular-nums; min-width: 38px; color: var(--muted); }
+  .vj-it .t { flex: 1; min-width: 0; word-break: break-word; }
+  .vj-it .t b { font-weight: 700; }
+  .vj-it .t small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  .vj-it a.mapa { font-size: 11.5px; color: var(--indigo); font-weight: 600; text-decoration: none; }
+  .vj-sin { font-size: 10.5px; font-weight: 800; padding: 1px 6px; border-radius: 5px; background: var(--aviso-bg); color: var(--aviso-fg); margin-left: 4px; white-space: nowrap; }
+  .vj-duermes { font-size: 12px; font-weight: 600; color: var(--ev-fitness-fg); background: var(--ev-fitness-bg); border-radius: 8px; padding: 6px 9px; }
+  .vj-pend { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-top: 1px solid var(--line); font-size: 13px; cursor: pointer; }
+  .vj-pend:first-of-type { border-top: 0; }
+  .vj-pend .c { width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--soft); display: grid; place-items: center; flex: none; font-size: 12px; }
+  .vj-pend.hecho { color: var(--soft); text-decoration: line-through; }
+  .vj-pend.hecho .c { background: var(--ev-fitness-dot); border-color: var(--ev-fitness-dot); color: #fff; }
+  .vj-arriba { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-bottom: 10px; }
+  .vj-caja { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+  .vj-caja h4 { font-size: 13px; font-weight: 800; color: var(--muted); margin-bottom: 6px; }
+  .vu-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; align-items: start; }
+  .vu { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; background: linear-gradient(135deg, color-mix(in srgb, var(--ev-trip-dot) 12%, transparent), transparent 60%); }
+  .vu.prox { border-color: var(--ev-trip-dot); }
+  .vu-cab { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; font-size: 12px; font-weight: 700; color: var(--muted); }
+  .vu-cab .cuenta { background: var(--ev-trip-bg); color: var(--ev-trip-fg); padding: 3px 9px; border-radius: 999px; }
+  .vu-ruta { display: flex; align-items: center; gap: 10px; margin: 10px 0 6px; }
+  .vu-ruta .ap { font-family: 'Hanken Grotesk', sans-serif; font-weight: 800; font-size: 30px; line-height: 1; }
+  .vu-ruta .ap small { display: block; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .vu-ruta .linea { flex: 1; border-top: 2px dashed var(--ev-trip-dot); opacity: .7; }
+  .vu-ruta .ap:last-child { text-align: right; }
+  .vu-datos { display: flex; flex-wrap: wrap; gap: 5px; font-size: 12px; }
+  .vu-datos span { background: var(--seg-bg); border-radius: 7px; padding: 3px 8px; font-weight: 600; }
+  .vu-salida { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; border-radius: 10px; padding: 10px 12px; background: var(--col-bg); }
+  .vu-salida small { display: block; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  .vu-salida b { font-family: 'Hanken Grotesk', sans-serif; font-size: 24px; font-weight: 800; font-variant-numeric: tabular-nums; }
+  .vu-salida .casa b { color: var(--ev-fitness-fg); }
+  .vu-salida .det { grid-column: 1 / -1; font-size: 11.5px; color: var(--muted); }
+  .vu-billetes { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; }
+  .vu-billete { display: flex; align-items: center; gap: 6px; border: 1px solid var(--line); border-radius: 9px; padding: 5px 6px 5px 10px; font-size: 13px; background: var(--card); }
+  .vu-billete span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vu-billete .btn { height: 32px; min-width: 32px; padding: 0 10px; font-size: 13px; }
+  .vu-sinbillete { font-size: 12px; color: var(--aviso-fg); background: var(--aviso-bg); border-radius: 8px; padding: 6px 9px; margin-top: 10px; }
+  .vj-editar { font-size: 12.5px; font-weight: 700; color: var(--indigo); text-decoration: none; white-space: nowrap; }
+  @media (max-width: 700px) { .vj-arriba { grid-template-columns: 1fr; } }
+
+  /* ── Incrustada en calendario.html (?solo=resumen): sin cabecera ni lateral ── */
+  html.solo .top, html.solo .lateral, html.solo .vista-cab { display: none; }
+  html.solo .app { padding: 0; height: 100dvh; min-height: 0; }
+  html.solo .cuerpo { grid-template-columns: minmax(0, 1fr); height: 100%; }
+  html.solo .vista { height: 100%; padding: 2px; border: 0; box-shadow: none; background: transparent; }
+  html.solo, html.solo body { background: transparent; }
+
+  /* ── Resumen: todo lo del día de un vistazo ── */
+  #contenido > .hoy { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; align-items: start; }
+  .hoy-card { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+  .hoy-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-height: 30px; }
+  .hoy-cab h4 { font-size: 13px; font-weight: 800; flex: 1; }
+  .hoy-cab .btn { height: 30px; min-width: 0; padding: 0 10px; font-size: 12px; }
+  .hoy-fila { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.3; }
+  .hoy-fila:first-of-type { border-top: 0; padding-top: 2px; }
+  .hoy-fila > div { flex: 1; min-width: 0; word-break: break-word; }
+  .hoy-fila a { color: inherit; font-weight: 600; }
+  .hoy-fila small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+  .hoy-fila .btn { height: 28px; min-width: 0; padding: 0 8px; font-size: 12px; flex: none; }
+  .hoy-mas { display: block; width: 100%; margin-top: 8px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; text-align: left; cursor: pointer; padding: 2px 0; }
+  .hoy-card .ev-fila { margin-bottom: 6px; }
+  .gastos-saldo { font-size: 15px; font-weight: 800; margin-bottom: 2px; }
+  .hoy-card.horario { grid-column: 1 / -1; }
+  .horario-dias { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+  .horario-dia { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; font-size: 13px; line-height: 1.3; min-width: 0; }
+  .horario-dia.es-hoy { border-color: var(--ink); border-width: 2px; }
+  .horario-dia.pasado { opacity: .5; }
+  .horario-dia b { display: block; font-size: 12px; color: var(--muted); font-weight: 700; margin-bottom: 5px; }
+  .horario-dia .h { display: inline-block; border-radius: 6px; padding: 2px 8px; font-size: 13px; font-weight: 800; margin-bottom: 5px; }
+  .horario-dia span.q { display: block; word-break: break-word; }
+  @media (max-width: 700px) { .horario-dias { grid-template-columns: minmax(0, 1fr); } }
+  .hoja label.enc { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 4px; }
+  .hoja .enc-campo { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; font: inherit; font-size: 14px; background: var(--card); color: var(--ink); }
+  @media (max-width: 1100px) { #contenido > .hoy { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 700px) { #contenido > .hoy { grid-template-columns: minmax(0, 1fr); } }
+  .dia { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+  .dia-cab { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .dia h4 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 4px 0 8px; }
+  .dia section + section { margin-top: 12px; }
+  .ev-fila { display: flex; gap: 12px; padding: 10px 12px; border-radius: 12px; margin-bottom: 6px; align-items: baseline; }
+  .ev-fila .h { font-family: 'Hanken Grotesk', sans-serif; font-weight: 800; font-size: 18px; min-width: 52px; font-variant-numeric: tabular-nums; }
+  .ev-fila .tt { font-weight: 600; font-size: 15px; }
+  .lfila {
+    display: flex; gap: 10px; align-items: center; padding: 9px 10px; border-radius: 10px; border: 1px solid var(--line);
+    margin-bottom: 6px; cursor: pointer; font-size: 14px;
+  }
+  .lfila .meta { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+  /* ── Kanban ── */
+  .kanban { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; height: 100%; }
+  .kcol { background: var(--col-bg); border-radius: 12px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .kcol h3 { padding: 10px 12px 6px; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+  .kcol h3 .n { margin-left: auto; font-size: 12px; color: var(--muted); background: var(--card); border-radius: 999px; padding: 1px 8px; }
+  .klista { overflow: auto; padding: 2px 8px 10px; display: flex; flex-direction: column; gap: 7px; min-height: 0; }
+  .tarjeta {
+    background: var(--card); border-radius: 10px; padding: 8px 10px; border-left: 4px solid var(--c); box-shadow: var(--shadow);
+    cursor: pointer;
+  }
+  .tarjeta.fh { --c: var(--src-fh); } .tarjeta.egs { --c: var(--src-egs); } .tarjeta.ag { --c: var(--src-ag); }
+  .tarjeta .t { font-weight: 600; font-size: 13.5px; line-height: 1.3; word-break: break-word; }
+  .tarjeta .m { font-size: 11.5px; color: var(--muted); margin-top: 4px; display: flex; gap: 4px 8px; flex-wrap: wrap; align-items: center; }
+  .fuente { font-weight: 700; color: var(--c); }
+  .venc { color: var(--atr-fecha); font-weight: 700; }
+  .prio { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+  .masbtn { border: 1px dashed var(--soft); background: transparent; color: var(--muted); border-radius: 10px; padding: 8px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
+
+  /* ── Lateral: resumen + parte ── */
+  .stats { display: grid; gap: 8px; }
+  .stat {
+    display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 10px;
+    padding: 8px 12px; border-left: 4px solid var(--c); cursor: pointer; border-radius: 12px;
+  }
+  .stat .l { font-size: 14px; font-weight: 700; }
+  .stat .n { font-size: 30px; font-weight: 800; line-height: 1; text-align: center; color: var(--c); font-variant-numeric: tabular-nums; }
+  .stat .d { font-size: 12px; color: var(--muted); line-height: 1.3; }
+  .stat .d .venc { font-weight: 700; }
+  .parte { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 12px 14px; }
+  .parte-cab { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .parte-cab h3 { font-size: 15px; font-weight: 800; }
+  .parte-nav { margin-left: auto; display: flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+  .parte-nav button { border: none; background: var(--seg-bg); border-radius: 8px; width: 30px; height: 30px; font-size: 16px; cursor: pointer; }
+  .parte-nav button:disabled { opacity: .35; }
+  .md { overflow: auto; flex: 1; min-height: 0; font-size: 14px; line-height: 1.5; }
+  .md p { margin-bottom: 8px; }
+  .md ul { margin: 0 0 8px 18px; }
+  .md li { margin-bottom: 4px; }
+  .md h4 { font-size: 14px; margin: 8px 0 4px; }
+  .md code { font-size: 12.5px; background: var(--seg-bg); padding: 0 4px; border-radius: 4px; }
+  .pie { font-size: 11.5px; color: var(--muted); padding: 0 4px; }
+  .pie .aviso { color: var(--aviso-fg); background: var(--aviso-bg); border: 1px solid var(--aviso-line); border-radius: 8px; padding: 6px 8px; display: block; margin-top: 4px; }
+
+  /* ── Casa: gastos con Montse, tareas compartidas y reparto de la casa ── */
+  #contenido > .casa { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 10px; min-height: 100%; }
+  .casa-cab { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .casa-cab .chips { margin-left: 0; }
+  .casa-cab .sep { flex: 1; }
+  .casa-cab .btn { height: 34px; font-size: 13.5px; }
+  .casa-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .casa-stat { padding: 8px 12px; border-left: 4px solid var(--c); border-radius: 12px; display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 58px; cursor: pointer; }
+  .casa-stat .n { font-size: 21px; font-weight: 800; color: var(--c); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .casa-stat .l { font-size: 12px; color: var(--muted); font-weight: 600; line-height: 1.3; }
+  .casa-cuerpo { display: grid; gap: 12px; min-height: 0; }
+  .casa-abajo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+  .casa-panel { display: flex; flex-direction: column; min-height: 0; min-width: 0; gap: 8px; }
+  .casa-panel h4 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+  .casa-panel h4 .n { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 600; }
+  .casa-panel h4 a { color: var(--indigo); text-decoration: none; text-transform: none; letter-spacing: 0; font-weight: 600; }
+  .rutinas { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; height: min(400px, 50vh); }
+  .rutinas.tablero { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .rcol { background: var(--col-bg); border-radius: 10px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .rcol.hoy { box-shadow: inset 0 0 0 2px var(--indigo); }
+  .rcol-cab { padding: 6px 7px 4px; font-size: 12.5px; font-weight: 800; display: flex; align-items: baseline; gap: 4px; }
+  .rcol-cab small { font-weight: 600; color: var(--muted); text-transform: uppercase; font-size: 10.5px; }
+  .rcol-cab .n { margin-left: auto; font-size: 11px; color: var(--muted); font-weight: 600; }
+  .rlista { overflow: auto; padding: 0 5px 6px; display: flex; flex-direction: column; gap: 5px; }
+  .rut { background: var(--card); border-radius: 8px; padding: 6px 8px; border-left: 4px solid var(--c); box-shadow: var(--shadow); cursor: pointer; font-size: 12.5px; line-height: 1.3; }
+  .rut .t { font-weight: 600; word-break: break-word; }
+  .rut .m { font-size: 11px; color: var(--muted); margin-top: 3px; display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+  .rut .m b { color: var(--atr-fecha); }
+  .rut.hecha { opacity: .55; } .rut.hecha .t { text-decoration: line-through; }
+  .pers { display: inline-grid; place-items: center; min-width: 17px; height: 17px; padding: 0 5px; border-radius: 9px; font-size: 9.5px; font-weight: 800; background: var(--indigo-soft); color: var(--indigo); flex: none; }
+  .pers.m { background: color-mix(in srgb, var(--montse) 18%, transparent); color: var(--montse); }
+  .pers.a { background: var(--seg-bg); color: var(--ink); }
+  .gasto { display: flex; gap: 8px; align-items: center; padding: 7px 9px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; margin-bottom: 5px; cursor: pointer; }
+  .gasto .sub { font-size: 11px; color: var(--muted); display: block; }
+  .gasto .imp { margin-left: auto; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .barras { display: grid; gap: 4px; font-size: 11.5px; margin-bottom: 8px; }
+  .barra { display: grid; grid-template-columns: 76px minmax(0, 1fr) 64px; gap: 6px; align-items: center; }
+  .barra i { display: block; height: 8px; border-radius: 4px; background: var(--src-fh); }
+  .barra b { text-align: right; font-variant-numeric: tabular-nums; }
+  .lista-scroll { overflow: auto; max-height: 280px; }
+  .lfila.hecha { opacity: .5; }
+  /* Formularios de las hojas */
+  .form { display: grid; gap: 10px; margin-bottom: 14px; }
+  .form label { font-size: 12px; font-weight: 700; color: var(--muted); display: grid; gap: 4px; }
+  .form input, .form select { width: 100%; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 10px; padding: 10px 12px; font-size: 16px; font-family: inherit; }
+  .form .fila { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .opc { display: flex; gap: 6px; flex-wrap: wrap; }
+  .opc button { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .opc button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .btn.peligro { color: var(--atr-fecha); }
+
+  /* ── Hoja de detalle ── */
+  .hoja { position: fixed; inset: 0; background: var(--overlay); display: none; align-items: flex-end; justify-content: center; z-index: 20; }
+  .hoja.on { display: flex; }
+  .hoja-in {
+    background: var(--card); width: min(560px, 100%); border-radius: 18px 18px 0 0; padding: 18px 20px 22px;
+    box-shadow: var(--sheet-shadow); max-height: 80vh; overflow: auto;
+  }
+  .hoja-in h3 { font-size: 18px; line-height: 1.3; margin: 6px 0 8px; }
+  .hoja-in .det { font-size: 13.5px; color: var(--muted); display: grid; gap: 4px; margin-bottom: 14px; }
+  .hoja-in .acc { display: flex; gap: 8px; flex-wrap: wrap; }
+  .hoja-in .acc .btn { height: 46px; flex: 1; min-width: 120px; }
+  .btn.prim { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+
+  /* ── Acceso ── */
+  /* Portada: siempre oscura, sea cual sea el tema del panel, para que la imagen se lea igual. */
+  #login { position: fixed; inset: 0; display: none; z-index: 30; overflow: auto; color: #F8FAFC;
+    padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+    background: linear-gradient(90deg, #0b132640, #0b1326a6), url('/cab-hogar.jpg') center / cover no-repeat, #0b1326; }
+  #login .portada { margin: auto; width: min(1120px, 100%); min-height: min(640px, 100%); display: grid; grid-template-columns: 1fr minmax(320px, 380px); gap: 56px; align-items: center; }
+  #login .lema { align-self: stretch; display: flex; flex-direction: column; justify-content: space-between; gap: 32px; }
+  #login .hora { font-family: 'Hanken Grotesk', sans-serif; font-weight: 700; font-size: clamp(64px, 11vw, 124px); line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  #login .fecha { margin-top: 12px; font-size: clamp(17px, 2vw, 22px); color: #cbd5e1; }
+  #login .fecha::first-letter { text-transform: uppercase; }
+  #login h1 { font-family: 'Hanken Grotesk', sans-serif; font-weight: 800; font-size: clamp(24px, 3vw, 34px); letter-spacing: -.01em; }
+  #login .sub { margin-top: 6px; font-size: 15px; color: #cbd5e1; }
+  #login .caja { width: 100%; padding: 26px; background: #131b2ed9; border: 1px solid #ffffff1f; border-radius: 18px; box-shadow: 0 18px 50px #00000059; -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  #login h2 { font-family: 'Hanken Grotesk', sans-serif; font-weight: 700; font-size: 22px; margin-bottom: 6px; }
+  #login .caja p { font-size: 14px; line-height: 1.45; color: #cbd5e1; margin-bottom: 18px; }
+  #login input { width: 100%; border: 1px solid #334155; background: #0b1326b3; color: #F8FAFC; border-radius: 10px; padding: 12px; font-size: 16px; margin-bottom: 8px; font-family: inherit; }
+  #login input::placeholder { color: #94A3B8; }
+  #login .btn { width: 100%; height: 48px; margin-bottom: 8px; background: transparent; border-color: #475569; color: #F8FAFC; font-size: 15px; }
+  #login .btn.prim { background: #ffb783; border-color: #ffb783; color: #2a1506; margin-bottom: 14px; }
+  #login .btn:last-child { margin-bottom: 0; }
+  #login input:focus-visible, #login .btn:focus-visible { outline: 2px solid #ffb783; outline-offset: 2px; }
+  @media (prefers-reduced-motion: no-preference) { #login .portada { animation: portada-entra .5s ease-out both; } }
+  @keyframes portada-entra { from { opacity: 0; transform: translateY(8px); } }
+  @media (max-width: 860px), (orientation: portrait) {
+    #login { background-position: center, 50% 30%, center; background-image: linear-gradient(#0b132680, #0b1326cc), url('/cab-hogar.jpg'); }
+    #login .portada { grid-template-columns: minmax(0, 480px); justify-content: center; gap: 28px; min-height: 0; }
+    #login .lema { gap: 16px; }
+  }
+  @media (max-height: 520px) and (min-width: 861px) { #login .hora { font-size: 64px; } #login .sub { display: none; } #login .portada { gap: 32px; } }
+
+  /* Vertical o pantallas pequeñas: el lateral pasa debajo y se desplaza todo. */
+  @media (max-width: 980px), (orientation: portrait) {
+    body { overflow: auto; }
+    .app { height: auto; min-height: 100dvh; }
+    .cuerpo { grid-template-columns: 1fr; }
+    .vista { height: 72vh; }
+    .parte { max-height: 70vh; }
+  }
+  @media (max-width: 700px) {
+    .kanban { grid-template-columns: repeat(4, minmax(220px, 1fr)); }
+    .semana { grid-template-columns: repeat(7, minmax(130px, 1fr)); }
+    .dia { grid-template-columns: 1fr; }
+    .casa-abajo { grid-template-columns: 1fr; }
+    .casa-stats { grid-template-columns: 1fr; }
+    .rutinas { grid-template-columns: repeat(7, minmax(120px, 1fr)); overflow-x: auto; }
+    .reloj b { font-size: 30px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="reloj"><b id="hora">--:--</b><span id="fecha"></span></div>
+    <div class="turnos-hoy" id="turnoHoy"></div>
+    <div class="der">
+      <nav class="seg" id="segVista">
+        <button data-v="hoy">Resumen</button><button data-v="mes">Mes</button><button data-v="semana">Semana</button><button data-v="dia">Día</button><button data-v="kanban">Kanban</button><button data-v="casa">Casa</button><button data-v="gastos">Gastos</button><button data-v="compras">Compras</button><button data-v="finde">Fin de semana</button><button data-v="viajes">Viajes</button><button data-v="vuelos">Vuelos</button>
+      </nav>
+      <div class="nav" id="navFechas">
+        <button class="btn" id="atras" aria-label="Anterior">‹</button>
+        <button class="btn" id="hoyBtn">Hoy</button>
+        <button class="btn" id="adelante" aria-label="Siguiente">›</button>
+      </div>
+      <button class="btn" id="temaBtn" title="Tema"></button>
+      <button class="btn" id="recargarBtn" title="Recargar la página (trae la última versión)">⟳</button>
+      <button class="btn" id="pantallaBtn" title="Pantalla completa">⛶</button>
+    </div>
+  </header>
+  <main class="cuerpo">
+    <section class="vista">
+      <div class="vista-cab">
+        <h2 id="titulo"></h2>
+        <div class="chips" id="filtroFuente">
+          <button data-f="todo">Todo</button><button data-f="fh">FileHub</button><button data-f="egs">EGStrategy</button><button data-f="ag">Agentes</button>
+        </div>
+        <div class="chips" id="filtroCal" title="Qué calendario ves: todo, solo lo tuyo, lo común o el de Montse">
+          <button data-c="todo">Todo</button><button data-c="mio">Mío</button><button data-c="comun">👥 Común</button><button data-c="montse">Montse</button>
+        </div>
+      </div>
+      <div id="contenido"></div>
+    </section>
+    <aside class="lateral">
+      <div class="stats" id="stats"></div>
+      <div class="parte card">
+        <div class="parte-cab">
+          <h3>☀️ Parte del agente</h3>
+          <div class="parte-nav"><button id="parteAnt" aria-label="Parte anterior">‹</button><span id="parteFecha"></span><button id="parteSig" aria-label="Parte siguiente">›</button></div>
+        </div>
+        <div id="parteTexto" class="md"></div>
+      </div>
+      <div class="pie" id="estado"></div>
+    </aside>
+  </main>
+</div>
+
+<div id="login">
+  <div class="portada">
+    <div class="lema">
+      <div>
+        <div class="hora" id="pHora"></div>
+        <div class="fecha" id="pFecha"></div>
+      </div>
+      <div>
+        <h1>Panel de FileHub</h1>
+        <div class="sub">Calendario, tareas, casa y parte diario</div>
+      </div>
+    </div>
+    <div class="caja">
+      <h2>Entrar</h2>
+      <p>Entra con tu cuenta de FileHub. Si ya tienes sesión en el calendario de este navegador, se usa sola.</p>
+      <button class="btn prim" id="gbtn">Entrar con Google</button>
+      <input id="lemail" type="email" placeholder="Correo" autocomplete="username" aria-label="Correo">
+      <input id="lpass" type="password" placeholder="Contraseña" autocomplete="current-password" aria-label="Contraseña">
+      <button class="btn" id="lbtn">Entrar</button>
+    </div>
+  </div>
+</div>
+<div class="hoja" id="hoja"><div class="hoja-in" id="hojaIn"></div></div>
+
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+const SUPABASE_URL = 'https://igvadjgjpyuvzailjqwg.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndmFkamdqcHl1dnphaWxqcXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NDI3MTAsImV4cCI6MjA4ODAxODcxMH0.eAqKCHDzrkvMTseaBP0I_JICP1owX60-cp3agYqRz4Q';
+// Mismo proyecto y storage por defecto que calendario.html → en el mismo dominio la sesión se comparte sola.
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+// ?demo → datos de ejemplo, sin sesión ni Supabase (para probar la pantalla).
+const DEMO = new URLSearchParams(location.search).has('demo');
+
+const UID_CARLOS = '69428dff-f2b6-46ae-8120-0052e9bbed51';
+const UID_MONTSE = '94c1791d-3a28-4452-a166-233cb9783749';
+const NOMBRES = { [UID_CARLOS]: 'Carlos', [UID_MONTSE]: 'Montse' };
+
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const deYmd = s => { const [y, m, d] = s.slice(0, 10).split('-').map(Number); return new Date(y, m - 1, d); };
+const masDias = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const fmt = (d, o) => d.toLocaleDateString('es-ES', o);
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const fechaCorta = s => s ? cap(fmt(deYmd(s), { weekday: 'short', day: 'numeric', month: 'short' })).replace(/[.,]/g, '') : '';
+const HOY = new Date(); HOY.setHours(0, 0, 0, 0);
+const HOY_S = ymd(HOY);
+const SEMANA_S = ymd(masDias(HOY, 7));
+// Como calendario.html: las vencidas de hace más de 75 días no cuentan como pendientes.
+const ATRAS_DESDE = ymd(masDias(HOY, -75));
+const DOWS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+// ── Turnos del centro de salud (los mismos que calendario.html) ────────────
+const T = {
+  URG_T: { label: 'URGENCIAS 13–20', bg: 'var(--t-urg-bg)', fg: 'var(--t-urg-fg)' },
+  AG_M:  { label: 'AGENDA 8–15',     bg: 'var(--t-agm-bg)', fg: 'var(--t-agm-fg)' },
+  AG_T:  { label: 'AGENDA 13–20',    bg: 'var(--t-agt-bg)', fg: 'var(--t-agt-fg)' },
+};
+const EGSTEK = { label: '💻 EGS TEK 8:30–12', bg: 'var(--t-egs-bg)', fg: 'var(--t-egs-fg)' };
+function isoWeek(d) {
+  const x = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = x.getUTCDay() || 7;
+  x.setUTCDate(x.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(x.getUTCFullYear(), 0, 1));
+  return Math.ceil(((x - y0) / 86400000 + 1) / 7);
+}
+// El botón «Viernes» del calendario lo guarda en este navegador; aquí solo se lee.
+const vierPar = localStorage.getItem('fh_cal_viernes_even') || 'M';
+function turnoDe(d) {
+  if (!DEMO && uid && uid !== UID_CARLOS) return null;
+  const dow = d.getDay();
+  if (dow === 1) return T.URG_T;
+  if (dow === 2 || dow === 4) return T.AG_M;
+  if (dow === 3) return T.AG_T;
+  if (dow === 5) {
+    const even = isoWeek(d) % 2 === 0;
+    return (even && vierPar === 'M') || (!even && vierPar === 'T') ? T.AG_M : T.AG_T;
+  }
+  return null;
+}
+const chip = t => `<span class="chip-t" style="background:${t.bg};color:${t.fg}">${t.label}</span>`;
+// Las mañanas con turno de tarde son de EGS TEK (8:30–12), como en el calendario.
+const chipsTurnoCal = d => filtroCal === 'montse' ? '' : chipsTurno(d);
+function chipsTurno(d) {
+  const t = turnoDe(d);
+  if (!t) return '';
+  return (t === T.URG_T || t === T.AG_T ? chip(EGSTEK) : '') + chip(t);
+}
+
+// ── Estado ─────────────────────────────────────────────────────────────────
+let uid = null, emailSesion = '';
+const SOLO_RESUMEN = document.documentElement.classList.contains('solo');
+const SOLO_VISTA = { resumen: 'hoy', viajes: 'viajes', vuelos: 'vuelos' }[new URLSearchParams(location.search).get('solo')] || 'hoy';
+let vista = SOLO_RESUMEN ? SOLO_VISTA : !localStorage.getItem('fh_tab_resumen') ? 'hoy' : (localStorage.getItem('fh_tab_vista') || 'hoy');
+if (!SOLO_RESUMEN) localStorage.setItem('fh_tab_resumen', '1');
+let fuente = localStorage.getItem('fh_tab_fuente') || 'todo';
+// Calendario que se ve en Mes, Semana, Día y Fin de semana: todo, lo mío, lo común o lo de Montse.
+const VISTAS_CAL = ['mes', 'semana', 'dia', 'finde'];
+let filtroCal = localStorage.getItem('fh_tab_cal') || 'todo';
+let compraVer = 'pendientes';
+let cursor = new Date(HOY);
+let mesCargado = '';
+// FileHub: eventos y tareas del mes visible, pendientes (kanban) y hechas hace poco.
+let eventos = [], tareasMes = [], pendientes = [], hechasFH = [];
+// Resumen: planes del agente de ocio y empleo (los sube el PC), proyectos del Workspace y encargos a agentes.
+let planes = [], empleo = null, proyectos = [], tareasProy = [], encargos = [], horario = [];
+// Horario de la consulta, apuntado como eventos con id «horario_AAAA-MM-DD». Se enseña la semana en curso;
+// en fin de semana, la siguiente, que es la que importa.
+const lunesHorario = () => { const dia = (HOY.getDay() + 6) % 7; return masDias(HOY, dia >= 5 ? 7 - dia : -dia); };
+// Lo que sube el PC (panel_tablet): partes diarios, tablero de los agentes y EGStrategy.
+let partes = [], tablero = null, egs = null, panelFalta = false;
+// Casa (Carlos + Montse): gastos del piso (piso_horta_gastos) y rutinas/tareas de casa (casa_items).
+let gastos = [], casa = [];
+// Viajes (tablas viajes + viaje_items) y vuelos: los mismos de los apartados Viajes y Vuelos de FileHub.
+let viajes = [], vuelos = [], viajeSel = localStorage.getItem('fh_tab_viaje') || '';
+const hechasAhora = new Set(); // tareas de casa marcadas desde el Resumen: siguen a la vista, tachadas
+const nuevasAhora = new Set(); // tareas de casa añadidas desde el Resumen: salen arriba, aunque haya muchas más antiguas
+const COLS_CASA = 'id,kind,title,assignee,done,fecha,hora,fecha_fin,importe,lugar,categoria,prioridad,cada_dias,ultima_vez,datos,notas,created_at';
+let parteIdx = 0, verSinFecha = false, ultimaCarga = 0, cargando = false, errorCarga = '';
+
+const TIPO_EV = {
+  personal: { bg: 'var(--ev-personal-bg)', fg: 'var(--ev-personal-fg)', dot: 'var(--ev-personal-dot)' },
+  work:     { bg: 'var(--ev-work-bg)',     fg: 'var(--ev-work-fg)',     dot: 'var(--ev-work-dot)' },
+  fitness:  { bg: 'var(--ev-fitness-bg)',  fg: 'var(--ev-fitness-fg)',  dot: 'var(--ev-fitness-dot)' },
+  trip:     { bg: 'var(--ev-trip-bg)',     fg: 'var(--ev-trip-fg)',     dot: 'var(--ev-trip-dot)' },
+  guardia:  { bg: 'var(--ev-guardia-bg)',  fg: 'var(--ev-guardia-fg)',  dot: 'var(--ev-guardia-dot)' },
+};
+const estiloEv = ev => /guardia/i.test(ev.title || '') ? TIPO_EV.guardia : (TIPO_EV[ev.type] || TIPO_EV.personal);
+const horaDe = e => (e.start_date || '').length > 10 ? (e.start_date || '').slice(11, 16) : '';
+const PRIO = { high: 'var(--prio-high)', medium: 'var(--prio-medium)', low: 'var(--prio-low)' };
+const PRIO_EGS = { blocker: 'high', alta: 'high', media: 'medium', baja: 'low' };
+const CATEG = { personal: 'Personal', work: 'Trabajo', finance: 'Finanzas', other: 'Otros' };
+const ESTADO_AG = { todo: 'en cola', ready: 'lista', triage: 'por clasificar', running: 'en marcha', blocked: 'espera tu «sí»', done: 'hecha' };
+const badgeQuien = x => x.para === 'montse' && !soyMontse() ? '<span class="quien m" title="En el calendario de Montse">M</span>' : x.shared && x.user_id !== uid
+  ? `<span class="quien${x.user_id === UID_MONTSE ? ' m' : ''}" title="Compartida · de ${NOMBRES[x.user_id] || '—'}">${(NOMBRES[x.user_id] || '?')[0]}</span>` : '';
+const egsTareas = () => (egs?.contenido?.ok && Array.isArray(egs.contenido.tareas)) ? egs.contenido.tareas : [];
+const agTareas = () => Array.isArray(tablero?.contenido?.tareas) ? tablero.contenido.tareas : [];
+const dueDe = t => (t.due_date || '').slice(0, 10);
+// «para» marca lo apuntado en el calendario de Montse desde otra cuenta: es suyo, no de quien lo escribió.
+const deMontse = x => x.user_id === UID_MONTSE || x.para === 'montse';
+const soyMontse = () => uid === UID_MONTSE;
+function pasaCal(x) {
+  if (!VISTAS_CAL.includes(vista)) return soyMontse() || x.para !== 'montse'; // Resumen: lo tuyo y lo común
+  if (filtroCal === 'comun') return !!x.shared && x.para !== 'montse';
+  if (filtroCal === 'montse') return deMontse(x);
+  if (filtroCal === 'mio') return soyMontse() ? deMontse(x) : x.user_id === (uid || UID_CARLOS) && x.para !== 'montse';
+  return true;
+}
+function pasaCasaCal(t) {
+  if (!VISTAS_CAL.includes(vista) || filtroCal === 'todo') return true;
+  if (filtroCal === 'comun') return t.assignee === 'ambos';
+  return t.assignee === 'ambos' || t.assignee === (filtroCal === 'montse' ? 'montse' : yoCasa());
+}
+const verEgsCal = () => !VISTAS_CAL.includes(vista) || filtroCal === 'todo' || (filtroCal === 'mio' && !soyMontse());
+
+// ── Datos ──────────────────────────────────────────────────────────────────
+function rangoMes(c) {
+  const primero = new Date(c.getFullYear(), c.getMonth(), 1);
+  const ultimo = new Date(c.getFullYear(), c.getMonth() + 1, 0);
+  const inicio = masDias(primero, -((primero.getDay() + 6) % 7));
+  const fin = masDias(ultimo, 7 - ((ultimo.getDay() + 6) % 7));
+  return { inicio, fin, filas: Math.round((fin - inicio) / (7 * 86400000)), desde: ymd(inicio), hasta: ymd(fin) };
+}
+const esRedFallo = m => /load failed|failed to fetch|networkerror|network request failed|timeout|the network connection was lost/i.test(m || '');
+async function conReintento(fn, intentos = 3) {
+  let r;
+  for (let i = 0; i < intentos; i++) {
+    r = await fn();
+    if (!r.error || !esRedFallo(r.error.message)) return r;
+    await new Promise(ok => setTimeout(ok, 700 * (i + 1)));
+  }
+  return r;
+}
+
+async function cargar() {
+  if (cargando) return;
+  cargando = true;
+  try {
+    if (DEMO) { if (!ultimaCarga) datosDemo(); }
+    else if (uid) {
+      const { desde, hasta } = rangoMes(cursor);
+      const cols = 'id,title,completed,category,priority,due_date,user_id,shared,stage,para';
+      const miasOComunes = `user_id.eq.${uid},shared.eq.true`;
+      const [ev, ta, pe, he, pt, ga, ca, wp, wt, en, ho, vj, vu] = await Promise.all([
+        conReintento(() => sb.from('calendar_events').select('id,title,start_date,end_date,type,user_id,shared,para')
+          .gte('start_date', desde).lt('start_date', hasta).order('start_date')),
+        conReintento(() => sb.from('tasks').select(cols).or(miasOComunes)
+          .gte('due_date', desde).lt('due_date', hasta).order('due_date')),
+        conReintento(() => sb.from('tasks').select(cols).or(miasOComunes).eq('completed', false)
+          .order('due_date', { ascending: true, nullsFirst: false }).limit(800)),
+        conReintento(() => sb.from('tasks').select(cols).or(miasOComunes).eq('completed', true)
+          .gte('due_date', ymd(masDias(HOY, -7))).lte('due_date', HOY_S).order('due_date', { ascending: false }).limit(20)),
+        conReintento(() => sb.from('panel_tablet').select('tipo,fecha,contenido,generado_at,updated_at')
+          .gte('fecha', ymd(masDias(HOY, -10))).order('fecha', { ascending: false })),
+        // El saldo necesita todos los gastos; las RLS solo dejan verlos a Carlos y Montse (otra sesión: []).
+        conReintento(() => sb.from('piso_horta_gastos').select('id,title,amount,category,paid_by,beneficiario,fecha,created_by')
+          .order('fecha', { ascending: false }).limit(3000)),
+        conReintento(() => sb.from('casa_items').select(COLS_CASA).in('kind', ['limpieza', 'tarea', 'compra', 'factura']).order('created_at')),
+        conReintento(() => sb.from('ws_projects').select('id,name,status').order('created_at')),
+        conReintento(() => sb.from('ws_tasks').select('id,project_id,title,due_date,priority').eq('completed', false).limit(300)),
+        conReintento(() => sb.from('agente_encargos').select('id,agente,titulo,estado,created_at').order('created_at', { ascending: false }).limit(8)),
+        conReintento(() => sb.from('calendar_events').select('id,title,start_date,end_date').like('id', 'horario%')
+          .gte('start_date', ymd(lunesHorario())).lt('start_date', ymd(masDias(lunesHorario(), 7))).order('start_date')),
+        conReintento(() => sb.from('viajes').select('id,user_id,titulo,emoji,fecha_inicio,fecha_fin,notas,shared,viaje_items(id,tipo,titulo,fecha,fecha_fin,hora,lugar,importe,estado,localizador,url,notas,hecho)')
+          .gte('fecha_fin', HOY_S).order('fecha_inicio')),
+        conReintento(() => sb.from('vuelos').select('*').gte('fecha', ymd(masDias(HOY, -1))).order('fecha').order('hora_salida', { nullsFirst: false })),
+      ]);
+      const err = ev.error || ta.error || pe.error || he.error;
+      if (err) throw err;
+      eventos = ev.data || [];
+      tareasMes = ta.data || [];
+      pendientes = (pe.data || []).filter(t => (!dueDe(t) || dueDe(t) >= ATRAS_DESDE) && (soyMontse() || t.para !== 'montse'));
+      hechasFH = he.data || [];
+      // Si la tabla aún no existe (migración panel_tablet sin aplicar), el resto del panel funciona igual.
+      panelFalta = !!pt.error;
+      const filas = pt.data || [];
+      partes = filas.filter(f => f.tipo === 'parte');
+      tablero = filas.find(f => f.tipo === 'tablero') || null;
+      egs = filas.find(f => f.tipo === 'egstrategy') || null;
+      // Un beneficiario raro inflaría el saldo del pagador: se normaliza a «ambos», como hace FileHub.
+      gastos = (ga.data || []).map(g => ({ ...g, amount: Number(g.amount) || 0, beneficiario: ['carlos', 'montse'].includes(g.beneficiario) ? g.beneficiario : 'ambos' }));
+      casa = ca.data || [];
+      const vistos = new Set();
+      planes = filas.filter(f => f.tipo === 'ocio').flatMap(f => Array.isArray(f.contenido?.planes) ? f.contenido.planes : [])
+        .filter(p => p && p.titulo && p.fecha >= HOY_S && p.fecha <= ymd(masDias(HOY, 14)) && /^https?:\/\//.test(p.url || ''))
+        .filter(p => { const k = p.fecha + '|' + p.url; if (vistos.has(k)) return false; vistos.add(k); return true; })
+        .sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || '')));
+      empleo = filas.find(f => f.tipo === 'empleo') || null;
+      proyectos = wp.data || [];
+      tareasProy = wt.data || [];
+      encargos = en.data || [];
+      horario = ho.data || [];
+      // Si aún no existen las tablas (migración sin aplicar), estas dos pestañas salen vacías.
+      viajes = vj.data || [];
+      vuelos = (vu.data || []).map(v => ({ ...v, billetes: Array.isArray(v.billetes) ? v.billetes : [] }));
+      mesCargado = desde;
+    }
+    errorCarga = '';
+    ultimaCarga = Date.now();
+  } catch (e) {
+    errorCarga = esRedFallo(e?.message) ? 'sin conexión' : (e?.message || 'error');
+  } finally {
+    cargando = false;
+  }
+  render();
+}
+
+// Elementos de un día en el calendario: eventos (por hora), tareas de casa (de los dos, con su hora),
+// tareas de FileHub y tareas de EGStrategy que vencen.
+function itemsDia(f) {
+  const ev = eventos.filter(e => (e.start_date || '').slice(0, 10) === f && pasaCal(e))
+    .map(e => ({ k: 'ev', hora: horaDe(e), titulo: e.title, est: estiloEv(e), raw: e }));
+  const cs = casa.filter(t => t.kind === 'tarea' && t.fecha === f && pasaCasaCal(t))
+    .map(t => ({ k: 'casa', hora: (t.hora || '').slice(0, 5), titulo: t.title, raw: t }));
+  const conHora = [...ev, ...cs].sort((a, b) => (a.hora || '99').localeCompare(b.hora || '99'));
+  const fh = tareasMes.filter(t => dueDe(t) === f && pasaCal(t)).map(t => ({ k: 'fh', titulo: t.title, raw: t }));
+  const eg = (verEgsCal() ? egsTareas() : []).filter(t => t.vence === f).map(t => ({ k: 'egs', titulo: t.texto, raw: t }));
+  return [...conHora, ...fh, ...eg];
+}
+function itemMini(it) {
+  if (it.k === 'ev') return `<div class="it"><i class="dot" style="background:${it.est.dot}"></i><span>${it.hora ? `<b>${it.hora}</b> ` : ''}${esc(it.titulo)}</span></div>`;
+  if (it.k === 'fh') return `<div class="it${it.raw.completed ? ' hecha' : ''}"><i class="cuad"></i><span>${esc(it.titulo)}</span></div>`;
+  if (it.k === 'casa') return `<div class="it${it.raw.done ? ' hecha' : ''}"><i class="tag casa">CASA</i><span>${it.hora ? `<b>${it.hora}</b> ` : ''}${esc(it.titulo)}</span></div>`;
+  return `<div class="it"><i class="tag egs">EGS</i><span>${esc(it.titulo)}</span></div>`;
+}
+function ficha(it) {
+  if (it.k === 'ev') return `<div class="ficha" style="background:${it.est.bg};color:${it.est.fg}">${it.hora ? `<b>${it.hora}</b>` : ''}${esc(it.titulo)}</div>`;
+  if (it.k === 'fh') return `<div class="ficha fh${it.raw.completed ? ' hecha' : ''}" data-fh="${esc(it.raw.id)}">${esc(it.titulo)}</div>`;
+  if (it.k === 'casa') return `<div class="ficha casa${it.raw.done ? ' hecha' : ''}" data-casa="${esc(it.raw.id)}">${it.hora ? `<b>${it.hora}</b>` : ''}${esc(it.titulo)}</div>`;
+  return `<div class="ficha egs" data-egs="${esc(it.raw.id)}"><i class="tag egs">EGS</i> ${esc(it.titulo)}</div>`;
+}
+
+// ── Vistas ─────────────────────────────────────────────────────────────────
+function htmlMes() {
+  const { inicio, filas } = rangoMes(cursor);
+  const mes = cursor.getMonth();
+  let h = `<div class="mes" style="--filas:${filas}"><div class="mes-dows">${DOWS.map(d => `<span>${d}</span>`).join('')}</div>`;
+  for (let f = 0; f < filas; f++) {
+    h += '<div class="mes-fila">';
+    for (let c = 0; c < 7; c++) {
+      const d = masDias(inicio, f * 7 + c), s = ymd(d), its = itemsDia(s);
+      const turno = chipsTurnoCal(d);
+      // Con dos chips (EGS TEK + turno de tarde) caben menos líneas.
+      const max = filas > 5 ? (turno.includes(EGSTEK.label) ? 1 : 2) : (turno.includes(EGSTEK.label) ? 2 : 3);
+      h += `<div class="celda${d.getMonth() !== mes ? ' fuera' : ''}${s === HOY_S ? ' hoy' : ''}" data-dia="${s}">`
+        + `<div class="num">${d.getDate()}</div>${turno}${its.slice(0, max).map(itemMini).join('')}`
+        + (its.length > max ? `<div class="mas">+${its.length - max} más</div>` : '') + '</div>';
+    }
+    h += '</div>';
+  }
+  return h + '</div>';
+}
+function htmlSemana() {
+  const lunes = masDias(cursor, -((cursor.getDay() + 6) % 7));
+  let h = '<div class="semana">';
+  for (let i = 0; i < 7; i++) {
+    const d = masDias(lunes, i), s = ymd(d), its = itemsDia(s);
+    h += `<div class="scol${s === HOY_S ? ' hoy' : ''}"><div class="scol-cab" data-dia="${s}">`
+      + `<div class="num"><small>${fmt(d, { weekday: 'short' }).replace('.', '')}</small>${d.getDate()}</div>${chipsTurnoCal(d)}</div>`
+      + `<div class="scol-lista">${its.map(ficha).join('') || '<div class="vacio">—</div>'}</div></div>`;
+  }
+  return h + '</div>';
+}
+const filaFH = t => `<div class="lfila${t.completed ? ' hecha' : ''}" data-fh="${esc(t.id)}"><i class="cuad"></i>${badgeQuien(t)}<span>${esc(t.title)}</span>`
+  + `<span class="meta">${t.priority ? `<i class="prio" style="background:${PRIO[t.priority] || PRIO.low}"></i> ` : ''}${esc(CATEG[t.category] || t.category || '')}</span></div>`;
+const filaEGS = t => `<div class="lfila" data-egs="${esc(t.id)}"><i class="tag egs">EGS</i><span>${esc(t.texto)}</span>`
+  + `<span class="meta">${esc(t.proyecto)} · ${esc(t.estadoNombre)}</span></div>`;
+const filaCasa = t => `<div class="lfila${t.done ? ' hecha' : ''}" data-casa="${esc(t.id)}"><span class="pers ${t.assignee === 'montse' ? 'm' : t.assignee === 'ambos' ? 'a' : ''}">${t.assignee === 'ambos' ? 'C+M' : t.assignee === 'montse' ? 'M' : 'C'}</span>`
+  + `<span>${esc(t.title)}</span><span class="meta">${t.hora ? t.hora.slice(0, 5) : t.fecha ? fechaCorta(t.fecha) : 'sin fecha'}</span></div>`;
+// Filas del Resumen con acciones a mano: ✓ (hecha / deshacer) y 🗑 (borrar); tocar el resto abre la ficha.
+const botonBorra = (attr, id, titulo) => `<button class="fila-borra" type="button" data-${attr}="${esc(id)}" aria-label="Borrar ${esc(titulo)}" title="Borrar">🗑</button>`;
+const filaHecho = ({ ok, abre, id, hecho, titulo, sub = '', pre = '', borra = '' }) => `<div class="compra${hecho ? ' hecha' : ''}" data-${abre}="${esc(id)}">`
+  + `<button class="compra-ok" type="button" data-${ok}="${esc(id)}" aria-label="${hecho ? 'Volver a pendiente' : 'Marcar como hecha'}">${hecho ? '↩' : '✓'}</button>`
+  + `<span class="compra-t">${pre}${esc(titulo)}${sub ? `<small>${esc(sub)}</small>` : ''}</span>${borra}</div>`;
+// Las RLS solo dejan borrar tus tareas; las compartidas de la otra persona se pueden completar, no borrar.
+const puedeBorrarFH = t => DEMO || t.user_id === uid;
+const filaFHAcc = t => filaHecho({ ok: 'fhok', abre: 'fh', id: t.id, hecho: t.completed, titulo: t.title, pre: badgeQuien(t),
+  sub: [CATEG[t.category] || t.category || '', t.priority === 'high' ? 'prioridad alta' : ''].filter(Boolean).join(' · '),
+  borra: puedeBorrarFH(t) ? botonBorra('fhborra', t.id, t.title) : '' });
+const subCasa = t => [PERSONAS[t.assignee] || '', t.fecha ? (t.fecha === HOY_S ? 'hoy' : fechaCorta(t.fecha)) : 'sin fecha', t.hora ? t.hora.slice(0, 5) : '', t.lugar || ''].filter(Boolean).join(' · ');
+const filaCasaAcc = t => filaHecho({ ok: 'cok', abre: 'casa', id: t.id, hecho: t.done, titulo: (t.categoria === 'paquete' ? '📦 ' : '') + t.title, sub: subCasa(t), borra: botonBorra('cborra', t.id, t.title) });
+function htmlDia() {
+  const s = ymd(cursor), its = itemsDia(s);
+  const ev = its.filter(i => i.k === 'ev' || (i.k === 'casa' && i.hora));
+  let h = `<div class="dia"><div class="dia-cab">${chipsTurnoCal(cursor)}</div><div><section><h4>Agenda</h4>`;
+  h += ev.length ? ev.map(i => i.k === 'casa'
+      ? `<div class="ev-fila${i.raw.done ? ' hecha' : ''}" style="background:color-mix(in srgb, var(--area-otro) 14%, transparent)" data-casa="${esc(i.raw.id)}"><span class="h">${i.hora}</span><span class="tt">📌 ${esc(i.titulo)}</span></div>`
+      : `<div class="ev-fila" style="background:${i.est.bg};color:${i.est.fg}"><span class="h">${i.hora || 'Todo el día'}</span><span class="tt">${esc(i.titulo)}</span></div>`).join('')
+    : '<div class="vacio">Sin eventos.</div>';
+  h += '</section></div><div><section><h4>Tareas del día</h4>';
+  const fh = tareasMes.filter(t => dueDe(t) === s && pasaCal(t)), eg = verEgsCal() ? egsTareas().filter(t => t.vence === s) : [];
+  const cs = casa.filter(t => t.kind === 'tarea' && t.fecha === s && !t.hora && pasaCasaCal(t));
+  h += (fh.length || eg.length || cs.length) ? cs.map(filaCasa).join('') + fh.map(filaFH).join('') + eg.map(filaEGS).join('') : '<div class="vacio">Nada que venza este día.</div>';
+  h += '</section>';
+  if (s === HOY_S && verEgsCal()) {
+    const atrFH = pendientes.filter(t => dueDe(t) && dueDe(t) < HOY_S);
+    const atrEG = egsTareas().filter(t => t.vence && t.vence < HOY_S);
+    if (atrFH.length || atrEG.length) {
+      h += `<section><h4>Atrasadas (${atrFH.length + atrEG.length})</h4>`
+        + atrEG.map(filaEGS).join('') + atrFH.slice(0, 15).map(filaFH).join('')
+        + (atrFH.length > 15 ? `<div class="vacio">… y ${atrFH.length - 15} más en el kanban.</div>` : '') + '</section>';
+    }
+  }
+  return h + '</div></div>';
+}
+
+// ── Resumen ────────────────────────────────────────────────────────────────
+const AGENTES = [
+  ['coordinador', 'Coordinador (decide él a quién pasarlo)'], ['casa', 'Casa y agenda'], ['medikai', 'MedikAI'],
+  ['egstek', 'EGS TeK'], ['egstrategy', 'EGStrategy'], ['finanzas', 'Finanzas'],
+  ['herramientas-formacion', 'Herramientas Formación'], ['empleo', 'Empleo'],
+];
+const nombreAgente = v => (AGENTES.find(a => a[0] === v) || [v, v])[1].replace(/ \(.*\)$/, '');
+const tarjetaHoy = (titulo, cuerpo, extra = '') => `<section class="hoy-card"><div class="hoy-cab"><h4>${titulo}</h4>${extra}</div>${cuerpo}</section>`;
+const urlSegura = u => /^https?:\/\//.test(u || '') ? u : '';
+// El informe de empleo es texto para Telegram: «1. Puesto · Empresa», «Encaje: alto…» y la URL.
+function ofertasEmpleo() {
+  const t = empleo?.contenido?.texto || '';
+  return t.split(/^\s*(?=\d+\.\s)/m).slice(1).map(b => ({
+    titulo: b.split('\n')[0].replace(/^\d+\.\s*/, '').trim(),
+    encaje: (b.match(/Encaje:\s*(alto|medio|bajo)/i) || [])[1] || '',
+    url: (b.match(/https?:\/\/[^\s)>]+/) || [])[0] || '',
+  })).filter(o => o.titulo).slice(0, 5);
+}
+function htmlHoy() {
+  const its = itemsDia(HOY_S);
+  const ev = its.filter(i => i.k === 'ev' || (i.k === 'casa' && i.hora));
+  const agenda = ev.length ? ev.map(i => i.k === 'casa'
+      ? `<div class="ev-fila${i.raw.done ? ' hecha' : ''}" style="background:color-mix(in srgb, var(--area-otro) 14%, transparent)" data-casa="${esc(i.raw.id)}"><span class="h">${i.hora}</span><span class="tt">📌 ${esc(i.titulo)}</span></div>`
+      : `<div class="ev-fila" style="background:${i.est.bg};color:${i.est.fg}"><span class="h">${i.hora || 'Todo el día'}</span><span class="tt">${esc(i.titulo)}</span></div>`).join('')
+    : '<div class="vacio">Sin eventos hoy.</div>';
+
+  const fh = tareasMes.filter(t => dueDe(t) === HOY_S && pasaCal(t)), eg = egsTareas().filter(t => t.vence === HOY_S);
+  const cs = casa.filter(t => t.kind === 'tarea' && t.fecha === HOY_S && !t.hora);
+  const atr = pendientes.filter(t => dueDe(t) && dueDe(t) < HOY_S).length + egsTareas().filter(t => t.vence && t.vence < HOY_S).length;
+  const tareasHoy = ((fh.length || eg.length || cs.length) ? cs.map(filaCasaAcc).join('') + fh.map(filaFHAcc).join('') + eg.map(filaEGS).join('') : '<div class="vacio">Nada que venza hoy.</div>')
+    + (atr ? `<button class="hoy-mas" data-irvista="kanban">⚠️ ${atr} atrasadas · ver en el kanban ›</button>` : '');
+
+  const filasPlan = planes.slice(0, 6).map(p => `<div class="hoy-fila"><div><a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.titulo)}</a>
+      <small>${esc(fechaCorta(p.fecha))}${p.hora ? ' · ' + esc(p.hora) : ''}${p.lugar ? ' · ' + esc(p.lugar) : ''}${p.precio ? ' · ' + esc(p.precio) : ''}</small></div>
+      <button class="btn" data-apuntar="${planes.indexOf(p)}" title="Apuntar en el calendario">➕</button></div>`).join('');
+  const verPlanes = filasPlan || '<div class="vacio">El agente de ocio los manda los domingos y los miércoles.</div>';
+
+  const ofertas = ofertasEmpleo();
+  const verEmpleo = ofertas.length ? ofertas.map(o => {
+      const u = urlSegura(o.url);
+      return `<div class="hoy-fila"><div>${u ? `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(o.titulo)}</a>` : esc(o.titulo)}${o.encaje ? `<small>Encaje ${esc(o.encaje.toLowerCase())}</small>` : ''}</div></div>`;
+    }).join('') + (empleo?.fecha ? `<div class="vacio">Informe del ${esc(fechaCorta(empleo.fecha))}</div>` : '')
+    : '<div class="vacio">El agente de empleo lo manda cada día a las 6:30.</div>';
+
+  const conTareas = proyectos.map(p => ({ p, ts: tareasProy.filter(t => t.project_id === p.id) })).filter(x => x.ts.length).sort((a, b) => b.ts.length - a.ts.length);
+  const verProy = conTareas.length ? conTareas.slice(0, 6).map(({ p, ts }) => {
+      const orden = ts.slice().sort((a, b) => String(a.due_date || '9999').localeCompare(String(b.due_date || '9999')));
+      return `<div class="hoy-fila"><div><b>${esc(p.name)}</b> · ${ts.length} pendiente${ts.length === 1 ? '' : 's'}<small>${esc(orden[0].title)}</small></div></div>`;
+    }).join('') : '<div class="vacio">Sin tareas pendientes en tus proyectos.</div>';
+
+  const esperan = agTareas().filter(t => t.estado === 'blocked'), enMarcha = agTareas().filter(t => t.estado === 'running');
+  const enCola = encargos.filter(e => e.estado === 'pendiente'), fallidos = encargos.filter(e => e.estado === 'error');
+  const filaAg = (t, txt) => `<div class="hoy-fila" data-ag="${esc(t.id)}" style="cursor:pointer"><div>${esc(t.titulo)}<small>${esc(nombreAgente(t.agente))} · ${txt}</small></div></div>`;
+  const filaEnc = (e, txt) => `<div class="hoy-fila"><div>${esc(e.titulo)}<small>${esc(nombreAgente(e.agente))} · ${txt}</small></div></div>`;
+  const verAg = [...esperan.slice(0, 4).map(t => filaAg(t, 'espera tu «sí»')), ...fallidos.slice(0, 2).map(e => filaEnc(e, 'no se pudo lanzar')),
+    ...enCola.map(e => filaEnc(e, 'se lanza en unos minutos')), ...enMarcha.slice(0, 3).map(t => filaAg(t, 'en marcha'))].join('') || '<div class="vacio">Nada en marcha ni esperándote.</div>';
+  const botonEnc = (DEMO || uid === UID_CARLOS) ? '<button class="btn" id="encargarBtn" type="button">＋ Encargar</button>' : '';
+
+  const diaHorario = e => {
+    const d = (e.start_date || '').slice(0, 10), ini = (e.start_date || '').slice(11, 13), fin = (e.end_date || '').slice(11, 13);
+    const t = /urgenc/i.test(e.title) ? 'urg' : Number(ini) < 13 ? 'agm' : 'agt';
+    return `<div class="horario-dia${d === HOY_S ? ' es-hoy' : d < HOY_S ? ' pasado' : ''}"><b>${esc(fechaCorta(d))}</b>
+      <span class="h" style="background:var(--t-${t}-bg);color:var(--t-${t}-fg)">${esc(String(Number(ini)))}–${esc(String(Number(fin)))} h</span>
+      <span class="q">${esc(String(e.title).replace(/^🩺\s*/, ''))}</span></div>`;
+  };
+  const tarjetaHorario = horario.length ? `<section class="hoy-card horario"><div class="hoy-cab"><h4>🩺 Mi horario · semana del ${esc(fechaCorta((horario[0].start_date || '').slice(0, 10)))}</h4></div><div class="horario-dias">${horario.map(diaHorario).join('')}</div></section>` : '';
+
+  const sC = saldoDe('carlos'), mesGastos = HOY_S.slice(0, 7);
+  const sinAjustes = gastos.filter(g => g.category !== 'ajuste');
+  const delMesG = sinAjustes.filter(g => (g.fecha || '').startsWith(mesGastos));
+  const saldoTexto = Math.abs(sC) < 0.5 ? 'Estáis en paz' : sC > 0 ? `Montse debe ${eur(sC)} a Carlos` : `Carlos debe ${eur(-sC)} a Montse`;
+  const pagador = p => p === 'montse' ? 'Montse' : 'Carlos';
+  const verGastos = `<div class="gastos-saldo">${esc(saldoTexto)}</div>
+    <div class="vacio">${esc(cap(fmt(HOY, { month: 'long' })))}: ${esc(eur(delMesG.reduce((s, g) => s + g.amount, 0)))} en ${delMesG.length} gasto${delMesG.length === 1 ? '' : 's'}</div>`
+    + sinAjustes.slice(0, 5).map(g => `<div class="compra" data-gasto="${esc(g.id)}"><span class="compra-t">${esc(g.title)}<small>${esc(fechaCorta((g.fecha || '').slice(0, 10)))} · pagó ${esc(pagador(g.paid_by))}${g.beneficiario !== 'ambos' ? ' · solo para ' + esc(PERSONAS[g.beneficiario]) : ''}</small></span><b>${esc(eur(g.amount))}</b>${botonBorra('gborra', g.id, g.title)}</div>`).join('');
+  const botonesGastos = `<button class="btn" type="button" data-gastos>＋ Añadir</button><a class="btn" href="https://carlosgalera-a11y.github.io/gastos/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none;color:inherit">Abrir ›</a>`;
+
+  // Casa: lo mismo que el panel de casa, en una tarjeta. Sin sesión de la pareja, casa viene vacío.
+  const mesCasa = HOY_S.slice(0, 7);
+  const facturasMes = casa.filter(f => f.kind === 'factura' && (f.fecha || f.fecha_fin || '').slice(0, 7) === mesCasa);
+  const porPagar = facturasMes.filter(f => !f.done), pagadas = facturasMes.filter(f => f.done);
+  const sumaF = l => eur(l.reduce((s, f) => s + (Number(f.importe) || 0), 0));
+  const alquiler = facturasMes.filter(f => f.categoria === 'alquiler');
+  const textoAlquiler = !alquiler.length ? 'sin apuntar' : alquiler.every(f => f.done) ? '✓ pagado' : 'por pagar';
+  // Tareas y paquetes: las pendientes, más las que acabas de marcar aquí (tachadas, por si te equivocas).
+  const pendCasa = casa.filter(i => i.kind === 'tarea' && !i.done);
+  const paquetes = pendCasa.filter(i => i.categoria === 'paquete');
+  const verTareas = casa.filter(i => i.kind === 'tarea' && (!i.done || hechasAhora.has(i.id)))
+    .sort((a, b) => (nuevasAhora.has(b.id) - nuevasAhora.has(a.id)) || (a.fecha || '9999').localeCompare(b.fecha || '9999') || (a.hora || '99').localeCompare(b.hora || '99'));
+  const compras = casa.filter(i => i.kind === 'compra' && !i.done && !i.datos?.grupo);
+  const quien = p => pendCasa.filter(i => i.assignee === p).length;
+  const urlCasa = `https://carlosgalera-a11y.github.io/casa/?volver=${SOLO_RESUMEN ? 'calendario' : 'tablet'}`;
+  const MAX_CASA = 8;
+  const verCasa = `<div class="hoy-fila"><div>🧾 <b>${esc(cap(fmt(HOY, { month: 'long' })))}</b>: ${porPagar.length} por pagar (${esc(sumaF(porPagar))}) · ${pagadas.length} pagadas (${esc(sumaF(pagadas))})<small>🏠 Alquiler: ${esc(textoAlquiler)}</small></div></div>
+    <div class="hoy-fila"><div>🛒 <b>${compras.length}</b> compra${compras.length === 1 ? "" : "s"} pendiente${compras.length === 1 ? "" : "s"}${compras.length ? `<small>${esc(compras.slice(0, 3).map(i => i.title).join(' · '))}</small>` : ''}</div></div>
+    <div class="hoy-fila"><div>🧹 <b>${pendCasa.length}</b> tarea${pendCasa.length === 1 ? "" : "s"} pendiente${pendCasa.length === 1 ? "" : "s"}<small>Carlos ${quien('carlos')} · Montse ${quien('montse')} · los dos ${quien('ambos')}${paquetes.length ? ` · 📦 ${paquetes.length} paquete${paquetes.length === 1 ? '' : 's'}` : ''}</small></div></div>`
+    + verTareas.slice(0, MAX_CASA).map(filaCasaAcc).join('')
+    + (verTareas.length > MAX_CASA ? `<a class="hoy-mas" href="${urlCasa}#tareas" target="_top" style="text-decoration:none">… y ${verTareas.length - MAX_CASA} más en Casa ›</a>` : '');
+  const botonCasa = `<button class="btn" type="button" data-ntcasa>＋ Tarea</button><a class="btn" href="${urlCasa}" target="_top" style="display:inline-flex;align-items:center;text-decoration:none;color:inherit">Abrir ›</a>`;
+
+  return `<div class="hoy">
+    ${tarjetaHorario}
+    ${tarjetaHoy('📅 Agenda de hoy', agenda)}
+    ${tarjetaHoy('✅ Tareas de hoy', tareasHoy, '<button class="btn" type="button" data-ntfh>＋ Tarea</button>')}
+    ${tarjetaHoy('🤖 Agentes', verAg, botonEnc)}
+    ${tarjetaHoy('🎭 Planes', verPlanes)}
+    ${tarjetaHoy('💼 Empleo e ingresos', verEmpleo)}
+    ${tarjetaHoy('🗂️ Proyectos', verProy, '<a class="btn" href="https://filehubworksplace.com/" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;text-decoration:none;color:inherit">Abrir ›</a>')}
+    ${gastos.length ? tarjetaHoy('💶 Gastos del piso', verGastos, botonesGastos) : ''}
+    ${casa.length || gastos.length ? tarjetaHoy('🏠 Casa', verCasa, botonCasa) : ''}
+  </div>`;
+}
+function formEncargo() {
+  abreHoja(`<h3>🤖 Encargar a un agente</h3>
+    <label class="enc" for="encTitulo">Qué tiene que hacer</label><input class="enc-campo" id="encTitulo" maxlength="300">
+    <label class="enc" for="encAgente">Agente</label><select class="enc-campo" id="encAgente">${AGENTES.map(([v, n]) => `<option value="${v}">${esc(n)}</option>`).join('')}</select>
+    <label class="enc" for="encDetalle">Más detalle (opcional)</label><textarea class="enc-campo" id="encDetalle" rows="3" maxlength="3800"></textarea>
+    <div class="acc"><button class="btn" data-cerrar>Cancelar</button><button class="btn prim" id="encGuardar" type="button">Encargar</button></div>`);
+  $('encTitulo').focus();
+  $('encGuardar').onclick = async () => {
+    const titulo = $('encTitulo').value.trim();
+    if (!titulo) { $('encTitulo').focus(); return; }
+    const fila = { agente: $('encAgente').value, titulo, detalle: $('encDetalle').value.trim() || null, origen: 'tablet' };
+    if (DEMO) { encargos.unshift({ id: 'x' + Date.now(), ...fila, estado: 'pendiente' }); cierraHoja(); render(); return; }
+    const { error } = await conReintento(() => sb.from('agente_encargos').insert(fila));
+    if (error) return avisaFallo(error, 'encargar');
+    cierraHoja();
+    cargar();
+  };
+}
+async function apuntarPlan(i) {
+  const p = planes[i];
+  if (!p) return;
+  const inicio = p.hora ? `${p.fecha}T${p.hora}` : p.fecha;
+  const fila = { id: `ev_plan_${Date.now()}`, user_id: uid, title: p.titulo, start_date: inicio, end_date: inicio, type: 'personal', shared: false };
+  if (!DEMO) {
+    const { error } = await conReintento(() => sb.from('calendar_events').insert(fila));
+    if (error) return avisaFallo(error, 'apuntar el plan');
+  } else eventos.push(fila);
+  planes.splice(i, 1);
+  if (DEMO) render(); else cargar();
+}
+
+// Kanban común: FileHub (stage/completed), EGStrategy (estado del proyecto) y tablero de los agentes (status).
+const COLS = [
+  { id: 'hacer', nombre: 'Por hacer' },
+  { id: 'curso', nombre: 'En curso' },
+  { id: 'espera', nombre: 'Esperando / revisión' },
+  { id: 'hecho', nombre: 'Hecho' },
+];
+function itemsKanban() {
+  const out = [];
+  for (const t of pendientes) out.push({ fuente: 'fh', id: t.id, titulo: t.title, col: t.stage === 'en-curso' ? 'curso' : 'hacer', vence: dueDe(t) || null, prio: t.priority, meta: CATEG[t.category] || t.category || '', raw: t });
+  for (const t of hechasFH) out.push({ fuente: 'fh', id: t.id, titulo: t.title, col: 'hecho', vence: null, prio: null, meta: fechaCorta(dueDe(t)), raw: t });
+  for (const t of egsTareas()) out.push({ fuente: 'egs', id: t.id, titulo: t.texto, col: { 'en-curso': 'curso', revision: 'espera' }[t.estado] || 'hacer', vence: t.vence, prio: PRIO_EGS[t.prioridad], meta: `${t.proyecto} · ${t.estadoNombre}`, raw: t });
+  for (const t of agTareas()) out.push({ fuente: 'ag', id: t.id, titulo: t.titulo, col: { blocked: 'espera', running: 'curso', done: 'hecho' }[t.estado] || 'hacer', vence: null, prio: null, meta: `${t.agente || 'agente'} · ${ESTADO_AG[t.estado] || t.estado}`, raw: t });
+  return out.filter(x => fuente === 'todo' || x.fuente === fuente);
+}
+const FUENTE_TXT = { fh: 'FileHub', egs: 'EGStrategy', ag: 'Agentes' };
+function tarjeta(x) {
+  const venc = x.vence && x.vence < HOY_S, hoy = x.vence === HOY_S;
+  return `<div class="tarjeta ${x.fuente}" data-${x.fuente}="${esc(x.id)}"><div class="t">${x.fuente === 'fh' ? badgeQuien(x.raw) + ' ' : ''}${esc(x.titulo)}</div>`
+    + `<div class="m"><span class="fuente">${FUENTE_TXT[x.fuente]}</span>`
+    + (x.vence ? `<span class="${venc ? 'venc' : ''}">${hoy ? 'hoy' : (venc ? 'venció ' : '') + fechaCorta(x.vence)}</span>` : '')
+    + (x.prio ? `<i class="prio" style="background:${PRIO[x.prio] || PRIO.low}" title="prioridad ${x.prio}"></i>` : '')
+    + (x.meta ? `<span>${esc(x.meta)}</span>` : '') + '</div></div>';
+}
+function htmlKanban() {
+  const todos = itemsKanban();
+  // Orden: vencidas y con fecha primero (la más próxima arriba), sin fecha al final.
+  const orden = (a, b) => (a.vence || '9999').localeCompare(b.vence || '9999');
+  return '<div class="kanban">' + COLS.map(c => {
+    let l = todos.filter(x => x.col === c.id).sort(orden);
+    // Las tareas de FileHub sin fecha (muchas) van plegadas al final de «Por hacer».
+    const sinFecha = c.id === 'hacer' ? l.filter(x => x.fuente === 'fh' && !x.vence) : [];
+    if (sinFecha.length && !verSinFecha) l = l.filter(x => !(x.fuente === 'fh' && !x.vence));
+    const MAX = 60, total = l.length + (verSinFecha ? 0 : sinFecha.length);
+    return `<div class="kcol"><h3>${c.nombre}<span class="n">${total}</span></h3><div class="klista">`
+      + (l.slice(0, MAX).map(tarjeta).join('') || '<div class="vacio">Nada aquí.</div>')
+      + (l.length > MAX ? `<div class="vacio">… y ${l.length - MAX} más.</div>` : '')
+      + (sinFecha.length ? `<button class="masbtn" id="verSinFecha">${verSinFecha ? 'Ocultar' : 'Ver'} ${sinFecha.length} sin fecha de FileHub</button>` : '')
+      + '</div></div>';
+  }).join('') + '</div>';
+}
+// ── Casa: gastos con Montse, tareas compartidas y reparto de la casa ──────
+// Mismo modelo que la app Casa (carlosgalera-a11y.github.io/casa), así lo apuntado aquí se ve allí y al revés:
+// rutina = casa_items kind 'limpieza' con cada_dias + ultima_vez (toca en última + cada); categoria 'alterna' =
+// al hacerla pasa a la otra persona. El área (limpieza/cocina/compra/otro) va en datos.area, que Casa conserva.
+const PERSONAS = { carlos: 'Carlos', montse: 'Montse', ambos: 'Los dos' };
+const AREAS = {
+  limpieza: { n: 'Limpieza', ic: '🧹', c: 'var(--area-limpieza)' }, cocina: { n: 'Cocina', ic: '🍳', c: 'var(--area-cocina)' },
+  compra:   { n: 'Compra',   ic: '🛒', c: 'var(--area-compra)' },   otro:   { n: 'Otro',   ic: '🏠', c: 'var(--area-otro)' },
+};
+const CAT_GASTO = { comida: '🍽️ Comida', casa: '🏠 Casa', luz: '⚡ Luz', alquiler: '🔑 Alquiler', otros: '• Otros', ajuste: '⇄ Ajuste de cuentas' };
+let persona = localStorage.getItem('fh_tab_persona') || 'ambos';   // ambos (juntos) | carlos | montse
+let casaModo = localStorage.getItem('fh_tab_casa') || 'semana';     // semana | tablero
+const yoCasa = () => emailSesion.startsWith('montsemaymo') ? 'montse' : 'carlos';
+const areaDe = r => AREAS[r.datos?.area] ? r.datos.area : 'limpieza';
+const rutinas = () => casa.filter(r => r.kind === 'limpieza');
+const tareasCasa = () => casa.filter(r => r.kind === 'tarea' && !r.done);
+const dePersona = p => persona === 'ambos' || p === persona || p === 'ambos';
+const chipPers = p => `<span class="pers ${p === 'montse' ? 'm' : p === 'ambos' ? 'a' : ''}" title="${PERSONAS[p] || ''}">${p === 'ambos' ? 'C+M' : p === 'montse' ? 'M' : 'C'}</span>`;
+// Cuándo toca una rutina (como en la app Casa): última vez + cada N días; sin última vez, hoy.
+const proximaDe = r => r.ultima_vez ? ymd(masDias(deYmd(r.ultima_vez), r.cada_dias || 7)) : HOY_S;
+// Hecha de verdad ese día: al crear una rutina, «última vez» se calcula hacia atrás para que toque el día
+// elegido, y eso no es una limpieza real anterior a la fecha de alta.
+const hechaEl = (r, s) => r.ultima_vez === s && (!r.created_at || r.created_at.slice(0, 10) <= s);
+const diasEntre = (a, b) => Math.round((deYmd(b) - deYmd(a)) / 86400000);
+const eur = n => n.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
+// Saldo estilo Tricount (igual que hortaBalance en FileHub): >0 → le deben a p.
+const parteDe = (g, p) => g.beneficiario === 'ambos' ? g.amount / 2 : (g.beneficiario === p ? g.amount : 0);
+const saldoDe = p => gastos.reduce((s, g) => s + (g.paid_by === p ? g.amount : 0) - parteDe(g, p), 0);
+
+const TAREA_CASA = { n: 'Tarea de casa', ic: '📌', c: 'var(--area-otro)' };
+function rut(r, s) {
+  const esRut = r.kind === 'limpieza', a = esRut ? AREAS[areaDe(r)] : TAREA_CASA;
+  const hecha = esRut ? r.ultima_vez === s : !!r.done;
+  const prox = esRut ? proximaDe(r) : (r.fecha || HOY_S), atraso = hecha ? 0 : diasEntre(prox, HOY_S);
+  let cuando = '';
+  if (atraso > 0) cuando = `<b>atrasada ${atraso} d</b>`;
+  else if (!esRut && r.hora) cuando = r.hora.slice(0, 5);
+  else if (esRut && s !== prox && !hecha) cuando = `toca ${fechaCorta(prox)}`;
+  return `<div class="rut${hecha ? ' hecha' : ''}" style="--c:${a.c}" data-casa="${esc(r.id)}"><div class="t">${a.ic} ${esc(r.title)}</div>`
+    + `<div class="m">${chipPers(r.assignee)}${esRut ? `<span>cada ${r.cada_dias || 7} d</span>` : ''}${cuando ? `<span>${cuando}</span>` : ''}</div></div>`;
+}
+const rcol = (cab, l, hoy = false) => `<div class="rcol${hoy ? ' hoy' : ''}"><div class="rcol-cab">${cab}<span class="n">${l.length || ''}</span></div>`
+  + `<div class="rlista">${l.join('') || '<div class="vacio">—</div>'}</div></div>`;
+function htmlRutinas() {
+  const R = rutinas().filter(r => dePersona(r.assignee)), T = tareasCasa().filter(t => dePersona(t.assignee));
+  if (casaModo === 'semana') {
+    const lunes = masDias(cursor, -((cursor.getDay() + 6) % 7));
+    let h = '<div class="rutinas">';
+    for (let i = 0; i < 7; i++) {
+      const d = masDias(lunes, i), s = ymd(d);
+      // Lo que toca ese día; las atrasadas se amontonan en hoy. Lo hecho ese día se ve tachado.
+      const pend = R.filter(r => proximaDe(r) === s || (s === HOY_S && proximaDe(r) < HOY_S)).sort((x, y) => proximaDe(x).localeCompare(proximaDe(y)));
+      const hechas = R.filter(r => hechaEl(r, s));
+      const tar = T.filter(t => t.fecha === s || (s === HOY_S && t.fecha && t.fecha < HOY_S));
+      h += rcol(`<small>${fmt(d, { weekday: 'short' }).replace('.', '')}</small>${d.getDate()}`, [...tar, ...pend].map(r => rut(r, s)).concat(hechas.map(r => rut(r, s))), s === HOY_S);
+    }
+    return h + '</div>';
+  }
+  const prox = r => r.kind === 'limpieza' ? proximaDe(r) : (r.fecha || HOY_S);
+  const todo = [...T, ...R].sort((x, y) => prox(x).localeCompare(prox(y)));
+  const en7 = ymd(masDias(HOY, 7)), hace7 = ymd(masDias(HOY, -7));
+  return '<div class="rutinas tablero">'
+    + rcol('Atrasadas', todo.filter(r => prox(r) < HOY_S).map(r => rut(r, HOY_S)))
+    + rcol('Hoy', todo.filter(r => prox(r) === HOY_S).map(r => rut(r, HOY_S)), true)
+    + rcol('Próximos 7 días', todo.filter(r => prox(r) > HOY_S && prox(r) <= en7).map(r => rut(r, prox(r))))
+    + rcol('Hechas · 7 días', R.filter(r => r.ultima_vez && r.ultima_vez >= hace7 && r.ultima_vez <= HOY_S && hechaEl(r, r.ultima_vez)).sort((x, y) => y.ultima_vez.localeCompare(x.ultima_vez)).map(r => rut(r, r.ultima_vez)))
+    + '</div>';
+}
+const filaGasto = g => `<div class="gasto" data-gasto="${esc(g.id)}">${chipPers(g.paid_by)}<span>${esc(g.title)}<span class="sub">${fechaCorta(g.fecha)} · pagó ${PERSONAS[g.paid_by] || '?'} · para ${g.beneficiario === 'ambos' ? 'los dos' : PERSONAS[g.beneficiario]}</span></span><span class="imp">${eur(g.amount)}</span></div>`;
+function htmlCasa() {
+  const sC = saldoDe('carlos'), mes = HOY_S.slice(0, 7);
+  const delMes = gastos.filter(g => (g.fecha || '').startsWith(mes) && g.category !== 'ajuste');
+  const totalMes = delMes.reduce((s, g) => s + g.amount, 0);
+  const porCat = Object.entries(delMes.reduce((o, g) => { o[g.category || 'otros'] = (o[g.category || 'otros'] || 0) + g.amount; return o; }, {})).sort((a, b) => b[1] - a[1]);
+  const hoyCasa = rutinas().filter(r => dePersona(r.assignee) && proximaDe(r) <= HOY_S);
+  const saldoTxt = Math.abs(sC) < 0.5 ? 'En paz' : sC > 0 ? `Montse debe ${eur(sC)} a Carlos` : `Carlos debe ${eur(-sC)} a Montse`;
+  const chips = (cls, act, opts, on) => `<div class="chips ${cls}">${opts.map(([v, t]) => `<button data-${act}="${v}"${on === v ? ' class="on"' : ''}>${t}</button>`).join('')}</div>`;
+  // Tareas pendientes compartidas: las de FileHub marcadas «compartida» (de los dos) y las tareas de casa.
+  const compartidas = pendientes.filter(t => t.shared && dePersona(t.user_id === UID_MONTSE ? 'montse' : 'carlos'));
+  const tCasa = tareasCasa().filter(t => dePersona(t.assignee)).sort((a, b) => (a.fecha || '9999').localeCompare(b.fecha || '9999') || (a.hora || '99').localeCompare(b.hora || '99'));
+  return `<div class="casa">
+    <div class="casa-cab">
+      ${chips('', 'pers', [['ambos', '👫 Juntos'], ['carlos', 'Carlos'], ['montse', 'Montse']], persona)}
+      ${chips('', 'cmodo', [['semana', 'Semana'], ['tablero', 'Tablero']], casaModo)}
+      <span class="sep"></span>
+      <button class="btn" id="nuevaRutina">+ Rutina</button><button class="btn" id="nuevoGasto">+ Gasto</button>
+    </div>
+    <div class="casa-stats">
+      <div class="casa-stat card" style="--c:${Math.abs(sC) < 0.5 ? 'var(--src-egs)' : sC > 0 ? 'var(--indigo)' : 'var(--montse)'}" data-gastos><div class="n">${Math.abs(sC) < 0.5 ? '✓' : eur(Math.abs(sC))}</div><div class="l">${saldoTxt}</div></div>
+      <div class="casa-stat card" style="--c:var(--src-fh)" data-gastos><div class="n">${eur(totalMes)}</div><div class="l">${cap(fmt(HOY, { month: 'long' }))} · ${delMes.length} gasto${delMes.length === 1 ? '' : 's'} del piso</div></div>
+      <div class="casa-stat card" style="--c:var(--area-limpieza)" data-cmodo="tablero"><div class="n">${hoyCasa.length}</div><div class="l">${hoyCasa.length === 1 ? 'rutina toca hoy' : 'rutinas tocan hoy'}${persona === 'ambos' ? '' : ' · ' + PERSONAS[persona]}</div></div>
+    </div>
+    <div class="casa-cuerpo">
+      <div class="casa-panel"><h4>Reparto de la casa<span class="n">${rutinas().length} rutinas</span></h4>${htmlRutinas()}</div>
+      <div class="casa-abajo">
+        <div class="casa-panel">
+          <h4>Gastos del piso<a href="https://carlosgalera-a11y.github.io/gastos/" target="_blank" rel="noopener">Abrir gastos ↗</a></h4>
+          ${porCat.length ? `<div class="barras">${porCat.slice(0, 4).map(([c, n]) => `<div class="barra"><span>${(CAT_GASTO[c] || c).replace(/^\S+ /, '')}</span><i style="width:${Math.round(n / porCat[0][1] * 100)}%"></i><b>${eur(n)}</b></div>`).join('')}</div>` : ''}
+          <div class="lista-scroll">${gastos.slice(0, 10).map(filaGasto).join('') || '<div class="vacio">Sin gastos todavía.</div>'}</div>
+        </div>
+        <div class="casa-panel">
+          <h4>Tareas pendientes<span class="n">${compartidas.length + tCasa.length}</span></h4>
+          <div class="lista-scroll">${tCasa.map(filaCasa).join('') + compartidas.map(filaFH).join('') || '<div class="vacio">Nada pendiente entre los dos.</div>'}</div>
+        </div>
+      </div>
+    </div></div>`;
+}
+
+// ── Gastos: el saldo y el mes elegido ──────────────────────────────────────
+const enlaceBtn = (url, txt, destino = '_blank') => `<a class="btn" href="${url}" target="${destino}"${destino === '_blank' ? ' rel="noopener"' : ''} style="display:inline-flex;align-items:center;text-decoration:none;color:inherit">${txt}</a>`;
+function htmlGastos() {
+  const mes = ymd(cursor).slice(0, 7);
+  const delMes = gastos.filter(g => (g.fecha || '').startsWith(mes));
+  const reales = delMes.filter(g => g.category !== 'ajuste');
+  const total = reales.reduce((s, g) => s + g.amount, 0);
+  const pago = p => reales.filter(g => g.paid_by === p).reduce((s, g) => s + g.amount, 0);
+  const porCat = Object.entries(reales.reduce((o, g) => { o[g.category || 'otros'] = (o[g.category || 'otros'] || 0) + g.amount; return o; }, {})).sort((a, b) => b[1] - a[1]);
+  const sC = saldoDe('carlos');
+  const saldoTxt = Math.abs(sC) < 0.5 ? 'En paz' : sC > 0 ? `Montse debe ${eur(sC)} a Carlos` : `Carlos debe ${eur(-sC)} a Montse`;
+  return `<div class="casa">
+    <div class="casa-cab"><span class="sep"></span><button class="btn" id="nuevoGasto">+ Gasto</button>${enlaceBtn('https://carlosgalera-a11y.github.io/gastos/', 'Abrir gastos ↗')}</div>
+    <div class="casa-stats">
+      <div class="casa-stat card" style="--c:${Math.abs(sC) < 0.5 ? 'var(--src-egs)' : sC > 0 ? 'var(--indigo)' : 'var(--montse)'}"><div class="n">${Math.abs(sC) < 0.5 ? '✓' : eur(Math.abs(sC))}</div><div class="l">${saldoTxt}</div></div>
+      <div class="casa-stat card" style="--c:var(--src-fh)"><div class="n">${eur(total)}</div><div class="l">${cap(fmt(cursor, { month: 'long' }))} · ${reales.length} gasto${reales.length === 1 ? '' : 's'}</div></div>
+      <div class="casa-stat card" style="--c:var(--area-compra)"><div class="n">${eur(pago('carlos'))} · ${eur(pago('montse'))}</div><div class="l">Pagó Carlos · pagó Montse</div></div>
+    </div>
+    <div class="gastos-mes">
+      ${porCat.length ? `<div class="barras">${porCat.map(([c, n]) => `<div class="barra"><span>${(CAT_GASTO[c] || c).replace(/^\S+ /, '')}</span><i style="width:${Math.round(n / porCat[0][1] * 100)}%"></i><b>${eur(n)}</b></div>`).join('')}</div>` : ''}
+      <div>${delMes.map(filaGasto).join('') || '<div class="vacio">Sin gastos este mes.</div>'}</div>
+    </div></div>`;
+}
+
+// ── Compras: la misma lista que el panel de casa, por tienda ───────────────
+const TIENDAS = { ikea: 'IKEA', conforama: 'Conforama', otra: 'Otras tiendas' };
+const listaCompra = i => (i.categoria || 'otra') + '|' + (i.datos?.grupo || '');
+function filaCompra(i) {
+  const d = i.datos || {};
+  const donde = d.pasillo ? `Pasillo ${d.pasillo} · ubicación ${d.ubic || '—'}` : d.seccion ? [d.zona, d.seccion].filter(Boolean).join(' · ') : i.lugar || '';
+  const sub = [d.uds > 1 ? `${d.uds} uds` : '', d.ref ? `Ref. ${d.ref}` : '', donde].filter(Boolean).join(' · ');
+  return `<div class="compra${i.done ? ' hecha' : ''}" data-casa="${esc(i.id)}">
+    <button class="compra-ok" type="button" data-comprado="${esc(i.id)}" aria-label="${i.done ? 'Volver a pendiente' : 'Marcar como comprado'}">${i.done ? '↩' : '✓'}</button>
+    <span class="compra-t">${esc(i.title)}${sub ? `<small>${esc(sub)}</small>` : ''}</span>
+    ${i.importe != null ? `<b>${esc(eur(Number(i.importe)))}</b>` : ''}</div>`;
+}
+function htmlCompras() {
+  const todas = casa.filter(i => i.kind === 'compra');
+  const vis = compraVer === 'todo' ? todas : todas.filter(i => !i.done);
+  // Primero las listas principales; las alternativas (datos.grupo) van detrás, como en el panel de casa.
+  const listas = [...new Set(vis.map(listaCompra))].sort((a, b) => (b.endsWith('|') - a.endsWith('|')) || a.localeCompare(b));
+  const chip = (v, txt) => `<button data-cver="${v}"${compraVer === v ? ' class="on"' : ''}>${txt}</button>`;
+  const pend = todas.filter(i => !i.done).length;
+  return `<div class="casa" style="grid-template-rows:auto minmax(0,1fr)">
+    <div class="casa-cab">
+      <div class="chips">${chip('pendientes', `Por comprar (${pend})`)}${chip('todo', 'Todo')}</div>
+      <span class="sep"></span>
+      <button class="btn" id="nuevaCompra">+ Compra</button>${enlaceBtn('https://carlosgalera-a11y.github.io/casa/?volver=tablet#compras', 'Abrir en Casa ›', '_top')}
+    </div>
+    ${listas.length ? `<div class="compras">${listas.map(k => {
+      const [tienda, grupo] = k.split('|'), l = vis.filter(i => listaCompra(i) === k);
+      return `<div class="casa-panel"><h4>${esc(TIENDAS[tienda] || tienda)}${grupo ? ' · ' + esc(grupo) : ''}<span class="n">${l.length}</span></h4><div>${l.map(filaCompra).join('')}</div></div>`;
+    }).join('')}</div>` : '<div class="vacio">No hay nada por comprar. Pulsa «+ Compra» para añadir algo.</div>'}
+  </div>`;
+}
+
+// ── Fin de semana: sábado y domingo, con lo apuntado y los planes del agente de ocio ──
+const sabadoDe = d => masDias(d, d.getDay() === 0 ? -1 : 6 - d.getDay());
+function htmlFinde() {
+  const col = d => {
+    const s = ymd(d), its = itemsDia(s);
+    const sugeridos = filtroCal === 'montse' ? [] : planes.map((p, i) => ({ p, i })).filter(x => x.p.fecha === s);
+    const verPlanes = sugeridos.length ? '<h4 class="finde-planes">🎭 Planes que sugiere el agente</h4>' + sugeridos.map(({ p, i }) => `<div class="hoy-fila"><div><a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer">${esc(p.titulo)}</a>
+        <small>${[p.hora, p.lugar, p.precio].filter(Boolean).map(esc).join(' · ')}</small></div>
+        <button class="btn" data-apuntar="${i}" title="Apuntar en el calendario">➕</button></div>`).join('') : '';
+    return `<div class="scol${s === HOY_S ? ' hoy' : ''}"><div class="scol-cab" data-dia="${s}"><div class="num"><small>${fmt(d, { weekday: 'long' })}</small> ${d.getDate()}</div>${chipsTurnoCal(d)}</div>
+      <div class="scol-lista">${its.map(ficha).join('') || '<div class="vacio">Nada apuntado.</div>'}${verPlanes}</div></div>`;
+  };
+  const sab = sabadoDe(cursor);
+  return `<div class="finde">${col(sab)}${col(masDias(sab, 1))}</div>`;
+}
+
+// ── Viajes: cuaderno del viaje elegido, un día por tarjeta ──────────────────
+const TIPO_VJ = {
+  hotel: { ico: '🏨', g: 'Dormir' }, vuelo: { ico: '✈️', g: 'Moverse' }, tren: { ico: '🚄', g: 'Moverse' },
+  actividad: { ico: '🎟️', g: 'Ver' }, plan: { ico: '📍', g: 'Ver' }, comida: { ico: '🍽️', g: 'Comer' }, pendiente: { ico: '☑️', g: 'Pendiente' },
+};
+const ES_RES_VJ = t => ['hotel', 'vuelo', 'tren', 'actividad'].includes(t);
+const hm = t => (t ? String(t).slice(0, 5) : '');
+const diasEntreS = (a, b) => Math.round((deYmd(b) - deYmd(a)) / 86400000);
+const mapa = q => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+const vivosVj = v => (v.viaje_items || []).filter(i => i.estado !== 'cancelada');
+const duermeVj = (v, d) => vivosVj(v).filter(i => i.tipo === 'hotel' && i.fecha && i.fecha_fin && i.fecha <= d && d < i.fecha_fin);
+const vuelosDe = v => vuelos.filter(f => f.viaje_id === v.id || (!f.viaje_id && f.fecha >= ymd(masDias(deYmd(v.fecha_inicio), -1)) && f.fecha <= v.fecha_fin));
+function cuentaVj(v) {
+  if (HOY_S < v.fecha_inicio) { const n = diasEntreS(HOY_S, v.fecha_inicio); return n === 1 ? 'Mañana' : `Faltan ${n} días`; }
+  return `Día ${diasEntreS(v.fecha_inicio, HOY_S) + 1} de ${diasEntreS(v.fecha_inicio, v.fecha_fin) + 1}`;
+}
+// A qué hora estar en el aeropuerto y salir de casa (igual que el apartado Vuelos de FileHub).
+const TRAYECTO_VU = { BCN: 45, RMU: 45, ALC: 50, OVD: 45, MAD: 50, VLC: 35, AGP: 35, SVQ: 30, PMI: 30, NRT: 90, HND: 45, KIX: 75, ITM: 40, NGO: 60 };
+function salidaVu(f) {
+  if (!f.hora_salida) return null;
+  const ant = { nacional: [75, 105], schengen: [90, 120], internacional: [180, 180] }[f.ambito || 'nacional'][f.maleta_facturada ? 1 : 0];
+  const tray = f.trayecto_min ?? TRAYECTO_VU[String(f.origen || '').toUpperCase()] ?? 60;
+  const [h, m] = hm(f.hora_salida).split(':').map(Number);
+  const menos = x => { let t = h * 60 + m - x; const antes = t < 0; t = ((t % 1440) + 1440) % 1440; return { h: `${pad(Math.floor(t / 60))}:${pad(t % 60)}`, antes }; };
+  return { aero: menos(ant).h, casa: menos(ant + tray + 15), ant, tray };
+}
+const minTxt = n => { const h = Math.floor(n / 60), m = n % 60; return h && m ? `${h} h ${m} min` : h ? `${h} h` : `${m} min`; };
+function cuentaVu(f) {
+  const n = diasEntreS(HOY_S, f.fecha);
+  if (n < 0) return 'Volado';
+  if (n === 0) {
+    if (!f.hora_salida) return 'Hoy';
+    const min = Math.round((new Date(`${f.fecha}T${hm(f.hora_salida)}:00`) - Date.now()) / 60000);
+    return min > 0 ? `Hoy, sale en ${minTxt(min)}` : 'Hoy (ya ha salido)';
+  }
+  return n === 1 ? 'Mañana' : `En ${n} días`;
+}
+function filaVj(hora, ico, grupo, titulo, lugar, notas, sinReservar) {
+  return `<div class="vj-it ${grupo}"><span class="h">${hora || ico}</span><div class="t">${hora ? ico + ' ' : ''}<b>${esc(titulo)}</b>${sinReservar ? '<span class="vj-sin">Sin reservar</span>' : ''}
+    ${notas ? `<small>${esc(notas)}</small>` : ''}${lugar ? `<small><a class="mapa" href="${mapa(lugar)}" target="_blank" rel="noopener noreferrer">📍 ${esc(lugar)}</a></small>` : ''}</div></div>`;
+}
+function htmlViajes() {
+  if (!viajes.length) return `<div class="vacio">No hay viajes por delante. Créalos en FileHub → <a class="vj-editar" href="/#viajes" target="_blank" rel="noopener">Viajes</a>.</div>`;
+  const v = viajes.find(x => x.id === viajeSel) || viajes[0];
+  const tira = viajes.length > 1 ? `<div class="vj-tira">${viajes.map(x => `<button class="vj-sel${x.id === v.id ? ' on' : ''}" data-vjsel="${esc(x.id)}"><span class="e">${esc(x.emoji || '🧳')}</span><span><b>${esc(x.titulo)}</b><small>${esc(cuentaVj(x))}</small></span></button>`).join('')}</div>` : '';
+  const dias = Array.from({ length: diasEntreS(v.fecha_inicio, v.fecha_fin) + 1 }, (_, i) => ymd(masDias(deYmd(v.fecha_inicio), i)));
+  const susVuelos = vuelosDe(v);
+  const reservas = vivosVj(v).filter(i => ES_RES_VJ(i.tipo));
+  const total = reservas.reduce((s, i) => s + (Number(i.importe) || 0), 0);
+  const sinNoche = dias.slice(0, -1).filter(d => !duermeVj(v, d).length);
+  const sinVuelos = !susVuelos.length && !vivosVj(v).some(i => i.tipo === 'vuelo');
+  const pend = (v.viaje_items || []).filter(i => i.tipo === 'pendiente').sort((a, b) => Number(a.hecho) - Number(b.hecho));
+  const pills = [
+    `<span class="vj-pill">${dias.length} días</span>`,
+    total ? `<span class="vj-pill">💶 ${total.toLocaleString('es-ES', { maximumFractionDigits: 0 })} €</span>` : '',
+    sinVuelos ? '<span class="vj-pill aviso">✈️ Sin vuelos</span>' : `<span class="vj-pill ok">✈️ ${susVuelos.length} vuelo${susVuelos.length === 1 ? '' : 's'}</span>`,
+    sinNoche.length ? `<span class="vj-pill aviso">🛏️ ${sinNoche.length} noche${sinNoche.length === 1 ? '' : 's'} sin alojamiento</span>` : '',
+    v.shared ? '<span class="vj-pill">👥 Compartido</span>' : '',
+    '<a class="vj-editar" href="/#viajes" target="_blank" rel="noopener">Editar en FileHub ↗</a>',
+  ].join('');
+  const portada = `<div class="vj-portada"><span class="e">${esc(v.emoji || '🧳')}</span><div><h3>${esc(v.titulo)}</h3>
+    <div class="sub">${esc(fechaCorta(v.fecha_inicio))} → ${esc(fechaCorta(v.fecha_fin))} · ${esc(cuentaVj(v))}</div>
+    ${v.notas ? `<div class="notas">${esc(v.notas)}</div>` : ''}</div><div class="vj-pills">${pills}</div></div>`;
+  const cajaVuelos = `<div class="vj-caja"><h4>✈️ Vuelos</h4>${susVuelos.length ? susVuelos.map(f => {
+      const s = salidaVu(f);
+      return `<div class="hoy-fila"><div><b>${esc(f.origen)} → ${esc(f.destino)}</b> · ${esc(fechaCorta(f.fecha))}${f.hora_salida ? ' · ' + hm(f.hora_salida) : ''}
+        <small>${s ? `🏠 Sal de casa a las <b>${s.casa.h}</b>${s.casa.antes ? ' (el día antes)' : ''} · aeropuerto ${s.aero}` : 'Falta la hora de salida'}${f.billetes.length ? ` · ${f.billetes.length} billete${f.billetes.length === 1 ? '' : 's'}` : ' · sin billete'}</small></div></div>`;
+    }).join('') : '<div class="vacio">Sin vuelos apuntados. Añádelos en FileHub → Vuelos.</div>'}</div>`;
+  const cajaPend = `<div class="vj-caja"><h4>☑️ Pendientes · ${pend.filter(p => !p.hecho).length}</h4>${pend.length ? pend.map(p => `<div class="vj-pend${p.hecho ? ' hecho' : ''}" data-vjpend="${esc(p.id)}"><span class="c">${p.hecho ? '✓' : ''}</span><span>${esc(p.titulo)}</span></div>`).join('') : '<div class="vacio">Nada pendiente.</div>'}</div>`;
+  const dia = (d, n) => {
+    const ent = vivosVj(v).filter(i => i.tipo === 'hotel' && i.fecha === d), sal = vivosVj(v).filter(i => i.tipo === 'hotel' && i.fecha_fin === d);
+    const cosas = vivosVj(v).filter(i => i.fecha === d && i.tipo !== 'hotel' && i.tipo !== 'pendiente');
+    const orden = i => i.hora ? hm(i.hora) : (i.tipo === 'tren' || i.tipo === 'vuelo' ? '00:00' : '99');
+    const filas = [
+      ...sal.map(h => ({ o: '!', html: filaVj('', '🏨', 'Dormir', `Salida · ${h.titulo}`, h.lugar, '') })),
+      ...susVuelos.filter(f => f.fecha === d).map(f => { const s = salidaVu(f); return { o: hm(f.hora_salida) || '00:00', html: filaVj(hm(f.hora_salida), '✈️', 'Moverse', `${f.origen} → ${f.destino}${f.numero ? ' · ' + f.numero : ''}`, '', s ? `🏠 Sal de casa a las ${s.casa.h}` : '') }; }),
+      ...cosas.map(i => ({ o: orden(i), html: filaVj(hm(i.hora), (TIPO_VJ[i.tipo] || TIPO_VJ.plan).ico, (TIPO_VJ[i.tipo] || TIPO_VJ.plan).g, i.titulo, i.lugar, i.notas, i.estado === 'pendiente' && ES_RES_VJ(i.tipo)) })),
+      ...ent.map(h => ({ o: '~', html: filaVj('', '🏨', 'Dormir', `Entrada · ${h.titulo}`, h.lugar, '') })),
+    ].sort((a, b) => (a.o < b.o ? -1 : a.o > b.o ? 1 : 0)); // ! (salidas) < horas < ~ (entradas)
+    const duerme = duermeVj(v, d);
+    const ciudad = (duerme[0] || ent[0])?.lugar || '';
+    return `<div class="vj-dia${d === HOY_S ? ' hoy' : ''}"><div class="vj-dia-cab"><span class="n">${n}</span><div><b>${esc(cap(fmt(deYmd(d), { weekday: 'long', day: 'numeric', month: 'short' })).replace('.', ''))}</b>${ciudad ? `<small>📍 ${esc(ciudad)}</small>` : ''}</div></div>
+      <div class="vj-lista">${filas.map(x => x.html).join('') || '<div class="vacio">Día libre.</div>'}${duerme.length ? `<div class="vj-duermes">🛏️ Duermes en ${esc(duerme.map(h => h.titulo).join(' / '))}</div>` : ''}</div></div>`;
+  };
+  return tira + portada + `<div class="vj-arriba">${cajaVuelos}${cajaPend}</div><div class="vj-dias">${dias.map((d, i) => dia(d, i + 1)).join('')}</div>`;
+}
+
+// ── Vuelos: próximos vuelos con la hora de salir de casa y los billetes ─────
+function htmlVuelos() {
+  const lista = vuelos.filter(f => f.fecha >= HOY_S);
+  if (!lista.length) return `<div class="vacio">No hay vuelos por delante. Añádelos (con el billete) en FileHub → <a class="vj-editar" href="/#flights" target="_blank" rel="noopener">Vuelos</a>.</div>`;
+  const viajeDe = id => viajes.find(v => v.id === id);
+  return `<div class="vu-lista">${lista.map((f, i) => {
+    const s = salidaVu(f), vj = viajeDe(f.viaje_id);
+    const datos = [f.aerolinea && f.numero ? `${f.aerolinea} · ${f.numero}` : f.aerolinea || f.numero, f.localizador && `Loc. ${f.localizador}`, f.terminal && `Terminal ${f.terminal}`, f.asiento && `Asiento ${f.asiento}`, f.maleta_facturada ? '🧳 Maleta facturada' : '🎒 Solo mano'].filter(Boolean);
+    return `<div class="vu${i === 0 ? ' prox' : ''}">
+      <div class="vu-cab"><span class="cuenta">${esc(cuentaVu(f))}</span><span>${esc(cap(fmt(deYmd(f.fecha), { weekday: 'long', day: 'numeric', month: 'long' })))}</span>${vj ? `<span>· ${esc(vj.emoji || '🧳')} ${esc(vj.titulo)}</span>` : ''}</div>
+      <div class="vu-ruta"><div class="ap">${esc(f.origen)}<small>${hm(f.hora_salida) || '--:--'}</small></div><div class="linea"></div><span>✈️</span><div class="linea"></div><div class="ap">${esc(f.destino)}<small>${hm(f.hora_llegada) || '--:--'}${f.llega_dia_siguiente ? ' +1' : ''}</small></div></div>
+      <div class="vu-datos">${datos.map(x => `<span>${esc(x)}</span>`).join('')}</div>
+      ${s ? `<div class="vu-salida"><div class="casa"><small>🏠 Sal de casa</small><b>${s.casa.h}</b>${s.casa.antes ? '<small>el día antes</small>' : ''}</div><div><small>🕒 En el aeropuerto</small><b>${s.aero}</b></div>
+        <div class="det">${minTxt(s.ant)} antes de la salida · trayecto ${minTxt(s.tray)} + 15 min de margen</div></div>` : '<div class="vu-sinbillete">Falta la hora de salida para calcular cuándo salir.</div>'}
+      ${f.billetes.length ? `<div class="vu-billetes">${f.billetes.map((b, j) => `<div class="vu-billete"><span>${b.mime === 'application/pdf' ? '📄' : '🖼️'} ${esc(b.nombre)}</span>
+        <button class="btn" data-billete="${esc(f.id)}" data-j="${j}" data-modo="ver">Ver</button><button class="btn" data-billete="${esc(f.id)}" data-j="${j}" data-modo="bajar" title="Descargar">⬇</button></div>`).join('')}</div>`
+        : '<div class="vu-sinbillete">Sin billete subido: súbelo en FileHub → Vuelos.</div>'}
+    </div>`;
+  }).join('')}</div>`;
+}
+async function abreBillete(id, j, modo) {
+  const f = vuelos.find(x => x.id === id), b = f?.billetes?.[j];
+  if (!b) return;
+  const w = modo === 'ver' ? window.open('', '_blank') : null;
+  const { data, error } = await sb.storage.from('files').createSignedUrl(b.path, 600, modo === 'bajar' ? { download: b.nombre } : undefined);
+  if (error || !data?.signedUrl) { w?.close(); alert('No se pudo abrir el billete: ' + (error?.message || 'sin enlace')); return; }
+  if (modo === 'ver') { if (w) w.location.href = data.signedUrl; else location.href = data.signedUrl; return; }
+  const a = document.createElement('a'); a.href = data.signedUrl; a.download = b.nombre; document.body.appendChild(a); a.click(); a.remove();
+}
+async function marcaPendViaje(id) {
+  const v = viajes.find(x => (x.viaje_items || []).some(i => i.id === id));
+  if (!v) return;
+  const it = v.viaje_items.find(i => i.id === id);
+  it.hecho = !it.hecho; render();
+  if (DEMO) return;
+  const { error } = await conReintento(() => sb.from('viaje_items').update({ hecho: it.hecho }).eq('id', id));
+  if (error) { it.hecho = !it.hecho; render(); alert('No se pudo marcar: ' + error.message); }
+}
+
+function tituloVista() {
+  if (vista === 'viajes') return 'Viajes';
+  if (vista === 'vuelos') return 'Vuelos';
+  if (vista === 'hoy') return 'Resumen de hoy';
+  if (vista === 'mes') return cap(fmt(cursor, { month: 'long', year: 'numeric' }));
+  if (vista === 'semana' || (vista === 'casa' && casaModo === 'semana')) {
+    const l = masDias(cursor, -((cursor.getDay() + 6) % 7)), d = masDias(l, 6);
+    return (vista === 'casa' ? 'Casa · ' : '') + `${fmt(l, { day: 'numeric', month: 'short' })} – ${fmt(d, { day: 'numeric', month: 'short', year: 'numeric' })}`.replace(/\./g, '');
+  }
+  if (vista === 'dia') return cap(fmt(cursor, { weekday: 'long', day: 'numeric', month: 'long' }));
+  if (vista === 'gastos') return 'Gastos · ' + cap(fmt(cursor, { month: 'long', year: 'numeric' }));
+  if (vista === 'finde') {
+    const s = sabadoDe(cursor), dom = masDias(s, 1), mesCorto = d => fmt(d, { month: 'short' }).replace('.', '');
+    return `Fin de semana · ${s.getDate()}${s.getMonth() === dom.getMonth() ? '' : ' ' + mesCorto(s)}–${dom.getDate()} ${mesCorto(dom)}`;
+  }
+  if (vista === 'compras') return 'Compras';
+  return vista === 'casa' ? 'Casa' : 'Tareas';
+}
+
+// ── Lateral ────────────────────────────────────────────────────────────────
+function pintaStats() {
+  const atr = pendientes.filter(t => dueDe(t) && dueDe(t) < HOY_S).length;
+  const hoy = pendientes.filter(t => dueDe(t) === HOY_S).length;
+  const sem = pendientes.filter(t => dueDe(t) > HOY_S && dueDe(t) <= SEMANA_S).length;
+  const eg = egsTareas(), egAtr = eg.filter(t => t.vence && t.vence < HOY_S).length, egHoy = eg.filter(t => t.vence === HOY_S).length;
+  const ag = agTareas(), agEsp = ag.filter(t => t.estado === 'blocked').length;
+  const agCola = ag.filter(t => ['todo', 'ready', 'triage'].includes(t.estado)).length, agMarcha = ag.filter(t => t.estado === 'running').length;
+  const parts = (...p) => p.filter(Boolean).join(' · ') || 'al día';
+  const egsDet = panelFalta ? 'falta activar el panel'
+    : !egs ? 'esperando al PC'
+    : !egs.contenido?.ok ? 'falta la sesión en el PC'
+    : parts(egAtr && `<span class="venc">${egAtr} vencida${egAtr > 1 ? 's' : ''}</span>`, egHoy && `${egHoy} hoy`);
+  // Número grande: FileHub = lo que vence en 7 días (con atrasadas); EGStrategy = mis pendientes;
+  // Agentes = tareas del tablero que esperan el «sí» de Carlos.
+  const stat = (c, f, n, l, d) => `<div class="stat card" style="--c:var(${c})" data-fuente="${f}"><div class="n">${n}</div><div><div class="l">${l}</div><div class="d">${d}</div></div></div>`;
+  $('stats').innerHTML =
+    stat('--src-fh', 'fh', atr + hoy + sem, 'FileHub · próximos 7 días',
+      parts(atr && `<span class="venc">${atr} atrasada${atr > 1 ? 's' : ''}</span>`, hoy && `${hoy} para hoy`))
+    + stat('--src-egs', 'egs', egs?.contenido?.ok ? eg.length : '—', 'EGStrategy · mis pendientes', egsDet)
+    + stat('--src-ag', 'ag', tablero ? agEsp : '—', 'Agentes · esperan tu «sí»',
+      tablero ? parts(agCola && `${agCola} en cola`, agMarcha && `${agMarcha} en marcha`) : (panelFalta ? 'falta activar el panel' : 'esperando al PC'));
+}
+// Markdown sencillo del parte (negritas, cursivas, listas y títulos).
+function md(txt) {
+  const inline = s => esc(s)
+    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
+    .replace(/(^|[\s(«])[*_](?!\s)(.+?)[*_](?=[\s).,:;!?»—-]|$)/g, '$1<i>$2</i>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>');
+  let h = '', lista = false;
+  for (const linea of String(txt).split(/\r?\n/)) {
+    const l = linea.trim(), li = l.match(/^[-*•]\s+(.*)/);
+    if (li) { if (!lista) { h += '<ul>'; lista = true; } h += `<li>${inline(li[1])}</li>`; continue; }
+    if (lista) { h += '</ul>'; lista = false; }
+    if (!l) continue;
+    const tit = l.match(/^#{1,4}\s+(.*)/);
+    h += tit ? `<h4>${inline(tit[1])}</h4>` : `<p>${inline(l)}</p>`;
+  }
+  return h + (lista ? '</ul>' : '');
+}
+function pintaParte() {
+  if (panelFalta || !partes.length) {
+    $('parteFecha').textContent = '';
+    $('parteAnt').disabled = $('parteSig').disabled = true;
+    $('parteTexto').innerHTML = `<p class="vacio">${panelFalta
+      ? 'El panel aún no está activado en Supabase (falta la migración <code>panel_tablet</code>).'
+      : 'Todavía no ha llegado ningún parte. El PC los sube cada 20 minutos.'}</p>`;
+    return;
+  }
+  parteIdx = Math.min(Math.max(parteIdx, 0), partes.length - 1);
+  const p = partes[parteIdx], gen = p.generado_at ? new Date(p.generado_at) : null;
+  $('parteFecha').textContent = (p.fecha === HOY_S ? 'Hoy' : fechaCorta(p.fecha))
+    + (gen ? ' · ' + gen.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '');
+  $('parteAnt').disabled = parteIdx >= partes.length - 1;
+  $('parteSig').disabled = parteIdx <= 0;
+  $('parteTexto').innerHTML = md(p.contenido?.texto || '');
+}
+function hace(ms) {
+  const min = Math.round((Date.now() - ms) / 60000);
+  return min < 1 ? 'ahora' : min < 60 ? `hace ${min} min` : `hace ${Math.round(min / 60)} h`;
+}
+function pintaEstado() {
+  const pc = Math.max(...[tablero, egs].filter(Boolean).map(f => Date.parse(f.updated_at) || 0), 0);
+  let h = ultimaCarga ? `Actualizado ${new Date(ultimaCarga).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}` : 'Cargando…';
+  if (pc) h += ` · PC ${hace(pc)}`;
+  if (errorCarga) h += `<span class="aviso">No se pudo recargar: ${esc(errorCarga)}. Se reintenta solo.</span>`;
+  else if (pc && Date.now() - pc > 90 * 60000) h += '<span class="aviso">El PC no sube datos desde hace más de hora y media (¿apagado?).</span>';
+  else if (egs && !egs.contenido?.ok) h += '<span class="aviso">EGStrategy: falta iniciar sesión en el PC (node herramientas/mcp-egstrategy/entrar.mjs).</span>';
+  $('estado').innerHTML = h;
+}
+
+function render() {
+  document.querySelectorAll('#segVista button').forEach(b => b.classList.toggle('on', b.dataset.v === vista));
+  document.querySelectorAll('#filtroFuente button').forEach(b => b.classList.toggle('on', b.dataset.f === fuente));
+  $('navFechas').style.visibility = vista === 'hoy' || vista === 'kanban' || vista === 'compras' || vista === 'viajes' || vista === 'vuelos' || (vista === 'casa' && casaModo !== 'semana') ? 'hidden' : '';
+  $('filtroFuente').style.display = vista === 'kanban' ? '' : 'none';
+  if (soyMontse() && filtroCal === 'montse') filtroCal = 'mio'; // para Montse, «Mío» ya es su calendario
+  $('filtroCal').style.display = VISTAS_CAL.includes(vista) ? '' : 'none';
+  document.querySelectorAll('#filtroCal button').forEach(b => {
+    b.classList.toggle('on', b.dataset.c === filtroCal);
+    b.style.display = b.dataset.c === 'montse' && soyMontse() ? 'none' : '';
+  });
+  $('titulo').textContent = tituloVista();
+  $('turnoHoy').innerHTML = chipsTurno(HOY);
+  const c = $('contenido');
+  c.className = 'v-' + vista;
+  c.innerHTML = vista === 'hoy' ? htmlHoy() : vista === 'mes' ? htmlMes() : vista === 'semana' ? htmlSemana() : vista === 'dia' ? htmlDia() : vista === 'casa' ? htmlCasa() : vista === 'gastos' ? htmlGastos() : vista === 'compras' ? htmlCompras() : vista === 'finde' ? htmlFinde() : vista === 'viajes' ? htmlViajes() : vista === 'vuelos' ? htmlVuelos() : htmlKanban();
+  pintaStats(); pintaParte(); pintaEstado();
+}
+
+// ── Hoja de detalle (tocar una tarea) ──────────────────────────────────────
+const abreHoja = html => { $('hojaIn').innerHTML = html; $('hoja').classList.add('on'); };
+const cierraHoja = () => $('hoja').classList.remove('on');
+function hojaFH(id) {
+  const t = [...pendientes, ...hechasFH, ...tareasMes].find(x => String(x.id) === String(id));
+  if (!t) return;
+  const est = t.completed ? 'Hecha' : t.stage === 'en-curso' ? 'En curso' : 'Por hacer';
+  abreHoja(`<span class="fuente" style="--c:var(--src-fh)">FileHub</span><h3>${esc(t.title)}</h3>
+    <div class="det"><span>${est}${dueDe(t) ? ' · vence ' + fechaCorta(dueDe(t)) : ' · sin fecha'}</span>
+    <span>${esc(CATEG[t.category] || t.category || '')}${t.priority ? ' · prioridad ' + ({ high: 'alta', medium: 'media', low: 'baja' }[t.priority] || t.priority) : ''}${t.shared ? ' · compartida' : ''}</span></div>
+    <div class="acc">
+      ${!t.completed && t.stage !== 'en-curso' ? `<button class="btn" data-acc="curso" data-id="${esc(t.id)}">▶ En curso</button>` : ''}
+      ${t.completed || t.stage === 'en-curso' ? `<button class="btn" data-acc="hacer" data-id="${esc(t.id)}">↩ Por hacer</button>` : ''}
+      ${!t.completed ? `<button class="btn prim" data-acc="hecha" data-id="${esc(t.id)}">✓ Hecha</button>` : ''}
+      ${puedeBorrarFH(t) ? `<button class="btn peligro" data-acc="borrar" data-id="${esc(t.id)}">🗑 Borrar</button>` : ''}
+      <button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+function hojaEGS(id) {
+  const t = egsTareas().find(x => x.id === id);
+  if (!t) return;
+  abreHoja(`<span class="fuente" style="--c:var(--src-egs)">EGStrategy</span><h3>${esc(t.texto)}</h3>
+    <div class="det"><span>${esc(t.proyecto)} · ${esc(t.estadoNombre)}${t.vence ? ' · vence ' + fechaCorta(t.vence) : ' · sin fecha'}</span>
+    <span>Prioridad ${esc(t.prioridad)}${t.subtareas ? ' · subtareas ' + esc(t.subtareas) : ''}</span></div>
+    <div class="acc"><a class="btn prim" style="display:grid;place-items:center;text-decoration:none" href="https://egsstrategy.com/" target="_blank" rel="noopener">Abrir EGStrategy</a>
+    <button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+function hojaAG(id) {
+  const t = agTareas().find(x => x.id === id);
+  if (!t) return;
+  abreHoja(`<span class="fuente" style="--c:var(--src-ag)">Agentes · ${esc(t.agente || '')}</span><h3>${esc(t.titulo)}</h3>
+    <div class="det"><span>${esc(ESTADO_AG[t.estado] || t.estado)} · ${esc(t.id)}</span>
+    ${t.estado === 'blocked' ? '<span>Espera tu respuesta: contéstale al coordinador por Telegram.</span>' : ''}</div>
+    <div class="acc"><button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+async function accionFH(id, acc) {
+  if (acc === 'borrar') {
+    const t = [...pendientes, ...hechasFH, ...tareasMes].find(x => String(x.id) === String(id));
+    if (!t || !confirm(`¿Borrar «${t.title}»?`)) return;
+    if (!DEMO) {
+      const { error } = await conReintento(() => sb.from('tasks').delete().eq('id', id));
+      if (error) return avisaFallo(error, 'borrar');
+    }
+    const queda = x => String(x.id) !== String(id);
+    pendientes = pendientes.filter(queda); hechasFH = hechasFH.filter(queda); tareasMes = tareasMes.filter(queda);
+    cierraHoja(); render(); return;
+  }
+  const cambios = acc === 'hecha' ? { completed: true, stage: null } : acc === 'curso' ? { completed: false, stage: 'en-curso' } : { completed: false, stage: null };
+  if (DEMO) {
+    for (const t of [...pendientes, ...hechasFH, ...tareasMes]) if (String(t.id) === String(id)) Object.assign(t, cambios);
+    pendientes = [...pendientes, ...hechasFH].filter((t, i, a) => !t.completed && a.findIndex(x => x.id === t.id) === i);
+    hechasFH = [...hechasFH, ...tareasMes].filter((t, i, a) => t.completed && a.findIndex(x => x.id === t.id) === i);
+    cierraHoja(); render(); return;
+  }
+  const { error } = await conReintento(() => sb.from('tasks').update(cambios).eq('id', id));
+  if (error) { alert('No se pudo guardar: ' + (esRedFallo(error.message) ? 'sin conexión, inténtalo otra vez' : error.message)); return; }
+  cierraHoja();
+  await cargar();
+}
+// ── Hojas de Casa: rutina / tarea de casa, gasto y sus formularios ────────
+const opc = (g, opts, on) => `<div class="opc" data-g="${g}">${opts.map(([v, t]) => `<button type="button" data-v="${v}"${on === v ? ' class="on"' : ''}>${t}</button>`).join('')}</div>`;
+const elegido = g => $('hojaIn').querySelector(`.opc[data-g="${g}"] .on`)?.dataset.v;
+const campo = n => $('hojaIn').querySelector(`[name="${n}"]`)?.value.trim();
+function hojaCasa(id) {
+  const r = casa.find(x => x.id === id);
+  if (!r) return;
+  const esRut = r.kind === 'limpieza', a = esRut ? AREAS[areaDe(r)] : TAREA_CASA, prox = esRut ? proximaDe(r) : r.fecha;
+  const hechaHoy = esRut ? r.ultima_vez === HOY_S : !!r.done;
+  abreHoja(`<span class="fuente" style="--c:${a.c}">${a.ic} ${a.n}</span><h3>${esc(r.title)}</h3>
+    <div class="det"><span>${PERSONAS[r.assignee] || '—'}${esRut ? ` · cada ${r.cada_dias || 7} días · ${r.categoria === 'alterna' ? 'se alterna Carlos ↔ Montse' : 'siempre la misma persona'}` : ''}</span>
+    <span>${esRut ? (r.ultima_vez ? `Última vez ${fechaCorta(r.ultima_vez)} · ` : 'Sin hacer todavía · ') + (prox < HOY_S ? `<span class="venc">atrasada ${diasEntre(prox, HOY_S)} días</span>` : prox === HOY_S ? 'toca hoy' : `toca ${fechaCorta(prox)}`) : (r.fecha ? `${fechaCorta(r.fecha)}${r.hora ? ' · ' + r.hora.slice(0, 5) : ''}` : 'Sin fecha')}</span>
+    ${r.notas ? `<span>${esc(r.notas)}</span>` : ''}</div>
+    <div class="acc">
+      ${hechaHoy ? `<button class="btn" data-cacc="pendiente" data-id="${esc(r.id)}">↩ Pendiente</button>` : `<button class="btn prim" data-cacc="hecha" data-id="${esc(r.id)}">✓ Hecha hoy</button>`}
+      ${['carlos', 'montse', 'ambos'].filter(p => p !== r.assignee).map(p => `<button class="btn" data-cacc="asigna:${p}" data-id="${esc(r.id)}">→ ${PERSONAS[p]}</button>`).join('')}
+      ${esRut ? `<button class="btn" data-cacc="editar" data-id="${esc(r.id)}">✏️ Editar</button>` : ''}
+      <button class="btn peligro" data-cacc="borrar" data-id="${esc(r.id)}">🗑 Borrar</button>
+      <button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+function formRutina(r = null) {
+  const area = r ? areaDe(r) : 'limpieza', cada = r?.cada_dias || 7;
+  const proxima = r ? proximaDe(r) : HOY_S;
+  abreHoja(`<span class="fuente" style="--c:var(--area-limpieza)">🏠 Casa</span><h3>${r ? 'Editar rutina' : 'Nueva rutina'}</h3>
+    <div class="form">
+      <label>Qué hay que hacer<input name="title" maxlength="300" value="${esc(r?.title || '')}" placeholder="Fregar el baño, hacer la compra…"></label>
+      <label>Área${opc('area', Object.entries(AREAS).map(([k, v]) => [k, `${v.ic} ${v.n}`]), area)}</label>
+      <label>Le toca a${opc('assignee', [['carlos', 'Carlos'], ['montse', 'Montse'], ['ambos', 'Los dos']], r?.assignee || 'ambos')}</label>
+      <label>Turno${opc('categoria', [['fijo', 'Siempre la misma persona'], ['alterna', '⇄ Se alterna']], r?.categoria || 'fijo')}</label>
+      <div class="fila"><label>Cada cuántos días<input name="cada_dias" type="number" min="1" max="365" value="${cada}"></label>
+      <label>Próxima vez<input name="proxima" type="date" value="${proxima}"></label></div>
+    </div>
+    <div class="acc"><button class="btn prim" data-guardar="rutina" data-id="${esc(r?.id || '')}">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>`);
+  $('hojaIn').querySelector('[name="title"]').focus();
+}
+function formGasto() {
+  abreHoja(`<span class="fuente" style="--c:var(--src-fh)">💶 Gastos del piso</span><h3>Nuevo gasto</h3>
+    <div class="form">
+      <label>Qué<input name="title" maxlength="200" placeholder="Compra súper, luz, cena…"></label>
+      <div class="fila"><label>Importe (€)<input name="amount" type="number" inputmode="decimal" step="0.01" min="0.01" placeholder="0,00"></label>
+      <label>Fecha<input name="fecha" type="date" value="${HOY_S}"></label></div>
+      <label>Pagó${opc('paid_by', [['carlos', 'Carlos'], ['montse', 'Montse']], yoCasa())}</label>
+      <label>Para${opc('beneficiario', [['ambos', 'Los dos (a medias)'], ['carlos', 'Solo Carlos'], ['montse', 'Solo Montse']], 'ambos')}</label>
+      <label>Categoría<select name="category">${Object.entries(CAT_GASTO).filter(([k]) => k !== 'ajuste').map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label>
+    </div>
+    <div class="acc"><button class="btn prim" data-guardar="gasto">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>`);
+  $('hojaIn').querySelector('[name="title"]').focus();
+}
+function formCompra() {
+  abreHoja(`<span class="fuente" style="--c:var(--area-compra)">🛒 Compras</span><h3>Nueva compra</h3>
+    <div class="form">
+      <label>Qué<input name="title" maxlength="200" placeholder="Leche, pilas, una lámpara…"></label>
+      <label>Tienda${opc('categoria', [['otra', 'Otra'], ['ikea', 'IKEA'], ['conforama', 'Conforama']], 'otra')}</label>
+      <label>Dónde (opcional)<input name="lugar" maxlength="120" placeholder="Pasillo, sección…"></label>
+      <label>Para${opc('assignee', [['ambos', 'Los dos'], ['carlos', 'Carlos'], ['montse', 'Montse']], 'ambos')}</label>
+    </div>
+    <div class="acc"><button class="btn prim" data-guardar="compra">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>`);
+  $('hojaIn').querySelector('[name="title"]').focus();
+}
+// Tarea del calendario (tabla tasks, la misma que calendario.html y el coordinador).
+function formTareaFH() {
+  const destinos = [['mio', 'Solo yo'], ['comun', '👥 Común'], ...((DEMO || uid === UID_CARLOS) ? [['montse', '👩 Calendario de Montse']] : [])];
+  abreHoja(`<span class="fuente" style="--c:var(--src-fh)">📅 Calendario</span><h3>Nueva tarea</h3>
+    <div class="form">
+      <label>Qué hay que hacer<input name="title" maxlength="300" placeholder="Llamar al banco, buscar casco para la bici…"></label>
+      <div class="fila"><label>Día<input name="fecha" type="date" value="${HOY_S}"></label>
+      <label>Categoría<select name="category">${Object.entries(CATEG).map(([k, v]) => `<option value="${k}">${v}</option>`).join('')}</select></label></div>
+      <label>Prioridad${opc('priority', [['high', 'Alta'], ['medium', 'Media'], ['low', 'Baja']], 'medium')}</label>
+      <label>Dónde se ve${opc('dest', destinos, 'mio')}</label>
+    </div>
+    <div class="acc"><button class="btn prim" data-guardar="tareafh">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>`);
+  $('hojaIn').querySelector('[name="title"]').focus();
+}
+// Tarea de casa (casa_items kind 'tarea'; un paquete es una tarea con categoria 'paquete', como lo apunta el coordinador).
+function formTareaCasa() {
+  abreHoja(`<span class="fuente" style="--c:var(--area-otro)">🏠 Casa</span><h3>Nueva tarea de casa</h3>
+    <div class="form">
+      <label>Tipo${opc('tipo', [['tarea', '📌 Tarea'], ['paquete', '📦 Paquete por recoger']], 'tarea')}</label>
+      <label>Qué hay que hacer<input name="title" maxlength="300" placeholder="Bajar la basura, recoger el pedido de Amazon…"></label>
+      <label>Le toca a${opc('assignee', [['carlos', 'Carlos'], ['montse', 'Montse'], ['ambos', 'Los dos']], yoCasa())}</label>
+      <div class="fila"><label>Día (opcional)<input name="fecha" type="date" value="${HOY_S}"></label>
+      <label>Hora (opcional)<input name="hora" type="time"></label></div>
+      <label>Dónde (opcional)<input name="lugar" maxlength="120" placeholder="Correos, portería, taquilla…"></label>
+    </div>
+    <div class="acc"><button class="btn prim" data-guardar="tareacasa">Guardar</button><button class="btn" data-cerrar>Cancelar</button></div>`);
+  $('hojaIn').querySelector('[name="title"]').focus();
+}
+function hojaGasto(id) {
+  const g = gastos.find(x => x.id === id);
+  if (!g) return;
+  abreHoja(`<span class="fuente" style="--c:var(--src-fh)">💶 ${(CAT_GASTO[g.category] || g.category || '').replace(/^\S+ /, '')}</span><h3>${esc(g.title)} · ${eur(g.amount)}</h3>
+    <div class="det"><span>${fechaCorta(g.fecha)} · pagó ${PERSONAS[g.paid_by] || '?'} · para ${g.beneficiario === 'ambos' ? 'los dos, a medias' : PERSONAS[g.beneficiario]}</span>${g.created_by ? `<span>Apuntado por ${esc(g.created_by)}</span>` : ''}</div>
+    <div class="acc"><button class="btn peligro" data-gacc="borrar" data-id="${esc(g.id)}">🗑 Borrar</button><button class="btn" data-cerrar>Cerrar</button></div>`);
+}
+const avisaFallo = (error, que) => alert(`No se pudo ${que}: ` + (esRedFallo(error?.message) ? 'sin conexión, inténtalo otra vez' : error?.message || 'error'));
+async function escribe(tabla, fn, que) {
+  if (DEMO) return true;
+  const { error } = await conReintento(() => fn(sb.from(tabla)));
+  if (error) { avisaFallo(error, que); return false; }
+  return true;
+}
+async function accionCasa(id, acc) {
+  const r = casa.find(x => x.id === id);
+  if (!r) return;
+  const esRut = r.kind === 'limpieza';
+  if (acc === 'editar') return formRutina(r);
+  if (acc === 'borrar') {
+    if (!confirm(`¿Borrar «${r.title}»?`)) return;
+    if (!(await escribe('casa_items', q => q.delete().eq('id', id), 'borrar'))) return;
+    casa = casa.filter(x => x.id !== id);
+  } else {
+    let cambio;
+    if (acc === 'hecha') {
+      cambio = esRut ? { ultima_vez: HOY_S } : { done: true };
+      // Turno alterno: al hacerla, la próxima le toca a la otra persona (como en la app Casa).
+      if (esRut && r.categoria === 'alterna' && r.assignee !== 'ambos') cambio.assignee = r.assignee === 'carlos' ? 'montse' : 'carlos';
+    } else if (acc === 'pendiente') cambio = esRut ? { ultima_vez: null } : { done: false };
+    else if (acc.startsWith('asigna:')) cambio = { assignee: acc.slice(7) };
+    else return;
+    if (!(await escribe('casa_items', q => q.update({ ...cambio, updated_at: new Date().toISOString() }).eq('id', id), 'guardar'))) return;
+    Object.assign(r, cambio);
+  }
+  cierraHoja(); render();
+}
+async function guardaRutina(id) {
+  const title = campo('title'), cada = Math.min(365, Math.max(1, Math.round(Number(campo('cada_dias'))) || 7));
+  const proxima = /^\d{4}-\d{2}-\d{2}$/.test(campo('proxima') || '') ? campo('proxima') : HOY_S;
+  if (!title) { alert('Escribe qué hay que hacer.'); return; }
+  const r = id ? casa.find(x => x.id === id) : null;
+  // La app Casa calcula «toca» como última + cada: para que toque el día elegido, última = ese día − cada.
+  const fila = { title, assignee: elegido('assignee') || 'ambos', categoria: elegido('categoria') || 'fijo', cada_dias: cada,
+    ultima_vez: ymd(masDias(deYmd(proxima), -cada)), datos: { ...(r?.datos || {}), area: elegido('area') || 'limpieza' } };
+  if (r) {
+    if (!(await escribe('casa_items', q => q.update({ ...fila, updated_at: new Date().toISOString() }).eq('id', id), 'guardar'))) return;
+    Object.assign(r, fila);
+  } else {
+    const nueva = { kind: 'limpieza', ...fila, created_by: emailSesion || null };
+    if (DEMO) { casa.push({ id: 'c' + Date.now(), ...nueva, created_at: new Date().toISOString() }); }
+    else {
+      const { data, error } = await conReintento(() => sb.from('casa_items').insert(nueva).select(COLS_CASA).single());
+      if (error) { avisaFallo(error, 'guardar'); return; }
+      casa.push(data);
+    }
+  }
+  cierraHoja(); render();
+}
+async function guardaCompra() {
+  const title = campo('title');
+  if (!title) { alert('Escribe qué hay que comprar.'); return; }
+  const nueva = { kind: 'compra', title, categoria: elegido('categoria') || 'otra', lugar: campo('lugar') || null, assignee: elegido('assignee') || 'ambos', created_by: emailSesion || null };
+  if (DEMO) casa.push({ id: 'c' + Date.now(), ...nueva, done: false, created_at: new Date().toISOString() });
+  else {
+    const { data, error } = await conReintento(() => sb.from('casa_items').insert(nueva).select(COLS_CASA).single());
+    if (error) { avisaFallo(error, 'guardar'); return; }
+    casa.push(data);
+  }
+  cierraHoja(); render();
+}
+const fechaValida = s => /^\d{4}-\d{2}-\d{2}$/.test(s || '') ? s : null;
+async function guardaTareaFH() {
+  const title = campo('title');
+  if (!title) { alert('Escribe qué hay que hacer.'); return; }
+  const fecha = fechaValida(campo('fecha')), dest = elegido('dest') || 'mio';
+  const fila = { id: `task_tab_${Date.now()}`, user_id: uid, title, completed: false, category: campo('category') || 'personal',
+    priority: elegido('priority') || 'medium', due_date: fecha, shared: dest !== 'mio', ...(dest === 'montse' ? { para: 'montse' } : {}) };
+  if (DEMO) {
+    const t = { ...fila, user_id: UID_CARLOS, stage: null, para: fila.para || null };
+    pendientes.push(t); if (fecha) tareasMes.push(t);
+    cierraHoja(); render(); return;
+  }
+  const { error } = await conReintento(() => sb.from('tasks').insert(fila));
+  if (error) return avisaFallo(error, 'guardar');
+  cierraHoja();
+  await cargar();
+}
+async function guardaTareaCasa() {
+  const title = campo('title');
+  if (!title) { alert('Escribe qué hay que hacer.'); return; }
+  const hora = /^\d{2}:\d{2}/.test(campo('hora') || '') ? campo('hora').slice(0, 5) : null;
+  const nueva = { kind: 'tarea', title, assignee: elegido('assignee') || 'ambos', fecha: fechaValida(campo('fecha')), hora, lugar: campo('lugar') || null,
+    categoria: elegido('tipo') === 'paquete' ? 'paquete' : null, prioridad: 'media', created_by: emailSesion || null };
+  let creada;
+  if (DEMO) creada = { id: 'c' + Date.now(), ...nueva, done: false, created_at: new Date().toISOString() };
+  else {
+    const { data, error } = await conReintento(() => sb.from('casa_items').insert(nueva).select(COLS_CASA).single());
+    if (error) { avisaFallo(error, 'guardar'); return; }
+    creada = data;
+  }
+  casa.push(creada); nuevasAhora.add(creada.id);
+  cierraHoja(); render();
+}
+async function guardaGasto() {
+  const title = campo('title'), amount = Math.round(Number(String(campo('amount')).replace(',', '.')) * 100) / 100;
+  if (!title) { alert('Escribe qué es el gasto.'); return; }
+  if (!(amount > 0)) { alert('Pon un importe mayor que cero.'); return; }
+  const g = { id: crypto.randomUUID(), title, amount, category: campo('category') || 'otros', paid_by: elegido('paid_by') || yoCasa(),
+    beneficiario: elegido('beneficiario') || 'ambos', fecha: /^\d{4}-\d{2}-\d{2}$/.test(campo('fecha') || '') ? campo('fecha') : HOY_S, created_by: PERSONAS[yoCasa()] };
+  if (!(await escribe('piso_horta_gastos', q => q.insert(g), 'guardar'))) return;
+  gastos = [g, ...gastos].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  cierraHoja(); render();
+}
+async function borraGasto(id) {
+  const g = gastos.find(x => x.id === id);
+  if (!g || !confirm(`¿Borrar «${g.title}» (${eur(g.amount)})?`)) return;
+  if (!(await escribe('piso_horta_gastos', q => q.delete().eq('id', id), 'borrar'))) return;
+  gastos = gastos.filter(x => x.id !== id);
+  cierraHoja(); render();
+}
+$('hoja').addEventListener('click', e => {
+  if (e.target === $('hoja') || e.target.closest('[data-cerrar]')) { cierraHoja(); return; }
+  const o = e.target.closest('.opc button');
+  if (o) { o.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === o)); return; }
+  const b = e.target.closest('[data-acc]');
+  if (b) return accionFH(b.dataset.id, b.dataset.acc);
+  const c = e.target.closest('[data-cacc]');
+  if (c) return accionCasa(c.dataset.id, c.dataset.cacc);
+  const g = e.target.closest('[data-gacc]');
+  if (g) return borraGasto(g.dataset.id);
+  const s = e.target.closest('[data-guardar]');
+  if (s) {
+    const que = s.dataset.guardar;
+    return que === 'gasto' ? guardaGasto() : que === 'compra' ? guardaCompra() : que === 'tareafh' ? guardaTareaFH() : que === 'tareacasa' ? guardaTareaCasa() : guardaRutina(s.dataset.id);
+  }
+});
+
+// ── Interacción ────────────────────────────────────────────────────────────
+function cambiaVista(v) {
+  // El fin de semana y los gastos se abren siempre en el actual, aunque vinieras de otro mes.
+  const alActual = v !== vista && (v === 'finde' || v === 'gastos');
+  vista = v; localStorage.setItem('fh_tab_vista', v);
+  if (alActual) cursor = new Date(HOY);
+  // El resumen es siempre de hoy: si estabas en otro mes, hay que volver a pedir sus datos.
+  if ((v === 'hoy' || alActual) && !DEMO && rangoMes(HOY).desde !== mesCargado) { cursor = new Date(HOY); cargar(); return; }
+  render();
+}
+$('segVista').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b) cambiaVista(b.dataset.v); });
+$('filtroFuente').addEventListener('click', e => {
+  const b = e.target.closest('button[data-f]');
+  if (!b) return;
+  fuente = b.dataset.f; localStorage.setItem('fh_tab_fuente', fuente); render();
+});
+$('filtroCal').addEventListener('click', e => {
+  const b = e.target.closest('button[data-c]');
+  if (!b) return;
+  filtroCal = b.dataset.c; localStorage.setItem('fh_tab_cal', filtroCal); render();
+});
+$('stats').addEventListener('click', e => {
+  const s = e.target.closest('[data-fuente]');
+  if (!s) return;
+  fuente = s.dataset.fuente; localStorage.setItem('fh_tab_fuente', fuente); cambiaVista('kanban');
+});
+$('contenido').addEventListener('click', e => {
+  const t = e.target;
+  const vs = t.closest('[data-vjsel]');
+  if (vs) { viajeSel = vs.dataset.vjsel; localStorage.setItem('fh_tab_viaje', viajeSel); render(); return; }
+  const vp = t.closest('[data-vjpend]');
+  if (vp) return marcaPendViaje(vp.dataset.vjpend);
+  const bi = t.closest('[data-billete]');
+  if (bi) return abreBillete(bi.dataset.billete, Number(bi.dataset.j), bi.dataset.modo);
+  if (t.closest('#encargarBtn')) return formEncargo();
+  if (t.closest('#nuevaCompra')) return formCompra();
+  if (t.closest('[data-ntfh]')) return formTareaFH();
+  if (t.closest('[data-ntcasa]')) return formTareaCasa();
+  // Botones ✓ y 🗑 de las filas: van antes que tocar la fila, que abre la ficha.
+  const gb = t.closest('[data-gborra]');
+  if (gb) return borraGasto(gb.dataset.gborra);
+  const fo = t.closest('[data-fhok]');
+  if (fo) { const x = [...pendientes, ...hechasFH, ...tareasMes].find(y => String(y.id) === fo.dataset.fhok); return x && accionFH(x.id, x.completed ? 'hacer' : 'hecha'); }
+  const fb = t.closest('[data-fhborra]');
+  if (fb) return accionFH(fb.dataset.fhborra, 'borrar');
+  const co = t.closest('[data-cok]');
+  if (co) { const r = casa.find(x => x.id === co.dataset.cok); if (!r) return; hechasAhora.add(r.id); return accionCasa(r.id, r.done ? 'pendiente' : 'hecha'); }
+  const cb = t.closest('[data-cborra]');
+  if (cb) return accionCasa(cb.dataset.cborra, 'borrar');
+  const cv = t.closest('[data-cver]');
+  if (cv) { compraVer = cv.dataset.cver; render(); return; }
+  const cp = t.closest('[data-comprado]');
+  if (cp) { const r = casa.find(x => x.id === cp.dataset.comprado); return r && accionCasa(r.id, r.done ? 'pendiente' : 'hecha'); }
+  const ap = t.closest('[data-apuntar]');
+  if (ap) return apuntarPlan(Number(ap.dataset.apuntar));
+  const iv = t.closest('[data-irvista]');
+  // Incrustada no hay pestañas para volver: el kanban se abre en la tablet completa.
+  if (iv) { if (SOLO_RESUMEN) window.open('/tablet.html', '_blank', 'noopener'); else cambiaVista(iv.dataset.irvista); return; }
+  if (t.closest('#verSinFecha')) { verSinFecha = !verSinFecha; render(); return; }
+  if (t.closest('#nuevaRutina')) return formRutina();
+  if (t.closest('#nuevoGasto')) return formGasto();
+  const pe = t.closest('[data-pers]'), cm = t.closest('[data-cmodo]');
+  if (pe) { persona = pe.dataset.pers; localStorage.setItem('fh_tab_persona', persona); render(); return; }
+  if (cm) { casaModo = cm.dataset.cmodo; localStorage.setItem('fh_tab_casa', casaModo); render(); return; }
+  if (t.closest('[data-gastos]')) return formGasto();
+  const fh = t.closest('[data-fh]'), eg = t.closest('[data-egs]'), ag = t.closest('[data-ag]'), cs = t.closest('[data-casa]'), ga = t.closest('[data-gasto]');
+  if (fh) return hojaFH(fh.dataset.fh);
+  if (eg) return hojaEGS(eg.dataset.egs);
+  if (ag) return hojaAG(ag.dataset.ag);
+  if (cs) return hojaCasa(cs.dataset.casa);
+  if (ga) return hojaGasto(ga.dataset.gasto);
+  const dia = t.closest('[data-dia]');
+  if (dia) { cursor = deYmd(dia.dataset.dia); cambiaVista('dia'); }
+});
+// Solo se vuelve a pedir a Supabase si el cursor sale del mes cargado.
+const irA = async d => { cursor = d; if (!DEMO && rangoMes(cursor).desde !== mesCargado) await cargar(); else render(); };
+const mueve = dir => irA(vista === 'mes' || vista === 'gastos' ? new Date(cursor.getFullYear(), cursor.getMonth() + dir, 1)
+  : masDias(cursor, dir * (vista === 'semana' || vista === 'casa' || vista === 'finde' ? 7 : 1)));
+$('atras').onclick = () => mueve(-1);
+$('adelante').onclick = () => mueve(1);
+$('hoyBtn').onclick = () => irA(new Date(HOY));
+$('parteAnt').onclick = () => { parteIdx++; pintaParte(); };
+$('parteSig').onclick = () => { parteIdx--; pintaParte(); };
+// ⟳ recarga la página entera con la última versión: pide de nuevo el HTML saltándose
+// la caché del navegador, activa el service worker nuevo si lo hay y recarga.
+$('recargarBtn').onclick = async () => {
+  const b = $('recargarBtn');
+  b.disabled = true; b.textContent = '…';
+  try {
+    const reg = await navigator.serviceWorker?.getRegistration?.();
+    await reg?.update?.().catch(() => {});
+    reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+    await fetch(location.href, { cache: 'reload' }).catch(() => {});
+  } catch {}
+  location.reload();
+};
+$('pantallaBtn').onclick = () => {
+  if (document.fullscreenElement) document.exitFullscreen?.();
+  else document.documentElement.requestFullscreen?.().catch(() => {});
+  despierta();
+};
+
+// Tema: el mismo interruptor que el calendario (auto → claro → oscuro).
+const TEMAS = ['auto', 'light', 'dark'], TEMA_ICONO = { auto: '🌗', light: '☀️', dark: '🌙' };
+const mqOscuro = matchMedia('(prefers-color-scheme: dark)');
+function aplicaTema() {
+  const pref = localStorage.getItem('fh_cal_tema') || 'auto';
+  const oscuro = pref === 'dark' || (pref === 'auto' && mqOscuro.matches);
+  document.documentElement.dataset.tema = oscuro ? 'dark' : 'light';
+  document.querySelector('meta[name="theme-color"]').content = oscuro ? '#0b1326' : '#f4f6fa';
+  $('temaBtn').textContent = TEMA_ICONO[pref];
+}
+$('temaBtn').onclick = () => {
+  const pref = localStorage.getItem('fh_cal_tema') || 'auto';
+  localStorage.setItem('fh_cal_tema', TEMAS[(TEMAS.indexOf(pref) + 1) % TEMAS.length]);
+  aplicaTema();
+};
+mqOscuro.addEventListener?.('change', aplicaTema);
+// Si se cambia el tema en el calendario que la incrusta, se aplica aquí también.
+addEventListener('storage', e => { if (e.key === 'fh_cal_tema') aplicaTema(); });
+aplicaTema();
+
+// ── Pantalla fija: reloj, pantalla siempre encendida y recarga sola ────────
+function reloj() {
+  const n = new Date();
+  if (ymd(n) !== HOY_S) { location.reload(); return; } // cambio de día: todo se recalcula
+  $('hora').textContent = n.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  $('fecha').textContent = cap(fmt(n, { weekday: 'long', day: 'numeric', month: 'long' }));
+}
+reloj();
+setInterval(reloj, 10000);
+let bloqueo = null;
+async function despierta() {
+  if (SOLO_RESUMEN) return; // mantener la pantalla encendida es cosa de la tablet, no del calendario
+  try { if ('wakeLock' in navigator && document.visibilityState === 'visible' && !bloqueo) { bloqueo = await navigator.wakeLock.request('screen'); bloqueo.addEventListener('release', () => { bloqueo = null; }); } } catch { /* sin permiso: la tablet se apagará según sus ajustes */ }
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  despierta();
+  if (Date.now() - ultimaCarga > 60000) cargar();
+});
+document.addEventListener('pointerdown', despierta, { once: true });
+setInterval(() => { if (document.visibilityState === 'visible') cargar(); }, 5 * 60000);
+
+// ── Se actualiza sola: cada despliegue cambia CACHE_VERSION en sw.js. Si cambia
+// mientras el panel está abierto, se recarga con la versión nueva (salvo que haya
+// una ficha abierta o estés escribiendo; entonces lo intenta en la siguiente vuelta).
+let versionVista = null;
+async function miraVersion() {
+  if (DEMO || document.visibilityState !== 'visible') return;
+  try {
+    const txt = await (await fetch('/sw.js?v=' + Date.now(), { cache: 'no-store' })).text();
+    const v = (txt.match(/CACHE_VERSION\s*=\s*'([^']+)'/) || [])[1];
+    if (!v) return;
+    if (versionVista === null) { versionVista = v; return; }
+    if (v === versionVista) return;
+    const ocupado = $('hoja')?.classList.contains('on') || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || '');
+    if (ocupado) return;
+    await fetch(location.href, { cache: 'reload' }).catch(() => {});
+    location.reload();
+  } catch { /* sin conexión: se mira en la siguiente vuelta */ }
+}
+miraVersion();
+setInterval(miraVersion, 5 * 60000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') miraVersion(); });
+
+// ── Sesión (la misma que calendario.html) ──────────────────────────────────
+$('gbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${location.origin}${location.pathname}`, queryParams: { access_type: 'offline', prompt: 'select_account' } },
+  });
+  if (error) alert('No se pudo iniciar con Google: ' + error.message);
+};
+$('lbtn').onclick = async () => {
+  const { error } = await sb.auth.signInWithPassword({ email: $('lemail').value.trim(), password: $('lpass').value });
+  if (error) { alert('No se pudo entrar: ' + error.message); return; }
+  location.reload();
+};
+// Hora y fecha de la portada: solo se actualizan mientras está a la vista.
+function relojPortada() {
+  if ($('login').style.display !== 'flex') return;
+  const ahora = new Date();
+  $('pHora').textContent = ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  $('pFecha').textContent = ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+setInterval(relojPortada, 15000);
+function aplicaSesion(session) {
+  const nuevo = session?.user?.id || null;
+  if (nuevo === uid && ultimaCarga) return;
+  uid = nuevo;
+  emailSesion = (session?.user?.email || '').toLowerCase();
+  $('login').style.display = uid || DEMO ? 'none' : 'flex';
+  relojPortada();
+  if (uid || DEMO) cargar(); else render();
+}
+sb.auth.onAuthStateChange((_ev, session) => {
+  aplicaSesion(session);
+  if (location.hash.includes('access_token')) history.replaceState(null, '', location.pathname + location.search);
+});
+(async () => {
+  despierta();
+  if (DEMO) { aplicaSesion(null); return; }
+  const { data: { session } } = await sb.auth.getSession();
+  aplicaSesion(session);
+})();
+
+// ── Datos de ejemplo (?demo) ───────────────────────────────────────────────
+function datosDemo() {
+  const d = n => ymd(masDias(HOY, n)), yo = UID_CARLOS;
+  const it = (tipo, titulo, n, extra = {}) => ({ id: 'vi' + Math.random().toString(36).slice(2, 8), tipo, titulo, fecha: n === null ? null : d(n), fecha_fin: null, hora: null, lugar: null, importe: null, estado: 'confirmada', localizador: null, url: null, notas: null, hecho: false, ...extra });
+  viajes = [{ id: 'vj1', user_id: yo, titulo: 'Escapada de ejemplo', emoji: '🏔️', fecha_inicio: d(2), fecha_fin: d(4), notas: 'Viaje de prueba del modo demo.', shared: true, viaje_items: [
+    it('hotel', 'Hotel del centro', 2, { fecha_fin: d(4), lugar: 'Centro', importe: 180 }),
+    it('plan', 'Paseo por el casco antiguo', 2, { hora: '18:00', lugar: 'Plaza Mayor' }),
+    it('comida', 'Cena típica', 2, { hora: '21:00', lugar: 'Calle de los bares', notas: 'Mejor reservar.' }),
+    it('plan', 'Museo', 3, { hora: '10:30', lugar: 'Museo de la ciudad' }),
+    it('tren', 'Tren de vuelta', 4, { estado: 'pendiente' }),
+    it('pendiente', 'Reservar la cena', null), it('pendiente', 'Cargar el móvil', null, { hecho: true }),
+  ] }];
+  vuelos = [{ id: 'vu1', viaje_id: 'vj1', origen: 'BCN', destino: 'MAD', fecha: d(2), hora_salida: '16:45:00', hora_llegada: '18:05:00', llega_dia_siguiente: false, aerolinea: 'Aerolínea', numero: 'XX123', localizador: 'ABC123', terminal: 'T1', asiento: null, ambito: 'nacional', maleta_facturada: false, trayecto_min: null, billetes: [{ path: 'demo', nombre: 'tarjeta-embarque.pdf', mime: 'application/pdf', size: 1 }] }];
+  const ta = (id, title, n, extra = {}) => ({ id, title, due_date: n === null ? null : d(n), completed: false, category: 'personal', priority: 'medium', user_id: yo, shared: false, stage: null, ...extra });
+  eventos = [
+    { id: 'e1', title: 'Reunión de equipo', start_date: d(0) + 'T09:00', type: 'work' },
+    { id: 'e2', title: 'Cena con amigos', start_date: d(1) + 'T21:00', type: 'personal' },
+    { id: 'e3', title: 'Gimnasio', start_date: d(2) + 'T19:30', type: 'fitness' },
+    { id: 'e4', title: 'Guardia', start_date: d(4), type: 'work' },
+    { id: 'e5', title: 'Viaje', start_date: d(9), type: 'trip' },
+    { id: 'e6', title: 'Formación', start_date: d(-3) + 'T16:00', type: 'work' },
+    { id: 'e7', title: 'Dentista', start_date: d(0) + 'T17:30', type: 'personal' },
+    { id: 'e8', title: 'Revisión de Montse', start_date: d(1) + 'T10:00', type: 'personal', shared: true, para: 'montse' },
+    { id: 'e9', title: 'Comida con la familia', start_date: d(2) + 'T14:00', type: 'personal', shared: true },
+  ].map(e => ({ user_id: yo, shared: false, ...e }));
+  pendientes = [
+    ta('f1', 'Renovar ITV del coche', -2, { priority: 'high' }),
+    ta('f2', 'Preparar sesión clínica', 0, { category: 'work', stage: 'en-curso' }),
+    ta('f3', 'Comprar regalo cumpleaños', 1, { shared: true, user_id: UID_MONTSE }),
+    ta('f4', 'Pedir cita revisión', 3),
+    ta('f5', 'Revisar seguro hogar', 6, { category: 'finance', priority: 'low' }),
+    ta('f6', 'Ordenar fotos del verano', null),
+    ta('f7', 'Leer artículo pendiente', null),
+  ];
+  hechasFH = [ta('f8', 'Pagar recibo comunidad', -1, { completed: true, category: 'finance' })];
+  tareasMes = [...pendientes, ...hechasFH];
+  const ahora = new Date().toISOString();
+  egs = { updated_at: ahora, contenido: { ok: true, tareas: [
+    { id: 'g1', texto: 'Revisar textos de la portada', estado: 'revision', estadoNombre: 'En revisión', proyecto: 'Web', vence: d(-1), prioridad: 'alta' },
+    { id: 'g2', texto: 'Grabar vídeo del curso', estado: 'en-curso', estadoNombre: 'En curso', proyecto: 'Cursos', vence: d(2), prioridad: 'media', subtareas: '1/3' },
+    { id: 'g3', texto: 'Feedback del panel del profesor', estado: 'pendiente', estadoNombre: 'Pendiente', proyecto: 'Campus', vence: d(0), prioridad: 'blocker' },
+    { id: 'g4', texto: 'Propuesta visual de certificados', estado: 'pendiente', estadoNombre: 'Pendiente', proyecto: 'Campus', vence: null, prioridad: 'baja' },
+  ] } };
+  tablero = { updated_at: ahora, contenido: { tareas: [
+    { id: 't_a1', titulo: 'T3: tests por tema y avance bloqueado', estado: 'blocked', agente: 'egstek' },
+    { id: 't_a2', titulo: 'Montar vídeos y subir al sandbox', estado: 'blocked', agente: 'egstek' },
+    { id: 't_a3', titulo: 'Revisar ramas activas y planificar merge', estado: 'running', agente: 'medikai' },
+    { id: 't_a4', titulo: 'Cambiar la voz de los cursos a voz natural', estado: 'todo', agente: 'egstek' },
+    { id: 't_a5', titulo: 'Copia semanal cifrada', estado: 'done', agente: 'egstrategy' },
+  ] } };
+  partes = [
+    { fecha: d(0), generado_at: new Date(HOY.getTime() + 7.5 * 3600000).toISOString(), contenido: { texto: '☀️ **Parte de ejemplo — 7:30**\n\n**Tu día:** reunión a las 9:00 y dentista a las 17:30.\n\n**🔴 Pendientes tuyas:**\n- **T3 (egstek)** bloqueada: espera tu «sí».\n- **3 PRs >3 días** en egstek-mvp.\n\n**📧 Correos (últimas 24 h):**\n- *Formación* — nuevo vídeo disponible.\n- *Proveedor* — factura de octubre. **Pide respuesta.**\n\nSin nada más urgente. Buen día 👍' } },
+    { fecha: d(-1), generado_at: new Date(HOY.getTime() - 16.5 * 3600000).toISOString(), contenido: { texto: '☀️ **Parte de ayer**\n\nAgenda vacía. Sin correos importantes.' } },
+  ];
+  const rutina = (id, title, area, assignee, cada, ultima, categoria = 'fijo') => ({ id, kind: 'limpieza', title, assignee, cada_dias: cada, ultima_vez: ultima === null ? null : d(ultima), categoria, datos: { area } });
+  casa = [
+    rutina('c1', 'Baño', 'limpieza', 'carlos', 7, -9, 'alterna'),
+    rutina('c2', 'Aspirar y fregar', 'limpieza', 'montse', 7, -7, 'alterna'),
+    rutina('c3', 'Cocinar entre semana', 'cocina', 'ambos', 1, -1),
+    rutina('c4', 'Compra grande', 'compra', 'ambos', 7, -5),
+    rutina('c5', 'Cambiar sábanas', 'limpieza', 'ambos', 14, -12),
+    rutina('c6', 'Limpiar nevera', 'cocina', 'montse', 30, -3),
+    rutina('c7', 'Sacar el vidrio', 'otro', 'carlos', 7, null),
+    rutina('c8', 'Menú de la semana', 'cocina', 'ambos', 7, -7),
+    rutina('c9', 'Plancha', 'limpieza', 'montse', 7, 0),
+    { id: 'c10', kind: 'tarea', title: 'Recoger paquete en Correos', assignee: 'carlos', fecha: d(1), hora: '18:00', done: false },
+    { id: 'c11', kind: 'compra', title: 'KALLAX estantería, blanco', categoria: 'ikea', assignee: 'ambos', done: false, datos: { ref: '303.721.88', uds: 2, pasillo: '12', ubic: '04' } },
+    { id: 'c12', kind: 'compra', title: 'Pilas', categoria: 'otra', assignee: 'carlos', done: false },
+  ];
+  const gasto = (id, title, amount, category, paid_by, beneficiario, n) => ({ id, title, amount, category, paid_by, beneficiario, fecha: d(n), created_by: PERSONAS[paid_by] });
+  planes = [
+    { titulo: 'Concierto de jazz en Jamboree', fecha: d(2), hora: '21:00', lugar: 'Gòtic', precio: '15 €', url: 'https://ejemplo.test/jazz' },
+    { titulo: 'Mercado de Sant Antoni', fecha: d(3), hora: '', lugar: 'Sant Antoni', precio: 'gratis', url: 'https://ejemplo.test/mercado' },
+  ];
+  empleo = { fecha: d(0), contenido: { texto: '💼 Empleo e ingresos\n\n1. Medical Advisor IA · Empresa (Barcelona)\n   Encaje: alto. Por su doble perfil.\n   https://ejemplo.test/a\n\n2. Product Manager · Otra (remoto)\n   Encaje: medio. Le falta algo.\n   https://ejemplo.test/b\n' } };
+  proyectos = [{ id: 'p1', name: 'MedikAI' }, { id: 'p2', name: 'EGS TeK' }, { id: 'p3', name: 'Sin tareas' }];
+  tareasProy = [{ id: 'w1', project_id: 'p1', title: 'Apartado de las UBAs', due_date: d(1) }, { id: 'w2', project_id: 'p1', title: 'Repaso Santa Coloma', due_date: null }, { id: 'w3', project_id: 'p2', title: 'Grabar medicaciones', due_date: d(4) }];
+  encargos = [{ id: 'n1', agente: 'casa', titulo: 'Buscar fontanero', estado: 'pendiente' }];
+  const lh = lunesHorario(), dh = n => ymd(masDias(lh, n));
+  horario = [
+    { id: 'horario_a', title: '🩺 Urgencias (MURG)', start_date: dh(0) + 'T13:00', end_date: dh(0) + 'T20:00' },
+    { id: 'horario_b', title: '🩺 Agenda: 1/2 M18 + 1/2 M11', start_date: dh(1) + 'T08:00', end_date: dh(1) + 'T15:00' },
+    { id: 'horario_c', title: '🩺 Agenda M11', start_date: dh(2) + 'T13:00', end_date: dh(2) + 'T20:00' },
+    { id: 'horario_d', title: '🩺 Agenda M11', start_date: dh(3) + 'T08:00', end_date: dh(3) + 'T15:00' },
+    { id: 'horario_e', title: '🩺 Agenda D M11', start_date: dh(4) + 'T08:00', end_date: dh(4) + 'T15:00' },
+  ];
+  gastos = [
+    gasto('g1', 'Compra súper', 64.3, 'comida', 'montse', 'ambos', 0),
+    gasto('g2', 'Luz octubre', 58.2, 'luz', 'carlos', 'ambos', -2),
+    gasto('g3', 'Cena viernes', 42, 'comida', 'carlos', 'ambos', -4),
+    gasto('g4', 'Bombillas', 12.9, 'casa', 'montse', 'ambos', -6),
+    gasto('g5', 'Alquiler', 950, 'alquiler', 'carlos', 'ambos', -8),
+    gasto('g6', 'Farmacia', 9.4, 'otros', 'montse', 'montse', -9),
+  ];
+}
+</script>
+</body>
+</html>
