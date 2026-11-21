@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Agentes · Workspace</title>
+<meta name="robots" content="noindex" />
+<script>
+  // Tema, aplicado antes de pintar. En FileHub manda el del calendario (fh_cal_tema: auto | light | dark);
+  // en el Workspace, ws_tema ('claro' u oscuro por defecto). ?tema=claro|oscuro lo fuerza (pruebas).
+  (function(){ try {
+    var forzado = new URLSearchParams(location.search).get('tema'), claro;
+    if (forzado) claro = forzado === 'claro';
+    else if (/(^|\.)arditifilehub\.com$/.test(location.hostname)) {
+      var pref = localStorage.getItem('fh_cal_tema') || 'auto';
+      claro = !(pref === 'dark' || (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches));
+    } else claro = localStorage.getItem('ws_tema') === 'claro';
+    if (claro) document.documentElement.classList.add('claro');
+  } catch(_){} })();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    color-scheme: dark;
+    --fondo: #0b1326; --tarjeta: #141d33; --hueco: #0d1528; --borde: #33415c;
+    --texto: #f8fafc; --suave: #b2bfd2; --tenue: #8a99b2;
+    --acento: #8083ff; --acento-texto: #c0c1ff; --acento-fondo: rgba(128,131,255,.16);
+    --verde: #4edea3; --verde-fondo: rgba(78,222,163,.14);
+    --ambar: #fbbf24; --ambar-fondo: rgba(251,191,36,.14);
+    --rojo: #fca5a5; --rojo-fondo: rgba(248,113,113,.14);
+    --gris-fondo: rgba(148,163,184,.14);
+  }
+  html.claro {
+    color-scheme: light;
+    --fondo: #eef2f7; --tarjeta: #ffffff; --hueco: #f6f8fb; --borde: #dbe2ec;
+    --texto: #0f172a; --suave: #475569; --tenue: #5b6577;
+    --acento: #4f46e5; --acento-texto: #4f46e5; --acento-fondo: rgba(79,70,229,.10);
+    --verde: #047857; --verde-fondo: rgba(4,120,87,.10);
+    --ambar: #b45309; --ambar-fondo: rgba(180,83,9,.10);
+    --rojo: #b91c1c; --rojo-fondo: rgba(185,28,28,.09);
+    --gris-fondo: rgba(71,85,105,.10);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fondo); color: var(--texto); font: 14px/1.5 Inter, system-ui, sans-serif; }
+  body { padding: 20px 16px 48px; }
+  body.dentro { padding: 14px 14px 32px; }
+  .ancho { max-width: 1080px; margin: 0 auto; }
+  h1, h2, h3 { font-family: 'Hanken Grotesk', Inter, sans-serif; margin: 0; text-wrap: balance; }
+  h1 { font-size: 22px; font-weight: 800; }
+  h2 { font-size: 15px; font-weight: 700; }
+  h3 { font-size: 13.5px; font-weight: 700; }
+  p { margin: 0; }
+  .cab { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .cab .sub { color: var(--suave); font-size: 12.5px; }
+  .cab .hueco { flex: 1; }
+  .rejilla { display: grid; gap: 14px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
+  @media (max-width: 860px) { .rejilla { grid-template-columns: minmax(0, 1fr); } }
+  .col { display: grid; gap: 14px; min-width: 0; }
+  .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px; padding: 16px; min-width: 0; }
+  .tarjeta > h2 { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tarjeta > h2 .cuenta { font: 600 11px Inter, sans-serif; color: var(--tenue); }
+  .nota { color: var(--tenue); font-size: 12px; }
+  label { display: block; font-size: 11.5px; font-weight: 600; color: var(--suave); margin: 10px 0 4px; }
+  select, input[type=text], textarea {
+    width: 100%; background: var(--hueco); color: var(--texto); border: 1px solid var(--borde); border-radius: 10px;
+    padding: 9px 11px; font: inherit; }
+  textarea { min-height: 92px; resize: vertical; }
+  select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--borde); background: transparent;
+    color: var(--suave); padding: 7px 12px; }
+  button:hover { color: var(--texto); border-color: var(--acento); }
+  button.principal { background: var(--acento); border-color: var(--acento); color: #fff; font-weight: 600; padding: 9px 16px; }
+  button.principal:hover { filter: brightness(1.08); color: #fff; }
+  button.mini { padding: 3px 9px; font-size: 11.5px; border-radius: 8px; }
+  button[disabled] { opacity: .55; cursor: default; }
+  .fila-botones { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+    background: var(--gris-fondo); color: var(--suave); }
+  .chip.verde { background: var(--verde-fondo); color: var(--verde); }
+  .chip.ambar { background: var(--ambar-fondo); color: var(--ambar); }
+  .chip.rojo { background: var(--rojo-fondo); color: var(--rojo); }
+  .chip.acento { background: var(--acento-fondo); color: var(--acento-texto); }
+  .estado-pc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--suave); }
+  .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--tenue); }
+  .punto.verde { background: var(--verde); } .punto.ambar { background: var(--ambar); } .punto.rojo { background: var(--rojo); }
+  ul.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  ul.lista li { background: var(--hueco); border: 1px solid var(--borde); border-radius: 12px; padding: 9px 11px; min-width: 0; }
+  .linea { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .linea .titulo { font-weight: 600; flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
+  .meta { color: var(--tenue); font-size: 11.5px; margin-top: 2px; overflow-wrap: anywhere; }
+  .proyectos { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .proy { background: var(--hueco); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 11px; text-align: left; color: var(--texto); }
+  .proy.activo { border-color: var(--acento); background: var(--acento-fondo); }
+  .proy b { display: block; font: 700 13.5px 'Hanken Grotesk', Inter, sans-serif; }
+  .proy span { display: block; color: var(--tenue); font-size: 11.5px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .ideas { display: grid; gap: 8px; }
+  .idea { background: var(--hueco); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 11px; display: flex; gap: 10px;
+    align-items: flex-start; }
+  .idea div { flex: 1; min-width: 0; }
+  .idea p { color: var(--suave); font-size: 12.5px; margin-top: 2px; }
+  .aviso { border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; }
+  .aviso.ok { background: var(--verde-fondo); color: var(--verde); }
+  .aviso.mal { background: var(--rojo-fondo); color: var(--rojo); }
+  .aviso.info { background: var(--ambar-fondo); color: var(--ambar); }
+  .centro { min-height: 50vh; display: grid; place-items: center; text-align: center; color: var(--suave); padding: 24px; }
+  .centro a { color: var(--acento-texto); }
+  .oculto { display: none !important; }
+</style>
+</head>
+<body>
+<div class="ancho" id="raiz"><div class="centro"><p>Cargando…</p></div></div>
+<script>
+/* Centro de agentes (solo el dueño). Se publica en FileHub (pestaña «Agentes» de calendario.html) y en el Workspace:
+ * en cada sitio vive en su mismo origen para compartir la sesión de Supabase. La copia maestra es la de filehub2026.
+ *  - Encargar: inserta en agente_encargos; el PC lo recoge cada 2 min (encargos-hermes.py) y lo lanza en el tablero de Hermes.
+ *  - Tablero: lo que sube el PC a panel_tablet cada 20 min (panel-tablet.py). Su hora dice si el PC sigue vivo.
+ * Lo privado no es esta página (cualquiera puede descargarla): son los datos, que Supabase solo sirve a la cuenta del dueño.
+ * ?demo=1 pinta datos de ejemplo sin tocar Supabase. */
+const SUPA_URL = 'https://igvadjgjpyuvzailjqwg.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndmFkamdqcHl1dnphaWxqcXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NDI3MTAsImV4cCI6MjA4ODAxODcxMH0.eAqKCHDzrkvMTseaBP0I_JICP1owX60-cp3agYqRz4Q';
+const OWNER_EMAIL = 'carlosgalera2roman@gmail.com';
+const OWNER_UID = '69428dff-f2b6-46ae-8120-0052e9bbed51'; // el de las reglas de agente_encargos
+const EN_FILEHUB = /(^|\.)arditifilehub\.com$/.test(location.hostname);
+if (EN_FILEHUB) document.title = 'Agentes · FileHub';
+const DEMO = new URLSearchParams(location.search).has('demo');
+const DENTRO = window.self !== window.top;
+if (DENTRO) document.body.classList.add('dentro');
+
+// Los agentes que admite la tabla agente_encargos (su CHECK). Si se añade uno allí, añadirlo aquí.
+const AGENTES = [
+  ['coordinador', 'Coordinador', 'Decide él a quién pasarlo'],
+  ['egstek', 'EGS TeK', 'Campus de formación de EGS'],
+  ['medikai', 'MedikAI', 'Plataforma formativa de IA clínica'],
+  ['egstrategy', 'EGStrategy', 'Panel privado del equipo EGS'],
+  ['casa', 'Casa y agenda', 'Correo, domótica y menús'],
+  ['finanzas', 'Finanzas', 'Gastos, ingresos y facturas'],
+  ['herramientas-formacion', 'Herramientas de formación', 'Radar de plataformas y ayudas'],
+  ['empleo', 'Empleo', 'Ofertas, OPEs y licitaciones'],
+];
+const NOMBRE_AGENTE = Object.fromEntries(AGENTES.map(a => [a[0], a[1]]));
+const ESTADO_TAREA = { todo: ['en cola', ''], ready: ['lista', ''], triage: ['por clasificar', ''], running: ['en marcha', 'acento'],
+  blocked: ['espera tu «sí»', 'ambar'], done: ['hecha', 'verde'] };
+const ESTADO_ENCARGO = { pendiente: ['esperando al PC', 'ambar'], lanzado: ['en el tablero', 'acento'], error: ['no se pudo lanzar', 'rojo'] };
+
+// Posibilidades con eve (propuestas del 21-nov-2026). Cada una rellena el formulario para el agente del proyecto.
+const BASE_EVE = 'Prototipo con el framework eve. El piloto está en C:\\Users\\carlos\\hermes\\eve-piloto y ya funciona con el modelo local. ' +
+  'Trabaja en una carpeta o rama aparte, sin publicar ni desplegar nada. Al acabar, resume qué funciona, qué falta y qué necesitas de mí.';
+const IDEAS = [
+  { agente: 'egstek', titulo: 'Tutor del curso dentro del campus', texto: 'Un chat que conoce el curso y el progreso del alumno, explica dudas y propone repaso.', primera: true },
+  { agente: 'egstek', titulo: 'Repaso y avisos programados', texto: 'Aviso semanal a quien se ha parado en un curso.' },
+  { agente: 'egstek', titulo: 'Calculadoras y emergencias como herramientas', texto: 'El agente usa tus calculadoras en vez de calcular de memoria.' },
+  { agente: 'egstek', titulo: 'Soporte de matrícula y diplomas', texto: 'Responde consultando el estado real. Solo consulta.' },
+  { agente: 'egstek', titulo: 'Borrador del feed editorial semanal', texto: 'Prepara el borrador y espera tu aprobación.' },
+  { agente: 'egstek', titulo: 'Producción de cursos por pasos', texto: 'De PDF a lecciones y preguntas, con revisión humana.' },
+  { agente: 'medikai', titulo: 'Pruebas automáticas de las respuestas clínicas', texto: 'Batería de casos que avisa si un cambio de modelo empeora la calidad.', primera: true },
+  { agente: 'medikai', titulo: 'Casos clínicos paso a paso, con memoria', texto: 'El alumno deja un caso y lo retoma días después.' },
+  { agente: 'medikai', titulo: 'Tareas largas con puntos de control', texto: 'Podcast, sesiones y cuadernos que no se pierden si algo se corta.' },
+  { agente: 'medikai', titulo: 'Tus datos como herramientas del agente', texto: 'Consulta calculadoras e interacciones en vez de responder de memoria.' },
+  { agente: 'medikai', titulo: 'Revisión humana antes de publicar', texto: 'El contenido queda pendiente hasta que un profesional lo aprueba.' },
+];
+
+const estado = { tareas: [], tableroAt: null, encargos: [], filtro: null, aviso: null, enviando: false, cargando: true, falloTablero: null };
+const $raiz = document.getElementById('raiz');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sb = DEMO ? null : window.supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+
+function haceCuanto(iso) {
+  if (!iso) return '';
+  const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (min < 1) return 'ahora mismo';
+  if (min < 60) return `hace ${min} min`;
+  if (min < 48 * 60) return `hace ${Math.round(min / 60)} h`;
+  return `hace ${Math.round(min / 1440)} días`;
+}
+function estadoPC() {
+  if (!estado.tableroAt) return ['', 'Sin datos del PC todavía'];
+  const min = (Date.now() - new Date(estado.tableroAt).getTime()) / 60000;
+  if (min <= 45) return ['verde', `PC activo · tablero de ${haceCuanto(estado.tableroAt)}`];
+  if (min <= 180) return ['ambar', `PC lento · tablero de ${haceCuanto(estado.tableroAt)}`];
+  return ['rojo', `El PC no responde · último tablero ${haceCuanto(estado.tableroAt)}`];
+}
+
+function datosDemo() {
+  const t = m => new Date(Date.now() - m * 60000).toISOString();
+  estado.tableroAt = t(6);
+  estado.tareas = [
+    { id: 't_390477c3', titulo: 'Verificar y arreglar: ranking y perfil no aparecen en la app web móvil', estado: 'running', agente: 'egstek' },
+    { id: 't_a1', titulo: 'T3: tests por tema y avance bloqueado', estado: 'blocked', agente: 'egstek' },
+    { id: 't_a2', titulo: 'Revisar ramas activas y planificar merge', estado: 'blocked', agente: 'medikai' },
+    { id: 't_a3', titulo: 'Informe semanal de seguridad', estado: 'todo', agente: 'egstrategy' },
+    { id: 't_a4', titulo: 'Barra superior en el móvil con «Panel del profesor»', estado: 'done', agente: 'egstek' },
+    { id: 't_a5', titulo: 'Resumen de costes de plataformas médicas', estado: 'done', agente: 'herramientas-formacion' },
+  ];
+  estado.encargos = [
+    { id: 'e1', agente: 'egstek', titulo: 'Prototipo con eve: Tutor del curso dentro del campus', estado: 'pendiente', created_at: t(1) },
+    { id: 'e2', agente: 'medikai', titulo: 'Revisar ramas activas y planificar merge', estado: 'lanzado', kanban_id: 't_a2', created_at: t(95), lanzado_at: t(93) },
+    { id: 'e3', agente: 'finanzas', titulo: 'Resumen de gastos de octubre', estado: 'error', error: 'El tablero no respondía', created_at: t(300) },
+  ];
+}
+
+async function cargar() {
+  if (DEMO) { datosDemo(); estado.cargando = false; return; }
+  const [tab, enc] = await Promise.all([
+    sb.from('panel_tablet').select('contenido,generado_at,updated_at').eq('tipo', 'tablero').order('fecha', { ascending: false }).limit(1),
+    sb.from('agente_encargos').select('id,agente,titulo,estado,kanban_id,error,created_at,lanzado_at').order('created_at', { ascending: false }).limit(30),
+  ]);
+  if (tab.error) estado.falloTablero = tab.error.message; else {
+    estado.falloTablero = null;
+    const fila = (tab.data || [])[0];
+    estado.tareas = (fila && fila.contenido && fila.contenido.tareas) || [];
+    estado.tableroAt = fila ? (fila.updated_at || fila.generado_at) : null;
+  }
+  if (enc.error) estado.aviso = ['mal', 'No he podido leer tus encargos: ' + enc.error.message];
+  else estado.encargos = enc.data || [];
+  estado.cargando = false;
+}
+
+function pintaProyectos() {
+  return `<div class="proyectos">${AGENTES.map(([id, nombre]) => {
+    const mias = estado.tareas.filter(t => t.agente === id);
+    const marcha = mias.filter(t => t.estado === 'running').length, esperan = mias.filter(t => t.estado === 'blocked').length;
+    const cola = mias.filter(t => ['todo', 'ready', 'triage'].includes(t.estado)).length;
+    const resumen = mias.length ? [marcha && `${marcha} en marcha`, esperan && `${esperan} esperan`, cola && `${cola} en cola`].filter(Boolean).join(' · ') || 'todo hecho' : 'sin tareas';
+    return `<button class="proy ${estado.filtro === id ? 'activo' : ''}" data-act="filtro" data-id="${esc(id)}" aria-pressed="${estado.filtro === id}"><b>${esc(nombre)}</b><span>${esc(resumen)}</span></button>`;
+  }).join('')}</div>`;
+}
+function pintaTablero() {
+  if (estado.falloTablero) return `<p class="nota">No he podido leer el tablero: ${esc(estado.falloTablero)}</p>`;
+  const orden = { blocked: 0, running: 1, ready: 2, todo: 3, triage: 4, done: 5 };
+  const lista = estado.tareas.filter(t => !estado.filtro || t.agente === estado.filtro)
+    .sort((a, b) => (orden[a.estado] ?? 9) - (orden[b.estado] ?? 9));
+  if (!lista.length) return `<p class="nota">${estado.filtro ? 'Este agente no tiene tareas en el tablero.' : 'El tablero está vacío.'}</p>`;
+  return `<ul class="lista">${lista.map(t => {
+    const [txt, color] = ESTADO_TAREA[t.estado] || [t.estado || '?', ''];
+    return `<li><div class="linea"><span class="titulo">${esc(t.titulo)}</span><span class="chip ${color}">${esc(txt)}</span></div>
+      <div class="meta">${esc(NOMBRE_AGENTE[t.agente] || t.agente || 'sin agente')} · ${esc(t.id)}${t.estado === 'blocked' ? ' · contéstale al coordinador por WhatsApp o Telegram' : ''}</div></li>`;
+  }).join('')}</ul>`;
+}
+function pintaEncargos() {
+  if (!estado.encargos.length) return `<p class="nota">Aún no has encargado nada desde aquí.</p>`;
+  return `<ul class="lista">${estado.encargos.map(e => {
+    let [txt, color] = ESTADO_ENCARGO[e.estado] || [e.estado, ''];
+    const tarea = e.kanban_id && estado.tareas.find(t => t.id === e.kanban_id);
+    if (tarea && ESTADO_TAREA[tarea.estado]) [txt, color] = ESTADO_TAREA[tarea.estado];
+    return `<li><div class="linea"><span class="titulo">${esc(e.titulo)}</span><span class="chip ${color}">${esc(txt)}</span>
+      ${e.estado === 'pendiente' ? `<button class="mini" data-act="cancelar" data-id="${esc(e.id)}">Cancelar</button>` : ''}</div>
+      <div class="meta">${esc(NOMBRE_AGENTE[e.agente] || e.agente)} · ${esc(haceCuanto(e.created_at))}${e.kanban_id ? ' · ' + esc(e.kanban_id) : ''}${e.error ? ' · ' + esc(e.error) : ''}</div></li>`;
+  }).join('')}</ul>`;
+}
+function pintaIdeas() {
+  const grupo = (agente, nombre) => `<h3 style="margin:12px 0 6px">${esc(nombre)}</h3><div class="ideas">${IDEAS.filter(i => i.agente === agente).map(i =>
+    `<div class="idea"><div><b>${esc(i.titulo)}</b>${i.primera ? ' <span class="chip acento">empezar por aquí</span>' : ''}<p>${esc(i.texto)}</p></div>
+     <button class="mini" data-act="idea" data-id="${IDEAS.indexOf(i)}">Preparar encargo</button></div>`).join('')}</div>`;
+  return grupo('egstek', 'EGS TeK') + grupo('medikai', 'MedikAI');
+}
+function pinta() {
+  const f = document.getElementById('form');
+  const borrador = f ? { agente: f.agente.value, titulo: f.titulo.value, detalle: f.detalle.value } : { agente: 'coordinador', titulo: '', detalle: '' };
+  const [color, textoPC] = estadoPC();
+  const esperan = estado.tareas.filter(t => t.estado === 'blocked').length;
+  $raiz.innerHTML = `
+    <div class="cab">
+      <div><h1>Centro de agentes</h1><p class="sub">Encarga tareas y sigue lo que hacen tus agentes${DEMO ? ' · datos de ejemplo' : ''}</p></div>
+      <span class="hueco"></span>
+      <span class="estado-pc" role="status"><span class="punto ${color}"></span>${esc(textoPC)}</span>
+      <button data-act="recargar">Actualizar</button>
+    </div>
+    ${estado.aviso ? `<div class="aviso ${estado.aviso[0]}" role="status">${esc(estado.aviso[1])}</div>` : ''}
+    ${esperan ? `<div class="aviso info">${esperan === 1 ? 'Hay 1 tarea que espera' : `Hay ${esperan} tareas que esperan`} tu «sí». Contéstale al coordinador por WhatsApp o Telegram.</div>` : ''}
+    <div class="rejilla">
+      <div class="col">
+        <section class="tarjeta" aria-labelledby="t-encargar">
+          <h2 id="t-encargar">Encargar una tarea</h2>
+          <form id="form">
+            <label for="agente">Para quién</label>
+            <select id="agente" name="agente">${AGENTES.map(([id, nombre, d]) => `<option value="${esc(id)}" ${borrador.agente === id ? 'selected' : ''}>${esc(nombre)} · ${esc(d)}</option>`).join('')}</select>
+            <label for="titulo">Qué quieres que haga</label>
+            <input id="titulo" name="titulo" type="text" maxlength="300" required placeholder="Por ejemplo: revisa por qué no carga el ranking en el móvil" value="${esc(borrador.titulo)}" />
+            <label for="detalle">Detalles (opcional)</label>
+            <textarea id="detalle" name="detalle" maxlength="4000" placeholder="Contexto, enlaces o cómo quieres recibir el resultado">${esc(borrador.detalle)}</textarea>
+            <div class="fila-botones">
+              <button class="principal" type="submit" ${estado.enviando ? 'disabled' : ''}>${estado.enviando ? 'Encargando…' : 'Encargar'}</button>
+              <span class="nota">El PC lo recoge en menos de 2 minutos.</span>
+            </div>
+          </form>
+        </section>
+        <section class="tarjeta" aria-labelledby="t-mios">
+          <h2 id="t-mios">Mis encargos <span class="cuenta">${estado.encargos.length || ''}</span></h2>
+          ${pintaEncargos()}
+        </section>
+      </div>
+      <div class="col">
+        <section class="tarjeta" aria-labelledby="t-proy">
+          <h2 id="t-proy">Proyectos y agentes <span class="cuenta">toca uno para filtrar el tablero</span></h2>
+          ${pintaProyectos()}
+        </section>
+        <section class="tarjeta" aria-labelledby="t-tablero">
+          <h2 id="t-tablero">Tablero ${estado.filtro ? `· ${esc(NOMBRE_AGENTE[estado.filtro])} <button class="mini" data-act="filtro" data-id="">Ver todos</button>` : ''}</h2>
+          ${pintaTablero()}
+        </section>
+        <section class="tarjeta" aria-labelledby="t-eve">
+          <h2 id="t-eve">Posibilidades con eve <span class="cuenta">propuestas · piloto local probado el 21-nov</span></h2>
+          <p class="nota">«Preparar encargo» rellena el formulario para el agente del proyecto. No se envía hasta que pulses «Encargar».</p>
+          ${pintaIdeas()}
+        </section>
+      </div>
+    </div>`;
+}
+
+async function encargar(datos) {
+  if (DEMO) { estado.encargos.unshift({ id: 'demo' + Date.now(), ...datos, estado: 'pendiente', created_at: new Date().toISOString() }); return null; }
+  const origen = 'agentes:' + (crypto.randomUUID ? crypto.randomUUID() : Date.now());
+  const { error } = await sb.from('agente_encargos').insert({ agente: datos.agente, titulo: datos.titulo, detalle: datos.detalle || null, origen });
+  return error ? error.message : null;
+}
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'form') return;
+  e.preventDefault();
+  const f = e.target, titulo = f.titulo.value.trim();
+  if (!titulo || estado.enviando) return;
+  estado.enviando = true; estado.aviso = null; pinta();
+  const fallo = await encargar({ agente: f.agente.value, titulo: titulo.slice(0, 300), detalle: f.detalle.value.trim().slice(0, 4000) });
+  estado.enviando = false;
+  if (fallo) estado.aviso = ['mal', 'No se ha podido encargar: ' + fallo];
+  else {
+    estado.aviso = ['ok', `Encargado a ${NOMBRE_AGENTE[f.agente.value]}. El PC lo recogerá en menos de 2 minutos.`];
+    document.getElementById('titulo').value = ''; document.getElementById('detalle').value = '';
+    if (!DEMO) await cargar();
+  }
+  pinta();
+});
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  if (act === 'recargar') { b.disabled = true; await cargar(); estado.aviso = null; pinta(); }
+  if (act === 'filtro') { estado.filtro = (id && estado.filtro !== id) ? id : null; pinta(); }
+  if (act === 'idea') {
+    const i = IDEAS[Number(id)]; if (!i) return;
+    pinta();
+    document.getElementById('agente').value = i.agente;
+    document.getElementById('titulo').value = ('Prototipo con eve: ' + i.titulo).slice(0, 300);
+    document.getElementById('detalle').value = `${i.texto}\n\n${BASE_EVE}`;
+    document.getElementById('titulo').focus(); document.getElementById('t-encargar').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  if (act === 'cancelar') {
+    b.disabled = true;
+    if (DEMO) estado.encargos = estado.encargos.filter(x => x.id !== id);
+    else {
+      const { error } = await sb.from('agente_encargos').delete().eq('id', id).eq('estado', 'pendiente');
+      estado.aviso = error ? ['mal', 'No se ha podido cancelar: ' + error.message] : ['ok', 'Encargo cancelado.'];
+      await cargar();
+    }
+    pinta();
+  }
+});
+
+(async function arranque() {
+  try {
+    if (!DEMO) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        const donde = EN_FILEHUB ? '<a href="./calendario.html" target="_top">calendario</a>' : '<a href="./" target="_top">Workspace</a>';
+        $raiz.innerHTML = `<div class="centro"><div><h1>Centro de agentes</h1><p style="margin-top:8px">Inicia sesión en el ${donde} y vuelve a esta pestaña.</p></div></div>`; return;
+      }
+      if (session.user.id !== OWNER_UID && (session.user.email || '').toLowerCase() !== OWNER_EMAIL) { $raiz.innerHTML = `<div class="centro"><p>Esta página es solo para Carlos.</p></div>`; return; }
+    }
+    await cargar(); pinta();
+    // Refresco cada minuto, salvo si la pestaña está oculta o estás escribiendo en el formulario (repintar quita el foco).
+    setInterval(async () => {
+      const a = document.activeElement;
+      if (document.hidden || estado.enviando || (a && a.closest && a.closest('#form'))) return;
+      await cargar(); pinta();
+    }, 60000);
+  } catch (e) {
+    $raiz.innerHTML = `<div class="centro"><div><p>No se pudo cargar.</p><p class="nota" style="margin-top:6px">${esc(String(e && e.message || e))}</p></div></div>`;
+  }
+})();
+</script>
+</body>
+</html>
