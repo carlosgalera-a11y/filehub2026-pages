@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Agentes · Workspace</title>
+<meta name="robots" content="noindex" />
+<script>
+  // Tema, aplicado antes de pintar. En FileHub manda el del calendario (fh_cal_tema: auto | light | dark);
+  // en el Workspace, ws_tema ('claro' u oscuro por defecto). ?tema=claro|oscuro lo fuerza (pruebas).
+  (function(){ try {
+    var forzado = new URLSearchParams(location.search).get('tema'), claro;
+    if (forzado) claro = forzado === 'claro';
+    else if (/(^|\.)arditifilehub\.com$/.test(location.hostname)) {
+      var pref = localStorage.getItem('fh_cal_tema') || 'auto';
+      claro = !(pref === 'dark' || (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches));
+    } else claro = localStorage.getItem('ws_tema') === 'claro';
+    if (claro) document.documentElement.classList.add('claro');
+  } catch(_){} })();
+  // Incrustada en la tablet o el calendario: si allí se cambia el tema, se cambia aquí también.
+  addEventListener('storage', function (e) {
+    if (e.key !== 'fh_cal_tema' || new URLSearchParams(location.search).get('tema')) return;
+    var pref = e.newValue || 'auto';
+    var claro = !(pref === 'dark' || (pref === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches));
+    document.documentElement.classList.toggle('claro', claro);
+  });
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.min.js"></script>
+<style>
+  :root {
+    color-scheme: dark;
+    --fondo: #0b1326; --tarjeta: #141d33; --hueco: #0d1528; --borde: #33415c;
+    --texto: #f8fafc; --suave: #b2bfd2; --tenue: #8a99b2;
+    --acento: #8083ff; --acento-texto: #c0c1ff; --acento-fondo: rgba(128,131,255,.16);
+    --verde: #4edea3; --verde-fondo: rgba(78,222,163,.14);
+    --ambar: #fbbf24; --ambar-fondo: rgba(251,191,36,.14);
+    --rojo: #fca5a5; --rojo-fondo: rgba(248,113,113,.14);
+    --gris-fondo: rgba(148,163,184,.14);
+  }
+  html.claro {
+    color-scheme: light;
+    --fondo: #eef2f7; --tarjeta: #ffffff; --hueco: #f6f8fb; --borde: #dbe2ec;
+    --texto: #0f172a; --suave: #475569; --tenue: #5b6577;
+    --acento: #4f46e5; --acento-texto: #4f46e5; --acento-fondo: rgba(79,70,229,.10);
+    --verde: #047857; --verde-fondo: rgba(4,120,87,.10);
+    --ambar: #b45309; --ambar-fondo: rgba(180,83,9,.10);
+    --rojo: #b91c1c; --rojo-fondo: rgba(185,28,28,.09);
+    --gris-fondo: rgba(71,85,105,.10);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--fondo); color: var(--texto); font: 14px/1.5 Inter, system-ui, sans-serif; }
+  body { padding: 20px 16px 48px; }
+  body.dentro { padding: 14px 14px 32px; }
+  .ancho { max-width: 1080px; margin: 0 auto; }
+  h1, h2, h3 { font-family: 'Hanken Grotesk', Inter, sans-serif; margin: 0; text-wrap: balance; }
+  h1 { font-size: 22px; font-weight: 800; }
+  h2 { font-size: 15px; font-weight: 700; }
+  h3 { font-size: 13.5px; font-weight: 700; }
+  p { margin: 0; }
+  .cab { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+  .cab .sub { color: var(--suave); font-size: 12.5px; }
+  .cab .hueco { flex: 1; }
+  .rejilla { display: grid; gap: 14px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
+  @media (max-width: 860px) { .rejilla { grid-template-columns: minmax(0, 1fr); } }
+  .col { display: grid; gap: 14px; min-width: 0; }
+  .tarjeta { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 16px; padding: 16px; min-width: 0; }
+  .tarjeta > h2 { margin-bottom: 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tarjeta > h2 .cuenta { font: 600 11px Inter, sans-serif; color: var(--tenue); }
+  .nota { color: var(--tenue); font-size: 12px; }
+  label { display: block; font-size: 11.5px; font-weight: 600; color: var(--suave); margin: 10px 0 4px; }
+  select, input[type=text], textarea {
+    width: 100%; background: var(--hueco); color: var(--texto); border: 1px solid var(--borde); border-radius: 10px;
+    padding: 9px 11px; font: inherit; }
+  textarea { min-height: 92px; resize: vertical; }
+  select:focus-visible, input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px; }
+  button { font: inherit; cursor: pointer; border-radius: 10px; border: 1px solid var(--borde); background: transparent;
+    color: var(--suave); padding: 7px 12px; }
+  button:hover { color: var(--texto); border-color: var(--acento); }
+  button.principal { background: var(--acento); border-color: var(--acento); color: #fff; font-weight: 600; padding: 9px 16px; }
+  button.principal:hover { filter: brightness(1.08); color: #fff; }
+  button.mini { padding: 3px 9px; font-size: 11.5px; border-radius: 8px; }
+  button[disabled] { opacity: .55; cursor: default; }
+  .fila-botones { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+  .chip { display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; white-space: nowrap;
+    background: var(--gris-fondo); color: var(--suave); }
+  .chip.verde { background: var(--verde-fondo); color: var(--verde); }
+  .chip.ambar { background: var(--ambar-fondo); color: var(--ambar); }
+  .chip.rojo { background: var(--rojo-fondo); color: var(--rojo); }
+  .chip.acento { background: var(--acento-fondo); color: var(--acento-texto); }
+  .estado-pc { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--suave); }
+  .punto { width: 8px; height: 8px; border-radius: 50%; background: var(--tenue); }
+  .punto.verde { background: var(--verde); } .punto.ambar { background: var(--ambar); } .punto.rojo { background: var(--rojo); }
+  ul.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  ul.lista li { background: var(--hueco); border: 1px solid var(--borde); border-radius: 12px; padding: 9px 11px; min-width: 0; }
+  .linea { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .linea .titulo { font-weight: 600; flex: 1 1 180px; min-width: 0; overflow-wrap: anywhere; }
+  .meta { color: var(--tenue); font-size: 11.5px; margin-top: 2px; overflow-wrap: anywhere; }
+  .proyectos { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .proy { background: var(--hueco); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 11px; text-align: left; color: var(--texto); }
+  .proy.activo { border-color: var(--acento); background: var(--acento-fondo); }
+  .proy b { display: block; font: 700 13.5px 'Hanken Grotesk', Inter, sans-serif; }
+  .proy span { display: block; color: var(--tenue); font-size: 11.5px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .ideas { display: grid; gap: 8px; }
+  .idea { background: var(--hueco); border: 1px solid var(--borde); border-radius: 12px; padding: 10px 11px; display: flex; gap: 10px;
+    align-items: flex-start; }
+  .idea div { flex: 1; min-width: 0; }
+  .idea p { color: var(--suave); font-size: 12.5px; margin-top: 2px; }
+  .aviso { border-radius: 12px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; }
+  .aviso.ok { background: var(--verde-fondo); color: var(--verde); }
+  .aviso.mal { background: var(--rojo-fondo); color: var(--rojo); }
+  .aviso.info { background: var(--ambar-fondo); color: var(--ambar); }
+  .centro { min-height: 50vh; display: grid; place-items: center; text-align: center; color: var(--suave); padding: 24px; }
+  .centro a { color: var(--acento-texto); }
+  .oculto { display: none !important; }
+  /* Tareas bloqueadas: por qué están paradas y qué puedes hacer con ellas desde aquí. */
+  .porque { color: var(--suave); font-size: 12.5px; margin-top: 8px; }
+  .motivo { background: var(--tarjeta); border: 1px solid var(--borde); border-radius: 10px; padding: 8px 10px; margin-top: 6px;
+    font-size: 12.5px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 260px; overflow: auto; }
+  details.mas { margin-top: 6px; }
+  details.mas summary { cursor: pointer; color: var(--acento-texto); font-size: 12px; }
+  textarea.resp { min-height: 58px; margin-top: 8px; background: var(--tarjeta); }
+  button.fuerte { background: var(--acento); border-color: var(--acento); color: #fff; font-weight: 600; }
+  button.fuerte:hover { filter: brightness(1.08); color: #fff; }
+  button.peligro { border-color: var(--rojo); color: var(--rojo); }
+  .estado-accion { margin-top: 8px; font-size: 12.5px; color: var(--ambar); }
+  .estado-accion.ok { color: var(--verde); } .estado-accion.mal { color: var(--rojo); }
+  .solo-lector { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  /* Dictado por voz: se mantiene pulsado (o se toca para empezar y para acabar). */
+  button.micro { display: inline-flex; align-items: center; gap: 8px; padding: 10px 16px; border-radius: 999px; font-weight: 600;
+    color: var(--texto); background: var(--hueco); touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  button.micro svg { width: 18px; height: 18px; flex: none; }
+  button.micro.oyendo { background: var(--rojo-fondo); border-color: var(--rojo); color: var(--rojo); }
+  button.micro.oyendo svg { animation: late 1.1s ease-in-out infinite; }
+  button.micro.mini { padding: 3px 9px; gap: 0; }
+  button.micro.mini svg { width: 14px; height: 14px; }
+  @keyframes late { 50% { transform: scale(1.22); } }
+  @media (prefers-reduced-motion: reduce) { button.micro.oyendo svg { animation: none; } }
+  .voz-texto { color: var(--suave); font-size: 12.5px; margin-top: 8px; min-height: 1.5em; overflow-wrap: anywhere; }
+  /* Pestañas internas («Encargos y tablero» · «Resultados agentes») y la lista de archivos entregados. */
+  .pestanas { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--borde); overflow-x: auto; scrollbar-width: none; }
+  .pestanas::-webkit-scrollbar { display: none; }
+  .pestanas button { border: 0; border-bottom: 2px solid transparent; border-radius: 8px 8px 0 0; padding: 9px 12px; font-weight: 600;
+    white-space: nowrap; color: var(--suave); margin-bottom: -1px; flex: none; }
+  .pestanas button[aria-selected="true"] { color: var(--texto); border-bottom-color: var(--acento); }
+  .pestanas .cuenta { font: 600 11px Inter, sans-serif; color: var(--suave); margin-left: 4px; background: var(--gris-fondo);
+    border-radius: 999px; padding: 1px 7px; font-variant-numeric: tabular-nums; }
+  .filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+  .filtros > div { flex: 1 1 200px; min-width: 0; }
+  .filtros label { margin-top: 0; }
+  .grupo { margin-top: 16px; }
+  .grupo:first-child { margin-top: 0; }
+  .grupo > h3 { overflow-wrap: anywhere; }
+  .grupo > .meta { margin-bottom: 8px; }
+  .archivo .fila-botones { margin-top: 8px; }
+  .archivo audio { display: block; width: 100%; margin-top: 8px; }
+  .archivo a { color: var(--acento-texto); font-size: 12.5px; }
+  .pie-res { margin-top: 14px; color: var(--tenue); font-size: 12px; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="ancho" id="raiz"><div class="centro"><p>Cargando…</p></div></div>
+<script>
+/* Centro de agentes (solo el dueño). Se publica en FileHub (pestaña «Agentes» de calendario.html) y en el Workspace:
+ * en cada sitio vive en su mismo origen para compartir la sesión de Supabase. La copia maestra es la de filehub2026.
+ *  - Encargar: inserta en agente_encargos; el PC lo recoge cada 2 min (encargos-hermes.py) y lo lanza en el tablero de Hermes.
+ *  - Tablero: lo que sube el PC a panel_tablet cada 2 min (panel-tablet.py), con el motivo de cada tarea bloqueada.
+ *    Su hora dice si el PC sigue vivo.
+ *  - Resultados agentes (pestaña interna, enlace directo ?ver=resultados): los archivos que entregan los agentes. El PC los
+ *    sube al almacén privado «agente-resultados» y los apunta en la tabla agente_resultados; aquí se listan por tarea y se
+ *    abren, descargan o borran con la sesión del dueño (enlaces firmados de una hora).
+ *  - Voz: el botón del micrófono dicta el encargo (o la respuesta a una tarea) con el reconocimiento de voz del navegador.
+ *  - Contestar, aprobar, reintentar o cerrar una tarea bloqueada: otra fila de agente_encargos con origen
+ *    «accion:<tipo>:<tarea>:<uuid>» y el texto en detalle. El mismo script del PC la aplica en el tablero.
+ * Lo privado no es esta página (cualquiera puede descargarla): son los datos, que Supabase solo sirve a la cuenta del dueño.
+ * ?demo=1 pinta datos de ejemplo sin tocar Supabase. */
+const SUPA_URL = 'https://igvadjgjpyuvzailjqwg.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlndmFkamdqcHl1dnphaWxqcXdnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0NDI3MTAsImV4cCI6MjA4ODAxODcxMH0.eAqKCHDzrkvMTseaBP0I_JICP1owX60-cp3agYqRz4Q';
+const OWNER_EMAIL = 'carlosgalera2roman@gmail.com';
+const OWNER_UID = '69428dff-f2b6-46ae-8120-0052e9bbed51'; // el de las reglas de agente_encargos
+const EN_FILEHUB = /(^|\.)arditifilehub\.com$/.test(location.hostname);
+if (EN_FILEHUB) document.title = 'Agentes · FileHub';
+const DEMO = new URLSearchParams(location.search).has('demo');
+const DENTRO = window.self !== window.top;
+if (DENTRO) document.body.classList.add('dentro');
+
+// Los agentes que admite la tabla agente_encargos (su CHECK). Si se añade uno allí, añadirlo aquí.
+const AGENTES = [
+  ['coordinador', 'Coordinador', 'Decide él a quién pasarlo'],
+  ['egstek', 'EGS TeK', 'Campus de formación de EGS'],
+  ['medikai', 'MedikAI', 'Plataforma formativa de IA clínica'],
+  ['egstrategy', 'EGStrategy', 'Panel privado del equipo EGS'],
+  ['casa', 'Casa y agenda', 'Correo, domótica y menús'],
+  ['finanzas', 'Finanzas', 'Gastos, ingresos y facturas'],
+  ['herramientas-formacion', 'Herramientas de formación', 'Radar de plataformas y ayudas'],
+  ['empleo', 'Empleo', 'Ofertas, OPEs y licitaciones'],
+];
+const NOMBRE_AGENTE = Object.fromEntries(AGENTES.map(a => [a[0], a[1]]));
+const ESTADO_TAREA = { todo: ['en cola', ''], ready: ['lista', ''], triage: ['por clasificar', ''], running: ['en marcha', 'acento'],
+  blocked: ['bloqueada', 'ambar'], done: ['hecha', 'verde'] };
+const ESTADO_ENCARGO = { pendiente: ['esperando al PC', 'ambar'], lanzado: ['en el tablero', 'acento'], error: ['no se pudo lanzar', 'rojo'] };
+const TITULO_ACCION = { responder: 'Respuesta a', aprobar: 'Aprobación de', reintentar: 'Reintento de', cerrar: 'Cierre de' };
+const HECHO_ACCION = { responder: 'Tu respuesta', aprobar: 'Tu «sí»', reintentar: 'El reintento', cerrar: 'El cierre' };
+// Resultados de los agentes: tabla con lo entregado y almacén privado donde vive cada archivo (los llena el PC).
+const TABLA_RESULTADOS = 'agente_resultados';
+const ALMACEN = 'agente-resultados';
+// Clase de archivo: [clave, etiqueta, color de la etiqueta, por la extensión, por el tipo MIME]. Manda la extensión.
+const CLASES = [
+  ['pdf', 'PDF', 'rojo', /\.pdf$/i, /pdf/],
+  ['ppt', 'PowerPoint', 'ambar', /\.(pptx?|ppsx?|potx?|odp|key)$/i, /presentation|powerpoint/],
+  ['doc', 'Word', 'acento', /\.(docx?|dotx?|odt|rtf)$/i, /wordprocessing|msword|rtf|opendocument\.text/],
+  ['xls', 'Excel', 'verde', /\.(xlsx?|xlsm|ods|csv|tsv)$/i, /spreadsheet|excel|csv/],
+  ['audio', 'Audio', 'acento', /\.(mp3|wav|m4a|ogg|oga|opus|flac|aac|wma)$/i, /^audio\//],
+  ['video', 'Vídeo', 'acento', /\.(mp4|mov|webm|mkv|avi|m4v)$/i, /^video\//],
+  ['imagen', 'Imagen', 'verde', /\.(png|jpe?g|gif|webp|svg|bmp|heic|avif)$/i, /^image\//],
+  ['zip', 'Zip', '', /\.(zip|rar|7z|tar|gz|tgz|bz2)$/i, /zip|compressed|x-tar|x-7z|x-rar/],
+  ['texto', 'Texto', '', /\.(txt|md|json|html?|xml|ya?ml|log|py|js|ts|css|sql|sh|ps1|cmd|bat|ini|toml)$/i, /^text\/|json|xml/],
+];
+// Lo que el navegador sabe enseñar sin descargar: eso lleva «Abrir». Los audios llevan «Escuchar».
+const SE_ABRE = ['pdf', 'imagen', 'video', 'texto'];
+
+// Posibilidades con eve (propuestas del 21-nov-2026). Cada una rellena el formulario para el agente del proyecto.
+const BASE_EVE = 'Prototipo con el framework eve. El piloto está en C:\\Users\\carlos\\hermes\\eve-piloto y ya funciona con el modelo local. ' +
+  'Trabaja en una carpeta o rama aparte, sin publicar ni desplegar nada. Al acabar, resume qué funciona, qué falta y qué necesitas de mí.';
+const IDEAS = [
+  { agente: 'egstek', titulo: 'Tutor del curso dentro del campus', texto: 'Un chat que conoce el curso y el progreso del alumno, explica dudas y propone repaso.', primera: true },
+  { agente: 'egstek', titulo: 'Repaso y avisos programados', texto: 'Aviso semanal a quien se ha parado en un curso.' },
+  { agente: 'egstek', titulo: 'Calculadoras y emergencias como herramientas', texto: 'El agente usa tus calculadoras en vez de calcular de memoria.' },
+  { agente: 'egstek', titulo: 'Soporte de matrícula y diplomas', texto: 'Responde consultando el estado real. Solo consulta.' },
+  { agente: 'egstek', titulo: 'Borrador del feed editorial semanal', texto: 'Prepara el borrador y espera tu aprobación.' },
+  { agente: 'egstek', titulo: 'Producción de cursos por pasos', texto: 'De PDF a lecciones y preguntas, con revisión humana.' },
+  { agente: 'medikai', titulo: 'Pruebas automáticas de las respuestas clínicas', texto: 'Batería de casos que avisa si un cambio de modelo empeora la calidad.', primera: true },
+  { agente: 'medikai', titulo: 'Casos clínicos paso a paso, con memoria', texto: 'El alumno deja un caso y lo retoma días después.' },
+  { agente: 'medikai', titulo: 'Tareas largas con puntos de control', texto: 'Podcast, sesiones y cuadernos que no se pierden si algo se corta.' },
+  { agente: 'medikai', titulo: 'Tus datos como herramientas del agente', texto: 'Consulta calculadoras e interacciones en vez de responder de memoria.' },
+  { agente: 'medikai', titulo: 'Revisión humana antes de publicar', texto: 'El contenido queda pendiente hasta que un profesional lo aprueba.' },
+];
+
+// acciones: lo que has decidido sobre tareas bloqueadas. borradores: respuestas a medio escribir, por tarea (repintar no las pierde).
+// ver: pestaña interna a la vista ('tablero' o 'resultados'). resultados: archivos entregados por los agentes; resFiltro los
+// acota; audio guarda el enlace de los que se están escuchando y enlace el de los que el navegador no dejó abrir solo.
+const estado = { tareas: [], tableroAt: null, encargos: [], acciones: [], filtro: null, aviso: null, enviando: false, cargando: true,
+  falloTablero: null, borradores: {}, confirma: null, accionando: null,
+  ver: new URLSearchParams(location.search).get('ver') === 'resultados' ? 'resultados' : 'tablero',
+  borrador: { agente: 'coordinador', titulo: '', detalle: '' },
+  resultados: [], falloResultados: null, resFiltro: { agente: '', texto: '', tarea: '' }, resConfirma: null, resOcupado: null,
+  audio: {}, enlace: {}, demoListo: false };
+const $raiz = document.getElementById('raiz');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const sb = DEMO ? null : window.supabase.createClient(SUPA_URL, SUPA_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+
+function haceCuanto(iso) {
+  if (!iso) return '';
+  const min = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (min < 1) return 'ahora mismo';
+  if (min < 60) return `hace ${min} min`;
+  if (min < 48 * 60) return `hace ${Math.round(min / 60)} h`;
+  return `hace ${Math.round(min / 1440)} días`;
+}
+function estadoPC() {
+  if (!estado.tableroAt) return ['', 'Sin datos del PC todavía'];
+  const min = (Date.now() - new Date(estado.tableroAt).getTime()) / 60000;
+  if (min <= 10) return ['verde', `PC activo · tablero de ${haceCuanto(estado.tableroAt)}`];
+  if (min <= 60) return ['ambar', `PC lento · tablero de ${haceCuanto(estado.tableroAt)}`];
+  return ['rojo', `El PC no responde · último tablero ${haceCuanto(estado.tableroAt)}`];
+}
+
+function datosDemo() {
+  const t = m => new Date(Date.now() - m * 60000).toISOString();
+  estado.tableroAt = t(6);
+  estado.tareas = [
+    { id: 't_390477c3', titulo: 'Verificar y arreglar: ranking y perfil no aparecen en la app web móvil', estado: 'running', agente: 'egstek' },
+    { id: 't_a1', titulo: 'T3: tests por tema y avance bloqueado', estado: 'blocked', agente: 'egstek',
+      bloqueo: { tipo: 'fallo', corte: true, fallos: 2, intentos: 3, desde: Date.now() / 1000 - 8 * 86400,
+        motivo: "pid 1234 exited with code 1 [owner admission settled interrupted] Worker's last output: 'Kanban owner refused: Gateway draining'",
+        nota: { de: 'egstek', texto: 'Tests del tema 1 escritos y en verde. Faltaban los del tema 2 cuando se cortó.' } } },
+    { id: 't_a2', titulo: 'Revisar ramas activas y planificar merge', estado: 'blocked', agente: 'medikai',
+      bloqueo: { tipo: 'pregunta', intentos: 1, desde: Date.now() / 1000 - 2 * 86400,
+        motivo: 'La petición de cambio está lista y sin conflictos.\nNecesito tu «sí» para fusionar en main y desplegar.' } },
+    { id: 't_a6', titulo: 'Tarea bloqueada sin datos del PC todavía', estado: 'blocked', agente: 'casa' },
+    { id: 't_a3', titulo: 'Informe semanal de seguridad', estado: 'todo', agente: 'egstrategy' },
+    { id: 't_a4', titulo: 'Barra superior en el móvil con «Panel del profesor»', estado: 'done', agente: 'egstek',
+      resultado: 'Barra publicada en el sandbox. Capturas en C:\\Users\\carlos\\hermes\\capturas\\demo.' },
+    { id: 't_a5', titulo: 'Resumen de costes de plataformas médicas', estado: 'done', agente: 'herramientas-formacion' },
+  ];
+  estado.encargos = [
+    { id: 'e1', agente: 'egstek', titulo: 'Prototipo con eve: Tutor del curso dentro del campus', estado: 'pendiente', created_at: t(1) },
+    { id: 'e2', agente: 'medikai', titulo: 'Revisar ramas activas y planificar merge', estado: 'lanzado', kanban_id: 't_a2', created_at: t(95), lanzado_at: t(93) },
+    { id: 'e3', agente: 'finanzas', titulo: 'Resumen de gastos de octubre', estado: 'error', error: 'El tablero no respondía', created_at: t(300) },
+    { id: 'e4', agente: 'egstek', titulo: 'Barra superior en el móvil con «Panel del profesor»', estado: 'lanzado', kanban_id: 't_a4', created_at: t(900), lanzado_at: t(898) },
+  ];
+  estado.acciones = [];
+  const pptx = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  estado.resultados = [
+    { id: 'r1', tarea: 't_a5', tarea_titulo: 'Resumen de costes de plataformas médicas', agente: 'herramientas-formacion',
+      nombre: 'Resumen de costes de plataformas médicas.pptx', ruta: 'demo/r1', tipo: pptx, tamano: 1153433, origen: 'adjunto', created_at: t(40), updated_at: t(40) },
+    { id: 'r2', tarea: 't_a5', tarea_titulo: 'Resumen de costes de plataformas médicas', agente: 'herramientas-formacion',
+      nombre: 'resumen-costes.pdf', ruta: 'demo/r2', tipo: 'application/pdf', tamano: 187321, origen: 'adjunto', created_at: t(41), updated_at: t(41) },
+    { id: 'r3', tarea: 't_a5', tarea_titulo: 'Resumen de costes de plataformas médicas', agente: 'herramientas-formacion',
+      nombre: 'resumen-hablado.mp3', ruta: 'demo/r3', tipo: 'audio/mpeg', tamano: 3355443, origen: 'adjunto', created_at: t(42), updated_at: t(42) },
+    { id: 'r4', tarea: 't_a4', tarea_titulo: 'Barra superior en el móvil con «Panel del profesor»', agente: 'egstek',
+      nombre: 'capturas-barra-movil.zip', ruta: 'demo/r4', tipo: 'application/zip', tamano: 2516582, origen: 'adjunto', created_at: t(890), updated_at: t(890) },
+    { id: 'r5', tarea: 'presentacion-medikai', tarea_titulo: 'presentacion-medikai', agente: null,
+      nombre: 'Qué es MedikAI.pptx', ruta: 'demo/r5', tipo: null, tamano: 842000, origen: 'carpeta', created_at: t(2000), updated_at: t(2000) },
+  ];
+}
+
+// Lo que decides sobre una tarea bloqueada viaja como una fila más de agente_encargos (ver la cabecera). La más reciente
+// de cada tarea cuenta mientras espera al PC; ya aplicada, solo un rato y solo si es posterior al bloqueo que enseña el tablero.
+function accionDe(t) {
+  const desde = ((t.bloqueo && t.bloqueo.desde) || 0) * 1000;
+  return estado.acciones.find(a => {
+    if (a.tarea !== t.id) return false;
+    if (a.estado === 'pendiente') return true;
+    const cuando = new Date(a.lanzado_at || a.created_at).getTime();
+    return cuando > desde && Date.now() - cuando < 15 * 60000;
+  });
+}
+// 'pregunta' (el agente espera tu respuesta), 'fallo' (el tablero se rindió) o 'sin-datos' (el PC aún no ha dicho por qué).
+function tipoBloqueo(t) { return t.estado !== 'blocked' ? null : (t.bloqueo && t.bloqueo.tipo) || 'sin-datos'; }
+function chipTarea(t) {
+  const tb = tipoBloqueo(t);
+  if (tb === 'pregunta') return ['espera tu respuesta', 'ambar'];
+  if (tb === 'fallo') return ['atascada por un fallo', 'rojo'];
+  return ESTADO_TAREA[t.estado] || [t.estado || '?', ''];
+}
+function guardaBorradores() {
+  document.querySelectorAll('textarea[data-resp]').forEach(x => { estado.borradores[x.dataset.resp] = x.value; });
+}
+
+async function cargar() {
+  // Los datos de ejemplo se ponen una sola vez: así lo que pruebes (encargar, borrar un resultado) no se deshace al refrescar.
+  if (DEMO) { if (!estado.demoListo) { datosDemo(); estado.demoListo = true; } estado.cargando = false; return; }
+  const [tab, enc, res] = await Promise.all([
+    sb.from('panel_tablet').select('contenido,generado_at,updated_at').eq('tipo', 'tablero').order('fecha', { ascending: false }).limit(1),
+    sb.from('agente_encargos').select('id,agente,titulo,estado,kanban_id,error,origen,created_at,lanzado_at').order('created_at', { ascending: false }).limit(60),
+    sb.from(TABLA_RESULTADOS).select('id,tarea,tarea_titulo,agente,nombre,ruta,tipo,tamano,origen,created_at,updated_at').order('created_at', { ascending: false }).limit(400),
+  ]);
+  // Si la tabla de resultados aún no existe o falla, lo dice su pestaña; el resto de la página sigue igual.
+  if (res.error) {
+    const falta = res.error.code === 'PGRST205' || res.error.code === '42P01' || /does not exist|schema cache/i.test(res.error.message || '');
+    estado.falloResultados = falta ? 'Los resultados todavía no están activados en la base de datos. En cuanto lo estén, aparecerán aquí.'
+      : 'No he podido leer los resultados: ' + res.error.message;
+    estado.resultados = [];
+  } else { estado.falloResultados = null; estado.resultados = res.data || []; }
+  if (tab.error) estado.falloTablero = tab.error.message; else {
+    estado.falloTablero = null;
+    const fila = (tab.data || [])[0];
+    estado.tareas = (fila && fila.contenido && fila.contenido.tareas) || [];
+    estado.tableroAt = fila ? (fila.updated_at || fila.generado_at) : null;
+  }
+  if (enc.error) estado.aviso = ['mal', 'No he podido leer tus encargos: ' + enc.error.message];
+  else {
+    const filas = enc.data || [];
+    estado.acciones = filas.map(e => { const m = /^accion:([a-z]+):(t_[0-9a-f]+)/.exec(e.origen || ''); return m && { ...e, tipo: m[1], tarea: m[2] }; }).filter(Boolean);
+    estado.encargos = filas.filter(e => !(e.origen || '').startsWith('accion:')).slice(0, 30);
+  }
+  estado.cargando = false;
+}
+
+function pintaProyectos() {
+  return `<div class="proyectos">${AGENTES.map(([id, nombre]) => {
+    const mias = estado.tareas.filter(t => t.agente === id);
+    const marcha = mias.filter(t => t.estado === 'running').length, atascadas = mias.filter(t => tipoBloqueo(t) === 'fallo').length;
+    const esperan = mias.filter(t => t.estado === 'blocked').length - atascadas;
+    const cola = mias.filter(t => ['todo', 'ready', 'triage'].includes(t.estado)).length;
+    const resumen = mias.length ? [marcha && `${marcha} en marcha`, esperan && `${esperan} ${esperan === 1 ? 'espera' : 'esperan'}`,
+      atascadas && `${atascadas} ${atascadas === 1 ? 'atascada' : 'atascadas'}`, cola && `${cola} en cola`].filter(Boolean).join(' · ') || 'todo hecho' : 'sin tareas';
+    return `<button class="proy ${estado.filtro === id ? 'activo' : ''}" data-act="filtro" data-id="${esc(id)}" aria-pressed="${estado.filtro === id}"><b>${esc(nombre)}</b><span>${esc(resumen)}</span></button>`;
+  }).join('')}</div>`;
+}
+function pintaTablero() {
+  if (estado.falloTablero) return `<p class="nota">No he podido leer el tablero: ${esc(estado.falloTablero)}</p>`;
+  const orden = { blocked: 0, running: 1, ready: 2, todo: 3, triage: 4, done: 5 };
+  // Las que esperan tu respuesta van antes que las atascadas: son las que solo tú puedes mover.
+  const peso = t => (orden[t.estado] ?? 9) + (tipoBloqueo(t) === 'fallo' ? 0.5 : 0);
+  const lista = estado.tareas.filter(t => !estado.filtro || t.agente === estado.filtro).sort((a, b) => peso(a) - peso(b));
+  if (!lista.length) return `<p class="nota">${estado.filtro ? 'Este agente no tiene tareas en el tablero.' : 'El tablero está vacío.'}</p>`;
+  return `<ul class="lista">${lista.map(t => {
+    const [txt, color] = chipTarea(t);
+    return `<li><div class="linea"><span class="titulo">${esc(t.titulo)}</span><span class="chip ${color}">${esc(txt)}</span>${botonArchivos(t.id)}</div>
+      <div class="meta">${esc(NOMBRE_AGENTE[t.agente] || t.agente || 'sin agente')} · ${esc(t.id)}</div>
+      ${t.estado === 'blocked' ? pintaBloqueo(t) : ''}${pintaResultado(t)}</li>`;
+  }).join('')}</ul>`;
+}
+// «2 archivos» junto a una tarea que ha entregado algo: al tocarlo salta a «Resultados agentes» con solo los suyos.
+function botonArchivos(tarea) {
+  const n = tarea ? estado.resultados.filter(r => r.tarea === tarea).length : 0;
+  return n ? `<button class="mini" data-act="res-tarea" data-id="${esc(tarea)}">${n === 1 ? '1 archivo' : n + ' archivos'}</button>` : '';
+}
+function pintaResultado(t) {
+  return t && t.estado === 'done' && t.resultado ? `<details class="mas"><summary>Resultado</summary><div class="motivo">${esc(t.resultado)}</div></details>` : '';
+}
+// Una tarea bloqueada: por qué está parada y, según el motivo, contestar, dar el «sí», reintentar o cerrarla.
+function pintaBloqueo(t) {
+  const b = t.bloqueo;
+  if (!b) return `<p class="porque">El PC aún no ha dicho por qué está parada. Mientras, contéstale al coordinador por WhatsApp o Telegram.</p>`;
+  const a = accionDe(t), fallo = b.tipo === 'fallo', id = esc(t.id);
+  const desde = b.desde ? haceCuanto(new Date(b.desde * 1000).toISOString()) : '';
+  const nota = b.nota && b.nota.texto ? `<details class="mas"><summary>Última nota${b.nota.de ? ' de ' + esc(NOMBRE_AGENTE[b.nota.de] || b.nota.de) : ''}</summary><div class="motivo">${esc(b.nota.texto)}</div></details>` : '';
+  const porque = fallo
+    ? `<p class="porque">${b.corte ? 'Un reinicio de Hermes la cortó mientras trabajaba' : 'Falló al ejecutarse'}${b.fallos ? `, ${b.fallos} veces seguidas,` : ''} y el tablero la paró${desde ? ' ' + esc(desde) : ''}.</p>
+       ${nota}<details class="mas"><summary>Detalle técnico</summary><div class="motivo">${esc(b.motivo || 'Sin detalle.')}</div></details>`
+    : `<p class="porque">Te pregunta${desde ? ', desde ' + esc(desde) : ''}:</p><div class="motivo">${esc(b.motivo || 'No dejó escrita la pregunta.')}</div>${nota}`;
+  if (a && a.estado === 'pendiente') return `${porque}<p class="estado-accion" role="status">${HECHO_ACCION[a.tipo] || 'Tu decisión'} está en camino. El PC lo aplica en menos de 2 minutos.
+    <button class="mini" data-act="cancelar" data-id="${esc(a.id)}">Deshacer</button></p>`;
+  if (a && a.estado === 'lanzado') return `${porque}<p class="estado-accion ok" role="status">${HECHO_ACCION[a.tipo] || 'Tu decisión'} se aplicó ${esc(haceCuanto(a.lanzado_at))}. El tablero lo reflejará enseguida.</p>`;
+  const error = a && a.estado === 'error' ? `<p class="estado-accion mal" role="status">No se pudo aplicar: ${esc(a.error || 'error desconocido')}</p>` : '';
+  const ocupado = estado.accionando === t.id ? 'disabled' : '';
+  const cerrar = estado.confirma === t.id
+    ? `<button class="mini peligro" data-act="cerrar-si" data-id="${id}" ${ocupado}>Sí, cerrarla</button><button class="mini" data-act="cerrar-no">No</button>`
+    : `<button class="mini" data-act="cerrar" data-id="${id}" ${ocupado}>Cerrar tarea</button>`;
+  return porque + error + (fallo
+    ? `<div class="fila-botones"><button class="mini fuerte" data-act="reintentar" data-id="${id}" ${ocupado}>Reintentar</button>${cerrar}</div>`
+    : `<label class="solo-lector" for="resp-${id}">Tu respuesta a ${id}</label>
+       <textarea class="resp" id="resp-${id}" data-resp="${id}" maxlength="3500" placeholder="Escribe tu respuesta">${esc(estado.borradores[t.id] || '')}</textarea>
+       <div class="fila-botones">${Reconocedor ? `<button type="button" class="micro mini" data-voz="${id}" aria-pressed="false" aria-label="Dictar la respuesta a ${id}" title="Dictar la respuesta">${MICRO}</button>` : ''}
+       <button class="mini fuerte" data-act="responder" data-id="${id}" ${ocupado}>Responder</button>
+       <button class="mini" data-act="aprobar" data-id="${id}" ${ocupado}>Sí, adelante</button>${cerrar}</div>`);
+}
+function pintaEncargos() {
+  if (!estado.encargos.length) return `<p class="nota">Aún no has encargado nada desde aquí.</p>`;
+  return `<ul class="lista">${estado.encargos.map(e => {
+    let [txt, color] = ESTADO_ENCARGO[e.estado] || [e.estado, ''];
+    const tarea = e.kanban_id && estado.tareas.find(t => t.id === e.kanban_id);
+    if (tarea && ESTADO_TAREA[tarea.estado]) [txt, color] = chipTarea(tarea);
+    return `<li><div class="linea"><span class="titulo">${esc(e.titulo)}</span><span class="chip ${color}">${esc(txt)}</span>
+      ${e.estado === 'pendiente' ? `<button class="mini" data-act="cancelar" data-id="${esc(e.id)}">Cancelar</button>` : ''}${botonArchivos(e.kanban_id)}</div>
+      <div class="meta">${esc(NOMBRE_AGENTE[e.agente] || e.agente)} · ${esc(haceCuanto(e.created_at))}${e.kanban_id ? ' · ' + esc(e.kanban_id) : ''}${e.error ? ' · ' + esc(e.error) : ''}</div>
+      ${pintaResultado(tarea)}</li>`;
+  }).join('')}</ul>`;
+}
+function pintaIdeas() {
+  const grupo = (agente, nombre) => `<h3 style="margin:12px 0 6px">${esc(nombre)}</h3><div class="ideas">${IDEAS.filter(i => i.agente === agente).map(i =>
+    `<div class="idea"><div><b>${esc(i.titulo)}</b>${i.primera ? ' <span class="chip acento">empezar por aquí</span>' : ''}<p>${esc(i.texto)}</p></div>
+     <button class="mini" data-act="idea" data-id="${IDEAS.indexOf(i)}">Preparar encargo</button></div>`).join('')}</div>`;
+  return grupo('egstek', 'EGS TeK') + grupo('medikai', 'MedikAI');
+}
+
+// ── Resultados agentes ────────────────────────────────────────────────────────────────────────────────────────────
+function claseArchivo(r) {
+  const nombre = String(r.nombre || ''), mime = String(r.tipo || '').toLowerCase();
+  return CLASES.find(c => c[3].test(nombre)) || (mime && CLASES.find(c => c[4].test(mime))) || ['otro', 'Otro', ''];
+}
+function tamanoLegible(n) {
+  n = Number(n) || 0;
+  if (n < 1024) return `${n} B`;
+  if (n < 1048576) return `${Math.round(n / 1024)} KB`;
+  if (n < 1073741824) return `${(n / 1048576).toLocaleString('es-ES', { maximumFractionDigits: 1 })} MB`;
+  return `${(n / 1073741824).toLocaleString('es-ES', { maximumFractionDigits: 2 })} GB`;
+}
+const llano = s => String(s || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');  // sin mayúsculas ni acentos, para buscar
+function resultadosFiltrados() {
+  const f = estado.resFiltro, q = llano(f.texto).trim();
+  return estado.resultados.filter(r => (!f.tarea || r.tarea === f.tarea)
+    && (!f.agente || (f.agente === '-' ? !r.agente : r.agente === f.agente))
+    && (!q || llano(`${r.nombre} ${r.tarea_titulo || ''} ${r.tarea}`).includes(q)));
+}
+function tituloDeTarea(tarea, filas) {
+  const delTablero = estado.tareas.find(t => t.id === tarea);
+  return (filas && filas[0] && filas[0].tarea_titulo) || (delTablero && delTablero.titulo) || tarea;
+}
+function pintaArchivo(r) {
+  const [clave, etiqueta, color] = claseArchivo(r), id = esc(r.id), ocupado = estado.resOcupado === r.id ? 'disabled' : '';
+  const suena = estado.audio[r.id];
+  const primero = clave === 'audio'
+    ? `<button class="mini fuerte" data-act="res-oir" data-id="${id}" ${ocupado}>${suena ? 'Cerrar el audio' : 'Escuchar'}</button>`
+    : SE_ABRE.includes(clave) ? `<button class="mini fuerte" data-act="res-abrir" data-id="${id}" ${ocupado}>Abrir</button>` : '';
+  const borrar = estado.resConfirma === r.id
+    ? `<button class="mini peligro" data-act="res-borrar-si" data-id="${id}" ${ocupado}>Sí, borrarlo</button><button class="mini" data-act="res-borrar-no">No</button>`
+    : `<button class="mini" data-act="res-borrar" data-id="${id}" ${ocupado}>Borrar</button>`;
+  return `<li class="archivo"><div class="linea"><span class="chip ${color}">${etiqueta}</span><span class="titulo">${esc(r.nombre)}</span></div>
+    <div class="meta">${esc(tamanoLegible(r.tamano))} · ${esc(haceCuanto(r.created_at))}</div>
+    <div class="fila-botones">${primero}<button class="mini ${primero ? '' : 'fuerte'}" data-act="res-bajar" data-id="${id}" ${ocupado}>Descargar</button>${borrar}</div>
+    ${estado.enlace[r.id] ? `<p class="meta"><a href="${esc(estado.enlace[r.id])}" target="_blank" rel="noopener">El navegador no ha dejado abrirlo solo. Pulsa aquí para abrir «${esc(r.nombre)}».</a></p>` : ''}
+    ${suena ? `<audio controls data-res="${id}" src="${esc(suena)}"></audio>` : ''}</li>`;
+}
+function pintaListaResultados() {
+  if (estado.falloResultados) return `<p class="nota">${esc(estado.falloResultados)}</p>`;
+  if (!estado.resultados.length) return `<p class="nota">Aún no hay ningún resultado. Cuando un agente termina una tarea y entrega un archivo, el PC lo sube aquí en un par de minutos.</p>`;
+  const lista = resultadosFiltrados();
+  if (!lista.length) return `<p class="nota">Ningún archivo coincide con lo que buscas.</p>`;
+  const grupos = new Map();  // vienen de más reciente a más antiguo: la tarea con el archivo más nuevo queda arriba
+  for (const r of lista) { if (!grupos.has(r.tarea)) grupos.set(r.tarea, []); grupos.get(r.tarea).push(r); }
+  return [...grupos].map(([tarea, filas]) => {
+    const agente = filas[0].agente, delTablero = estado.tareas.find(t => t.id === tarea);
+    const donde = /^t_[0-9a-z]+$/i.test(tarea) ? tarea : `carpeta «${tarea}»`;
+    return `<div class="grupo"><h3>${esc(tituloDeTarea(tarea, filas))}</h3>
+      <div class="meta">${esc(NOMBRE_AGENTE[agente] || agente || 'Sin agente')} · ${esc(donde)} · ${filas.length === 1 ? '1 archivo' : filas.length + ' archivos'} · ${esc(haceCuanto(filas[0].created_at))}</div>
+      <ul class="lista">${filas.map(pintaArchivo).join('')}</ul>${pintaResultado(delTablero)}</div>`;
+  }).join('');
+}
+function pieResultados() {
+  if (estado.falloResultados || !estado.resultados.length) return '';
+  const total = estado.resultados.reduce((s, r) => s + (Number(r.tamano) || 0), 0), n = estado.resultados.length, vistos = resultadosFiltrados().length;
+  return `${n === 1 ? '1 archivo' : n + ' archivos'} · ${esc(tamanoLegible(total))} ocupados en total${vistos !== n ? ` · mostrando ${vistos}` : ''}`;
+}
+function pintaResultados() {
+  const f = estado.resFiltro;
+  const agentes = [...new Set(estado.resultados.map(r => r.agente || '-'))].sort((a, b) => (a === '-') - (b === '-') || a.localeCompare(b));
+  return `<section class="tarjeta" aria-labelledby="t-res">
+    <h2 id="t-res">Resultados agentes <span class="cuenta">lo que entregan tus agentes</span></h2>
+    ${estado.falloResultados || !estado.resultados.length ? '' : `<div class="filtros">
+      <div><label for="res-busca">Buscar por nombre</label>
+        <input id="res-busca" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" placeholder="Por ejemplo: presentación" value="${esc(f.texto)}" /></div>
+      <div><label for="res-agente">Agente</label>
+        <select id="res-agente"><option value="">Todos</option>${agentes.map(a => `<option value="${esc(a)}" ${f.agente === a ? 'selected' : ''}>${esc(a === '-' ? 'Sin agente' : NOMBRE_AGENTE[a] || a)}</option>`).join('')}</select></div>
+    </div>`}
+    ${f.tarea ? `<p class="nota" style="margin-bottom:10px">Solo la tarea «${esc(tituloDeTarea(f.tarea, estado.resultados.filter(r => r.tarea === f.tarea)))}». <button class="mini" data-act="res-todas">Ver todos</button></p>` : ''}
+    <div id="res-lista">${pintaListaResultados()}</div>
+    <p class="pie-res" id="res-pie">${pieResultados()}</p>
+  </section>`;
+}
+// Repintar rehace los reproductores: se guarda por dónde iba cada audio y si sonaba, y se le devuelve después.
+function conAudio(repinta) {
+  const antes = [...document.querySelectorAll('audio[data-res]')].map(a => ({ id: a.dataset.res, t: a.currentTime, pausa: a.paused }));
+  repinta();
+  for (const x of antes) {
+    const a = [...document.querySelectorAll('audio[data-res]')].find(n => n.dataset.res === x.id);
+    if (!a) continue;
+    const sigue = () => { try { a.currentTime = x.t; } catch (_) {} if (!x.pausa) a.play().catch(() => {}); };
+    if (a.readyState >= 1) sigue(); else a.addEventListener('loadedmetadata', sigue, { once: true });
+  }
+}
+// Solo la lista y el pie: así el buscador no pierde el foco mientras escribes.
+function repintaLista() {
+  conAudio(() => {
+    const l = document.getElementById('res-lista'), p = document.getElementById('res-pie');
+    if (l) l.innerHTML = pintaListaResultados();
+    if (p) p.innerHTML = pieResultados();
+  });
+}
+// Un segundo de silencio en WAV, para que el reproductor de los datos de ejemplo tenga algo que cargar.
+function audioDeEjemplo() {
+  const frec = 8000, n = frec, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+  const pon = (o, s) => { for (let i = 0; i < s.length; i++) b[o + i] = s.charCodeAt(i); };
+  pon(0, 'RIFF'); v.setUint32(4, 36 + n, true); pon(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, frec, true); v.setUint32(28, frec, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); pon(36, 'data'); v.setUint32(40, n, true);
+  b.fill(128, 44);
+  let bin = ''; for (let i = 0; i < b.length; i++) bin += String.fromCharCode(b[i]);
+  return 'data:audio/wav;base64,' + btoa(bin);
+}
+// Enlace firmado de una hora al archivo del almacén privado; con «descargar», el navegador lo guarda con su nombre.
+async function enlaceFirmado(r, descargar) {
+  const { data, error } = await sb.storage.from(ALMACEN).createSignedUrl(r.ruta, 3600, descargar ? { download: r.nombre } : undefined);
+  return error ? { error: error.message } : { url: data.signedUrl };
+}
+// ── Voz ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+// El navegador transcribe (Web Speech API; en Chrome el audio pasa por el servicio de voz de Google) y el texto cae en
+// el formulario de encargo o en la respuesta a una tarea. Mantener pulsado = hablar mientras dura; un toque = empezar,
+// otro toque = acabar. Nada se envía solo, salvo que el dictado del encargo termine con «enviar».
+const Reconocedor = window.SpeechRecognition || window.webkitSpeechRecognition;
+const MICRO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+const voz = { rec: null, quiere: false, destino: null, base: '', final: '', provisional: '', aviso: '', pulsadoEn: 0, suelta: null, tope: null };
+const ERROR_VOZ = { 'not-allowed': 'El navegador no tiene permiso para usar el micrófono en esta página.', 'service-not-allowed': 'El navegador no tiene permiso para usar el micrófono en esta página.',
+  'audio-capture': 'No encuentro ningún micrófono.', network: 'El servicio de voz del navegador no responde. Comprueba la conexión.', 'no-speech': 'No te he oído. Prueba otra vez.' };
+// Cómo suena cada agente al dictarlo. «solo»: se reconoce aunque no digas «para…» delante (los demás son palabras corrientes).
+const ALIAS_AGENTE = [
+  ['coordinador', /^coordinador\b/, true],
+  ['egstrategy', /^(e ?g ?s ?strategy|e ?g ?s ?estrategia|estrategia)\b/, true],
+  ['egstek', /^(e ?g ?s ?te[ck]h?|e ?g ?s|campus)\b/, true],
+  ['medikai', /^(medi ?[ck] ?a ?[iy]|medic ?ai|medica ?[iy])\b/, true],
+  ['casa', /^(casa( y agenda)?|agenda)\b/, false],
+  ['finanzas', /^finanzas\b/, false],
+  ['herramientas-formacion', /^(herramientas( de formacion)?|formacion)\b/, false],
+  ['empleo', /^empleo\b/, false],
+];
+// «Para MedikAI, prepara la presentación del lunes, enviar» → { agente: 'medikai', texto: 'Prepara la presentación del lunes', enviar: true }
+function interpretaVoz(dicho) {
+  let t = String(dicho || '').trim().replace(/\s+/g, ' ');
+  const fin = /[\s,.;:]*(?:y )?(?:env[ií]a(?:r|lo|la)?|m[aá]nda(?:lo|la)|enc[aá]rga(?:lo|la))[\s.!]*$/i;
+  const enviar = fin.test(t);
+  if (enviar) t = t.replace(fin, '');
+  const m = /^(?:para|a|al|dile a|dile al|p[ií]dele a|p[ií]dele al|encarga a|encarga al|que)\s+(?:el |la )?(.+)$/i.exec(t);
+  const resto = m ? m[1] : t;
+  const plano = resto.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  let agente = null;
+  for (const [id, re, solo] of ALIAS_AGENTE) {
+    const mm = (m || solo) && re.exec(plano);
+    if (mm) { agente = id; t = resto.slice(mm[0].length); break; }
+  }
+  t = t.replace(/^[\s,.;:]+/, '').replace(/^que\s+/i, '').replace(/[\s,;:]+$/, '');
+  return { agente, texto: t.charAt(0).toUpperCase() + t.slice(1), enviar };
+}
+function actualizaVoz() {
+  document.querySelectorAll('[data-voz]').forEach(b => {
+    const activo = voz.quiere && b.dataset.voz === voz.destino;
+    b.classList.toggle('oyendo', activo); b.setAttribute('aria-pressed', String(activo));
+    const s = b.querySelector('span'); if (s) s.textContent = activo ? 'Te escucho. Suelta o toca para acabar' : 'Mantén pulsado o toca para hablar';
+  });
+  const out = document.getElementById('voz-texto');
+  if (out) out.textContent = voz.quiere && voz.destino === 'encargo' ? ((voz.base + voz.final + voz.provisional).trim() || 'Te escucho…') : voz.aviso;
+}
+function escuchaVoz() {
+  const rec = new Reconocedor();
+  rec.lang = 'es-ES'; rec.interimResults = true;
+  rec.continuous = !/Android/i.test(navigator.userAgent);  // en Android el modo continuo repite palabras: allí se encadenan frases sueltas
+  rec.onresult = e => {
+    let fin = '', prov = '';
+    for (let i = 0; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) fin += r[0].transcript + ' '; else prov += r[0].transcript; }
+    voz.final = fin; voz.provisional = prov; actualizaVoz();
+  };
+  rec.onerror = e => { if (e.error !== 'aborted') { voz.aviso = ERROR_VOZ[e.error] || `No he podido escucharte (${e.error}).`; if (e.error !== 'no-speech') voz.quiere = false; } };
+  rec.onend = () => {
+    voz.base += voz.final + voz.provisional + ' '; voz.final = ''; voz.provisional = '';
+    if (voz.quiere) { try { escuchaVoz(); return; } catch (_) { voz.quiere = false; } }  // sigues pulsando: otra frase
+    terminaVoz();
+  };
+  voz.rec = rec; rec.start();
+}
+function empiezaVoz(destino) {
+  if (!Reconocedor || voz.quiere) return;
+  Object.assign(voz, { quiere: true, destino, base: '', final: '', provisional: '', aviso: '' });
+  try { escuchaVoz(); } catch (e) { voz.quiere = false; voz.aviso = 'No he podido encender el micrófono.'; }
+  clearTimeout(voz.tope); voz.tope = setTimeout(paraVoz, 120000);  // por si se queda abierto
+  actualizaVoz();
+}
+function paraVoz() {
+  if (!voz.quiere) return;
+  voz.quiere = false; clearTimeout(voz.tope);
+  try { voz.rec.stop(); } catch (_) { terminaVoz(); }
+}
+function terminaVoz() {
+  clearTimeout(voz.tope);
+  const dicho = voz.base.trim().replace(/\s+/g, ' '), destino = voz.destino;
+  voz.base = ''; voz.rec = null;
+  if (dicho) aplicaVoz(destino, dicho); else if (!voz.aviso) voz.aviso = ERROR_VOZ['no-speech'];
+  actualizaVoz();
+}
+function aplicaVoz(destino, dicho) {
+  if (destino !== 'encargo') {  // respuesta a una tarea bloqueada: se añade a lo que ya hubiera escrito
+    const caja = document.getElementById('resp-' + destino);
+    if (caja) { caja.value = (caja.value.trim() ? caja.value.trim() + ' ' : '') + dicho.charAt(0).toUpperCase() + dicho.slice(1); estado.borradores[destino] = caja.value; caja.focus(); }
+    return;
+  }
+  const f = document.getElementById('form'); if (!f) return;
+  const v = interpretaVoz(dicho);
+  // Sin nombre de agente, decide el coordinador; salvo que lo hayas elegido tú a mano en el desplegable.
+  if (v.agente) { f.agente.value = v.agente; voz.agenteDicho = true; }
+  else if (voz.agenteDicho) { f.agente.value = 'coordinador'; voz.agenteDicho = false; }
+  if (!v.texto) { voz.aviso = 'Solo he entendido a quién va. Dime también qué quieres que haga.'; return; }
+  if (v.texto.length <= 300) f.titulo.value = v.texto;
+  else { const corte = v.texto.lastIndexOf(' ', 110); f.titulo.value = v.texto.slice(0, corte > 60 ? corte : 110) + '…'; f.detalle.value = v.texto.slice(0, 4000); }
+  if (v.enviar) { voz.aviso = ''; if (f.requestSubmit) f.requestSubmit(); else f.querySelector('button[type=submit]').click(); return; }
+  voz.aviso = `Dictado para ${NOMBRE_AGENTE[f.agente.value]}. Revísalo y pulsa «Encargar». Si acabas diciendo «enviar», sale sin tocar nada.`;
+  f.querySelector('button[type=submit]').focus();
+}
+document.addEventListener('pointerdown', e => {
+  const b = e.target.closest && e.target.closest('[data-voz]'); if (!b) return;
+  e.preventDefault();
+  if (voz.quiere) { voz.suelta = 'parar'; return; }  // ya escuchaba tras un toque: este otro toque lo acaba
+  voz.pulsadoEn = Date.now(); voz.suelta = 'decidir'; empiezaVoz(b.dataset.voz);
+});
+function finPulsacion() {
+  const s = voz.suelta; if (!s) return;
+  voz.suelta = null;
+  if (s === 'parar' || Date.now() - voz.pulsadoEn >= 450) paraVoz();  // lo mantenías pulsado: al soltar, acaba. Un toque corto sigue escuchando
+}
+document.addEventListener('change', e => { if (e.target.id === 'agente') voz.agenteDicho = false; });
+// Filtros de «Resultados agentes»: el buscador y el agente acotan la lista sin repintar la página entera.
+document.addEventListener('input', e => { if (e.target.id === 'res-busca') { estado.resFiltro.texto = e.target.value; estado.resConfirma = null; repintaLista(); } });
+document.addEventListener('change', e => { if (e.target.id === 'res-agente') { estado.resFiltro.agente = e.target.value; estado.resConfirma = null; repintaLista(); } });
+document.addEventListener('pointerup', finPulsacion);
+document.addEventListener('pointercancel', finPulsacion);
+document.addEventListener('keydown', e => {  // con teclado: Intro o espacio empiezan y acaban
+  if ((e.key !== 'Enter' && e.key !== ' ') || e.repeat || !e.target.closest || !e.target.closest('[data-voz]')) return;
+  e.preventDefault();
+  if (voz.quiere) paraVoz(); else empiezaVoz(e.target.closest('[data-voz]').dataset.voz);
+});
+
+// «2 tareas esperan tu respuesta y 1 está atascada por un fallo»: cada cosa por su nombre, que no todo espera un «sí».
+function avisoBloqueadas() {
+  const n = tipo => estado.tareas.filter(t => tipoBloqueo(t) === tipo).length;
+  const partes = [];
+  const suma = (num, uno, varios) => { if (num) partes.push((num === 1 ? uno : varios.replace('#', num)).replace('@', partes.length ? '' : num === 1 ? ' tarea' : ' tareas')); };
+  suma(n('pregunta'), '1@ espera tu respuesta', '#@ esperan tu respuesta');
+  suma(n('fallo'), '1@ está atascada por un fallo', '#@ están atascadas por un fallo');
+  suma(n('sin-datos'), '1@ está bloqueada', '#@ están bloqueadas');
+  if (!partes.length) return '';
+  const lista = partes.length > 2 ? `${partes.slice(0, -1).join(', ')} y ${partes[partes.length - 1]}` : partes.join(' y ');
+  return `<div class="aviso info">${esc(lista)}. Se resuelven aquí mismo, en el tablero.</div>`;
+}
+function pinta() { conAudio(pintaTodo); }
+function pintaTodo() {
+  guardaBorradores();
+  // El formulario solo existe en «Encargos y tablero»: lo escrito se guarda para no perderlo al pasar por «Resultados agentes».
+  const f = document.getElementById('form');
+  if (f) estado.borrador = { agente: f.agente.value, titulo: f.titulo.value, detalle: f.detalle.value };
+  const borrador = estado.borrador;
+  const busca = document.getElementById('res-busca');
+  const cursor = busca && document.activeElement === busca ? [busca.selectionStart, busca.selectionEnd] : null;
+  const [color, textoPC] = estadoPC(), enResultados = estado.ver === 'resultados';
+  const pestana = (id, texto, cuenta) => `<button role="tab" id="pes-${id}" aria-selected="${estado.ver === id}" aria-controls="panel" data-act="ver" data-id="${id}">${texto}${cuenta ? `<span class="cuenta">${cuenta}</span>` : ''}</button>`;
+  $raiz.innerHTML = `
+    <div class="cab">
+      <div><h1>Centro de agentes</h1><p class="sub">Encarga tareas y sigue lo que hacen tus agentes${DEMO ? ' · datos de ejemplo' : ''}</p></div>
+      <span class="hueco"></span>
+      <span class="estado-pc" role="status"><span class="punto ${color}"></span>${esc(textoPC)}</span>
+      <button data-act="recargar">Actualizar</button>
+    </div>
+    <div class="pestanas" role="tablist" aria-label="Secciones del centro de agentes">
+      ${pestana('tablero', 'Encargos y tablero', 0)}${pestana('resultados', 'Resultados agentes', estado.resultados.length)}
+    </div>
+    ${estado.aviso ? `<div class="aviso ${estado.aviso[0]}" role="status">${esc(estado.aviso[1])}</div>` : ''}
+    <div id="panel" role="tabpanel" aria-labelledby="pes-${estado.ver}">${enResultados ? pintaResultados() : `
+    ${avisoBloqueadas()}
+    <div class="rejilla">
+      <div class="col">
+        <section class="tarjeta" aria-labelledby="t-encargar">
+          <h2 id="t-encargar">Encargar una tarea</h2>
+          ${Reconocedor
+            ? `<button type="button" class="micro" data-voz="encargo" aria-pressed="false">${MICRO}<span>Mantén pulsado o toca para hablar</span></button>
+               <p class="voz-texto" id="voz-texto" role="status" aria-live="polite"></p>`
+            : `<p class="nota">Este navegador no permite dictar. Funciona en Chrome, Edge y Safari.</p>`}
+          <form id="form">
+            <label for="agente">Para quién</label>
+            <select id="agente" name="agente">${AGENTES.map(([id, nombre, d]) => `<option value="${esc(id)}" ${borrador.agente === id ? 'selected' : ''}>${esc(nombre)} · ${esc(d)}</option>`).join('')}</select>
+            <label for="titulo">Qué quieres que haga</label>
+            <input id="titulo" name="titulo" type="text" maxlength="300" required placeholder="Por ejemplo: revisa por qué no carga el ranking en el móvil" value="${esc(borrador.titulo)}" />
+            <label for="detalle">Detalles (opcional)</label>
+            <textarea id="detalle" name="detalle" maxlength="4000" placeholder="Contexto, enlaces o cómo quieres recibir el resultado">${esc(borrador.detalle)}</textarea>
+            <div class="fila-botones">
+              <button class="principal" type="submit" ${estado.enviando ? 'disabled' : ''}>${estado.enviando ? 'Encargando…' : 'Encargar'}</button>
+              <span class="nota">El PC lo recoge en menos de 2 minutos.</span>
+            </div>
+          </form>
+        </section>
+        <section class="tarjeta" aria-labelledby="t-mios">
+          <h2 id="t-mios">Mis encargos <span class="cuenta">${estado.encargos.length || ''}</span></h2>
+          ${pintaEncargos()}
+        </section>
+      </div>
+      <div class="col">
+        <section class="tarjeta" aria-labelledby="t-proy">
+          <h2 id="t-proy">Proyectos y agentes <span class="cuenta">toca uno para filtrar el tablero</span></h2>
+          ${pintaProyectos()}
+        </section>
+        <section class="tarjeta" aria-labelledby="t-tablero">
+          <h2 id="t-tablero">Tablero ${estado.filtro ? `· ${esc(NOMBRE_AGENTE[estado.filtro])} <button class="mini" data-act="filtro" data-id="">Ver todos</button>` : ''}</h2>
+          ${pintaTablero()}
+        </section>
+        <section class="tarjeta" aria-labelledby="t-eve">
+          <h2 id="t-eve">Posibilidades con eve <span class="cuenta">propuestas · piloto local probado el 21-nov</span></h2>
+          <p class="nota">«Preparar encargo» rellena el formulario para el agente del proyecto. No se envía hasta que pulses «Encargar».</p>
+          ${pintaIdeas()}
+        </section>
+      </div>
+    </div>`}</div>`;
+  actualizaVoz();  // repintar rehace los botones del micrófono: si estabas dictando, que se siga viendo
+  if (cursor) { const b2 = document.getElementById('res-busca'); if (b2) { b2.focus(); try { b2.setSelectionRange(cursor[0], cursor[1]); } catch (_) {} } }
+}
+
+async function encargar(datos) {
+  if (DEMO) { estado.encargos.unshift({ id: 'demo' + Date.now(), ...datos, estado: 'pendiente', created_at: new Date().toISOString() }); return null; }
+  const origen = 'agentes:' + (crypto.randomUUID ? crypto.randomUUID() : Date.now());
+  const { error } = await sb.from('agente_encargos').insert({ agente: datos.agente, titulo: datos.titulo, detalle: datos.detalle || null, origen });
+  return error ? error.message : null;
+}
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'form') return;
+  e.preventDefault();
+  const f = e.target, titulo = f.titulo.value.trim();
+  if (!titulo || estado.enviando) return;
+  estado.enviando = true; estado.aviso = null; pinta();
+  const fallo = await encargar({ agente: f.agente.value, titulo: titulo.slice(0, 300), detalle: f.detalle.value.trim().slice(0, 4000) });
+  estado.enviando = false;
+  if (fallo) estado.aviso = ['mal', 'No se ha podido encargar: ' + fallo];
+  else {
+    estado.aviso = ['ok', `Encargado a ${NOMBRE_AGENTE[f.agente.value]}. El PC lo recogerá en menos de 2 minutos.`];
+    document.getElementById('titulo').value = ''; document.getElementById('detalle').value = '';
+    if (!DEMO) await cargar();
+  }
+  pinta();
+});
+// Tu decisión sobre una tarea bloqueada. Va para el agente de la tarea si la tabla lo admite; si no, para el coordinador
+// (el PC solo mira el origen: nunca lo lanza como encargo nuevo).
+async function accion(tipo, id, texto) {
+  const t = estado.tareas.find(x => x.id === id);
+  if (!t) return 'La tarea ya no está en el tablero.';
+  const fila = { agente: NOMBRE_AGENTE[t.agente] ? t.agente : 'coordinador', titulo: `${TITULO_ACCION[tipo]} ${id}: ${t.titulo}`.slice(0, 300),
+    detalle: texto || null, origen: `accion:${tipo}:${id}:${crypto.randomUUID ? crypto.randomUUID() : Date.now()}` };
+  if (DEMO) { estado.acciones.unshift({ id: 'demo' + Date.now(), ...fila, tipo, tarea: id, estado: 'pendiente', created_at: new Date().toISOString() }); return null; }
+  const { error } = await sb.from('agente_encargos').insert(fila);
+  return error ? error.message : null;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  if (['responder', 'aprobar', 'reintentar', 'cerrar-si'].includes(act)) {
+    guardaBorradores();
+    const tipo = act === 'cerrar-si' ? 'cerrar' : act, texto = (estado.borradores[id] || '').trim().slice(0, 3500);
+    const caja = document.getElementById('resp-' + id);
+    if (tipo === 'responder' && !texto) { if (caja) { caja.placeholder = 'Escribe aquí tu respuesta antes de enviarla'; caja.focus(); } return; }
+    estado.accionando = id; estado.confirma = null; pinta();
+    const fallo = await accion(tipo, id, texto);
+    estado.accionando = null;
+    if (fallo) estado.aviso = ['mal', 'No se ha podido enviar: ' + fallo];
+    else {
+      estado.aviso = null; delete estado.borradores[id];
+      const c2 = document.getElementById('resp-' + id); if (c2) c2.value = '';
+      if (!DEMO) await cargar();
+    }
+    pinta();
+  }
+  if (act === 'cerrar') { estado.confirma = id; pinta(); }
+  if (act === 'cerrar-no') { estado.confirma = null; pinta(); }
+  // ── Pestañas internas y resultados ──
+  if (act === 'ver' || act === 'res-tarea') {
+    if (voz.quiere) return;  // a medio dictar no se cambia de pestaña: el dictado cae en el formulario de esta
+    estado.ver = act === 'res-tarea' ? 'resultados' : id;
+    estado.resConfirma = null;
+    if (act === 'res-tarea') estado.resFiltro = { agente: '', texto: '', tarea: id };
+    try {  // el enlace directo acompaña a la pestaña (recargar o compartirlo abre la misma)
+      const u = new URL(location.href);
+      if (estado.ver === 'resultados') u.searchParams.set('ver', 'resultados'); else u.searchParams.delete('ver');
+      history.replaceState(null, '', u);
+    } catch (_) {}
+    pinta();
+    if (act === 'res-tarea') window.scrollTo(0, 0);
+  }
+  if (act === 'res-todas') { estado.resFiltro.tarea = ''; pinta(); }
+  if (act === 'res-borrar') { estado.resConfirma = id; pinta(); }
+  if (act === 'res-borrar-no') { estado.resConfirma = null; pinta(); }
+  if (['res-abrir', 'res-bajar', 'res-oir', 'res-borrar-si'].includes(act)) {
+    const r = estado.resultados.find(x => String(x.id) === id);
+    if (!r) return;
+    if (act === 'res-oir' && estado.audio[r.id]) { delete estado.audio[r.id]; pinta(); return; }  // «Cerrar el audio»
+    if (DEMO) {
+      if (act === 'res-borrar-si') { estado.resultados = estado.resultados.filter(x => x !== r); delete estado.audio[r.id]; estado.resConfirma = null; estado.aviso = ['ok', `«${r.nombre}» borrado.`]; }
+      else if (act === 'res-oir') { estado.audio[r.id] = audioDeEjemplo(); estado.aviso = null; }
+      else estado.aviso = ['info', 'En los datos de ejemplo no hay archivos de verdad que abrir ni descargar.'];
+      pinta(); return;
+    }
+    // La ventana se pide ya, dentro del mismo toque: si se abre después de esperar el enlace, el navegador la bloquea.
+    const ventana = act === 'res-abrir' ? window.open('about:blank', '_blank') : null;
+    estado.resOcupado = r.id; estado.aviso = null; pinta();
+    let fallo = null;
+    if (act === 'res-borrar-si') {
+      const quita = await sb.storage.from(ALMACEN).remove([r.ruta]);
+      fallo = quita.error ? quita.error.message : null;
+      if (!fallo) { const fila = await sb.from(TABLA_RESULTADOS).delete().eq('id', r.id); fallo = fila.error ? fila.error.message : null; }
+      if (!fallo) { delete estado.audio[r.id]; delete estado.enlace[r.id]; estado.aviso = ['ok', `«${r.nombre}» borrado.`]; }
+      estado.resConfirma = null;
+    } else {
+      const e2 = await enlaceFirmado(r, act === 'res-bajar');
+      fallo = e2.error || null;
+      if (fallo) { if (ventana) ventana.close(); }
+      else if (act === 'res-oir') estado.audio[r.id] = e2.url;
+      else if (act === 'res-abrir') {
+        if (ventana) { try { ventana.opener = null; } catch (_) {} ventana.location.replace(e2.url); delete estado.enlace[r.id]; }
+        else estado.enlace[r.id] = e2.url;  // ventana bloqueada: queda el enlace a la vista para abrirlo a mano
+      } else {
+        const a = document.createElement('a'); a.href = e2.url; a.rel = 'noopener'; a.download = r.nombre;
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+    }
+    estado.resOcupado = null;
+    if (fallo) estado.aviso = ['mal', (act === 'res-borrar-si' ? 'No se ha podido borrar: ' : 'No se ha podido preparar el archivo: ') + fallo];
+    if (act === 'res-borrar-si' && !fallo) await cargar();
+    pinta();
+    if (act === 'res-oir' && !fallo) { const au = [...document.querySelectorAll('audio[data-res]')].find(n => n.dataset.res === String(r.id)); if (au) au.play().catch(() => {}); }
+  }
+  if (act === 'recargar') { b.disabled = true; await cargar(); estado.aviso = null; pinta(); }
+  if (act === 'filtro') { estado.filtro = (id && estado.filtro !== id) ? id : null; pinta(); }
+  if (act === 'idea') {
+    const i = IDEAS[Number(id)]; if (!i) return;
+    pinta();
+    document.getElementById('agente').value = i.agente;
+    document.getElementById('titulo').value = ('Prototipo con eve: ' + i.titulo).slice(0, 300);
+    document.getElementById('detalle').value = `${i.texto}\n\n${BASE_EVE}`;
+    document.getElementById('titulo').focus(); document.getElementById('t-encargar').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  if (act === 'cancelar') {
+    b.disabled = true;
+    if (DEMO) { estado.encargos = estado.encargos.filter(x => x.id !== id); estado.acciones = estado.acciones.filter(x => x.id !== id); }
+    else {
+      const { error } = await sb.from('agente_encargos').delete().eq('id', id).eq('estado', 'pendiente');
+      estado.aviso = error ? ['mal', 'No se ha podido cancelar: ' + error.message] : ['ok', 'Cancelado.'];
+      await cargar();
+    }
+    pinta();
+  }
+});
+
+(async function arranque() {
+  try {
+    if (!DEMO) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        const donde = EN_FILEHUB ? '<a href="./calendario.html" target="_top">calendario</a>' : '<a href="./" target="_top">Workspace</a>';
+        $raiz.innerHTML = `<div class="centro"><div><h1>Centro de agentes</h1><p style="margin-top:8px">Inicia sesión en el ${donde} y vuelve a esta pestaña.</p></div></div>`; return;
+      }
+      if (session.user.id !== OWNER_UID && (session.user.email || '').toLowerCase() !== OWNER_EMAIL) { $raiz.innerHTML = `<div class="centro"><p>Esta página es solo para Carlos.</p></div>`; return; }
+    }
+    await cargar(); pinta();
+    // Refresco cada minuto, salvo si la pestaña está oculta, estás escribiendo un encargo, una respuesta o una búsqueda
+    // (repintar quita el foco), hay un archivo a medio preparar o suena un audio.
+    setInterval(async () => {
+      const a = document.activeElement;
+      const suena = [...document.querySelectorAll('audio[data-res]')].some(x => !x.paused);
+      if (document.hidden || estado.enviando || estado.accionando || estado.resOcupado || estado.resConfirma || suena || voz.quiere
+        || (a && a.closest && a.closest('#form, textarea[data-resp], #res-busca'))) return;
+      await cargar(); pinta();
+    }, 60000);
+  } catch (e) {
+    $raiz.innerHTML = `<div class="centro"><div><p>No se pudo cargar.</p><p class="nota" style="margin-top:6px">${esc(String(e && e.message || e))}</p></div></div>`;
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "id": "/tablet.html",
+  "name": "Panel · FileHub",
+  "short_name": "Panel",
+  "description": "Panel fijo para la tablet: calendario (mes, semana, día), kanban de tareas de FileHub, EGStrategy y agentes, y el parte diario",
+  "start_url": "/tablet.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#0b1326",
+  "theme_color": "#0b1326",
+  "icons": [
+    { "src": "/icon-calendario-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-calendario.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-calendario.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
